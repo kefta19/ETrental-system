@@ -1,0 +1,139 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2>Create Your ETrental Account</h2>
+      <p>Join the Ethiopian rental property platform.</p>
+    </div>
+
+    @if (errorMessage) {
+      <div class="alert alert-danger">{{ errorMessage }}</div>
+    }
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div class="role-selector">
+        <button
+          type="button"
+          class="role-tab"
+          [class.active]="registerForm.get('role')?.value === 'renter'"
+          (click)="setRole('renter')"
+        >
+          Renter
+        </button>
+        <button
+          type="button"
+          class="role-tab"
+          [class.active]="registerForm.get('role')?.value === 'landlord'"
+          (click)="setRole('landlord')"
+        >
+          Landlord
+        </button>
+        <button
+          type="button"
+          class="role-tab"
+          [class.active]="registerForm.get('role')?.value === 'agency'"
+          (click)="setRole('agency')"
+        >
+          Agency
+        </button>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col">
+          <label class="form-label">First Name</label>
+          <input type="text" formControlName="firstName" class="form-control" placeholder="Abebe" />
+        </div>
+        <div class="form-group col">
+          <label class="form-label">Last Name</label>
+          <input type="text" formControlName="lastName" class="form-control" placeholder="Kebede" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input
+          type="email"
+          formControlName="email"
+          class="form-control"
+          placeholder="abebe@example.com"
+        />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col">
+          <label class="form-label">Ethiopian Phone Number</label>
+          <input
+            type="tel"
+            formControlName="phoneNumber"
+            class="form-control"
+            placeholder="+251 91 123 4567"
+          />
+        </div>
+        <div class="form-group col">
+          <label class="form-label">Password (Min. 8 chars, uppercase, digit, special char)</label>
+          <div class="password-field">
+            <input
+              [type]="hidePassword ? 'password' : 'text'"
+              formControlName="password"
+              class="form-control"
+              placeholder="••••••••"
+            />
+            <button type="button" class="toggle-password" (click)="togglePassword()">
+              {{ hidePassword ? '👁' : '🙈' }}
+            </button>
+          </div>
+          @if (registerForm.get('password')?.touched && registerForm.get('password')?.invalid) {
+            <div class="password-hint">{{ passwordStrengthMessage }}</div>
+          }
+        </div>
+      </div>
+
+      @if (registerForm.get('role')?.value === 'agency') {
+        <div class="agency-box">
+          <h4 class="agency-title">Agency Registration Details</h4>
+          <div class="form-group">
+            <label class="form-label">Company / Brokerage Name</label>
+            <input
+              type="text"
+              formControlName="agencyName"
+              class="form-control"
+              placeholder="e.g. Addis Prime Real Estate"
+            />
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label class="form-label">TIN Number</label>
+              <input
+                type="text"
+                formControlName="taxIdentificationNumber"
+                class="form-control"
+                placeholder="0012345678"
+              />
+            </div>
+            <div class="form-group col">
+              <label class="form-label">Sub-City</label>
+              <input
+                type="text"
+                formControlName="subCity"
+                class="form-control"
+                placeholder="Bole"
+              />
+            </div>
+          </div>
+        </div>
+      }
+
+      <button
+        type="submit"
+        class="btn btn-primary btn-block"
+        [disabled]="registerForm.invalid || isLoading"
+      >
+        {{ isLoading ? 'Creating Account...' : 'Complete Registration' }}
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account?
+      <a routerLink="/login" class="link-primary">Sign In</a>
+    </div>
+  </div>
+</div>

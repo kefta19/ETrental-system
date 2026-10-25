@@ -1,0 +1,6 @@
+@ETrental.Presentation_HostAddress = http://localhost:5186
+
+GET {{ETrental.Presentation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

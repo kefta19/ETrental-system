@@ -1,0 +1,584 @@
+<!-- Top navigation -->
+<header class="site-header">
+  <div class="header-container">
+    <div class="header-left">
+      <a routerLink="/" class="logo">
+        <span class="logo-mark">ET</span>
+        <span class="logo-text">rental</span>
+      </a>
+      <nav class="nav-menu">
+        <a routerLink="/properties" class="nav-link">Rent</a>
+        <a routerLink="/landlord/add-property" class="nav-link">List a property</a>
+      </nav>
+    </div>
+    <div class="header-right">
+      <a routerLink="/landlord/add-property" class="landlord-link">List your property</a>
+      <button class="icon-text-btn">EN</button>
+      <button class="icon-text-btn">ETB</button>
+      <a routerLink="/login" class="login-link">Log in</a>
+      <a routerLink="/register" class="register-btn">Sign up</a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero + search -->
+<section class="hero">
+  <div class="hero-container">
+    <h1 class="hero-heading">Find a home</h1>
+    <p class="hero-subheading">Browse 12,480 available homes across Ethiopia.</p>
+
+    <div class="search-box">
+      <form class="search-form" (ngSubmit)="onSearch()">
+        <div class="search-field">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M8.25 14.25a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM15.75 15.75l-3.2625-3.2625" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="selectedCity"
+            name="location"
+            class="search-input"
+            placeholder="Search all properties"
+          />
+        </div>
+        <div class="search-divider"></div>
+        <div class="search-field">
+          <select [(ngModel)]="selectedType" name="type" class="search-select">
+            <option value="All">All property types</option>
+            <option value="Apartment">Apartment</option>
+            <option value="Condominium">Condominium</option>
+            <option value="Villa">House / Villa</option>
+            <option value="Studio">Room / Studio</option>
+            <option value="Commercial">Commercial</option>
+          </select>
+        </div>
+        <div class="search-divider"></div>
+        <div class="search-field">
+          <select [(ngModel)]="selectedBudget" name="budget" class="search-select">
+            <option value="0">Any budget</option>
+            <option value="15000">Under 15,000 ETB</option>
+            <option value="30000">Under 30,000 ETB</option>
+            <option value="50000">Under 50,000 ETB</option>
+            <option value="80000">Under 80,000 ETB</option>
+            <option value="150000">100,000+ ETB</option>
+          </select>
+        </div>
+        <button type="submit" class="search-btn">Search</button>
+      </form>
+    </div>
+
+    <div class="search-or">
+      <span class="or-text">OR</span>
+    </div>
+
+    <div class="search-tabs">
+      <button type="button" class="search-tab" (click)="selectChip('Apartment')">Apartments</button>
+      <button type="button" class="search-tab" (click)="selectChip('Villa')">Houses</button>
+      <button type="button" class="search-tab" (click)="selectChip('Studio')">Rooms</button>
+      <button type="button" class="search-tab" (click)="selectChip('Commercial')">Commercial</button>
+    </div>
+
+    <div class="quick-links">
+      <span class="quick-label">Popular:</span>
+      <button type="button" class="quick-link" (click)="selectChip('Bole')">Bole</button>
+      <button type="button" class="quick-link" (click)="selectChip('CMC')">CMC</button>
+      <button type="button" class="quick-link" (click)="selectChip('Kazanchis')">Kazanchis</button>
+      <button type="button" class="quick-link" (click)="selectChip('Sarbet')">Sarbet</button>
+      <button type="button" class="quick-link" (click)="selectChip('Hawassa')">Hawassa</button>
+    </div>
+  </div>
+</section>
+
+<!-- Rental types -->
+<section class="section rental-types">
+  <div class="section-container">
+    <h2 class="section-title">What type of rental suits you?</h2>
+    <div class="types-grid">
+      <button class="type-card" (click)="selectType('Apartment')">
+        <span class="type-icon">🏢</span>
+        <span class="type-body">
+          <span class="type-name">Apartment</span>
+          <span class="type-count">4,210 properties</span>
+        </span>
+        <span class="type-arrow">→</span>
+      </button>
+      <button class="type-card" (click)="selectType('Villa')">
+        <span class="type-icon">🏡</span>
+        <span class="type-body">
+          <span class="type-name">House / Villa</span>
+          <span class="type-count">2,845 properties</span>
+        </span>
+        <span class="type-arrow">→</span>
+      </button>
+      <button class="type-card" (click)="selectType('Studio')">
+        <span class="type-icon">🛏️</span>
+        <span class="type-body">
+          <span class="type-name">Room</span>
+          <span class="type-count">1,732 properties</span>
+        </span>
+        <span class="type-arrow">→</span>
+      </button>
+      <button class="type-card" (click)="selectType('Studio')">
+        <span class="type-icon">🏠</span>
+        <span class="type-body">
+          <span class="type-name">Studio</span>
+          <span class="type-count">3,693 properties</span>
+        </span>
+        <span class="type-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Popular cities -->
+<section class="section cities-section">
+  <div class="section-container">
+    <h2 class="section-title">Popular cities to rent in Ethiopia</h2>
+    <div class="cities-grid">
+      <button class="city-card" (click)="selectChip('Addis Ababa')">
+        <span class="city-name">Addis Ababa</span>
+        <span class="city-count">8,450 properties</span>
+      </button>
+      <button class="city-card" (click)="selectChip('Hawassa')">
+        <span class="city-name">Hawassa</span>
+        <span class="city-count">1,240 properties</span>
+      </button>
+      <button class="city-card" (click)="selectChip('Mekelle')">
+        <span class="city-name">Mekelle</span>
+        <span class="city-count">890 properties</span>
+      </button>
+      <button class="city-card" (click)="selectChip('Bahir Dar')">
+        <span class="city-name">Bahir Dar</span>
+        <span class="city-count">720 properties</span>
+      </button>
+      <button class="city-card" (click)="selectChip('Dire Dawa')">
+        <span class="city-name">Dire Dawa</span>
+        <span class="city-count">540 properties</span>
+      </button>
+      <button class="city-card" (click)="selectChip('Adama')">
+        <span class="city-name">Adama</span>
+        <span class="city-count">380 properties</span>
+      </button>
+      <button class="city-card" (click)="selectChip('Jimma')">
+        <span class="city-name">Jimma</span>
+        <span class="city-count">290 properties</span>
+      </button>
+      <button class="city-card" (click)="selectChip('Gondar')">
+        <span class="city-name">Gondar</span>
+        <span class="city-count">180 properties</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Popular locations -->
+<section class="section locations-section">
+  <div class="section-container">
+    <div class="section-header-row">
+      <div>
+        <h2 class="section-title">Popular locations</h2>
+        <p class="section-subtitle">Explore rentals in Ethiopia's most sought-after areas</p>
+      </div>
+      <a routerLink="/properties" class="view-all-link">Explore all →</a>
+    </div>
+    <div class="locations-grid">
+      <button class="location-card location-1" (click)="selectChip('Bole')">
+        <span class="location-overlay"></span>
+        <span class="location-info">
+          <span class="location-name">Bole</span>
+          <span class="location-count">1,204 properties</span>
+        </span>
+      </button>
+      <button class="location-card location-2" (click)="selectChip('CMC')">
+        <span class="location-overlay"></span>
+        <span class="location-info">
+          <span class="location-name">CMC</span>
+          <span class="location-count">892 properties</span>
+        </span>
+      </button>
+      <button class="location-card location-3" (click)="selectChip('Kazanchis')">
+        <span class="location-overlay"></span>
+        <span class="location-info">
+          <span class="location-name">Kazanchis</span>
+          <span class="location-count">645 properties</span>
+        </span>
+      </button>
+      <button class="location-card location-4" (click)="selectChip('Hawassa')">
+        <span class="location-overlay"></span>
+        <span class="location-info">
+          <span class="location-name">Hawassa</span>
+          <span class="location-count">512 properties</span>
+        </span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- New listings -->
+<section class="section listings-section">
+  <div class="section-container">
+    <div class="section-header-row">
+      <div>
+        <h2 class="section-title">New listings</h2>
+        <p class="section-subtitle">Fresh homes added in the last 24 hours</p>
+      </div>
+      <a routerLink="/properties" class="view-all-link">See all →</a>
+    </div>
+
+    <div class="listings-grid">
+      <article class="listing-card" (click)="goToProperties()">
+        <div class="listing-image">
+          <span class="badge-new">New</span>
+          <button class="heart-btn" type="button" aria-label="Save" (click)="toggleFavorite($event, 1)">♡</button>
+        </div>
+        <div class="listing-content">
+          <div class="listing-price">25,000 <span class="currency">ETB</span><span class="period">/ month</span></div>
+          <h3 class="listing-title">2 rooms apartment of 85m²</h3>
+          <p class="listing-location">Bole, Addis Ababa</p>
+        </div>
+      </article>
+
+      <article class="listing-card" (click)="goToProperties()">
+        <div class="listing-image listing-image-2">
+          <button class="heart-btn" type="button" aria-label="Save" (click)="toggleFavorite($event, 2)">♡</button>
+        </div>
+        <div class="listing-content">
+          <div class="listing-price">60,000 <span class="currency">ETB</span><span class="period">/ month</span></div>
+          <h3 class="listing-title">4 rooms house of 250m²</h3>
+          <p class="listing-location">CMC, Addis Ababa</p>
+        </div>
+      </article>
+
+      <article class="listing-card" (click)="goToProperties()">
+        <div class="listing-image listing-image-3">
+          <span class="badge-new">New</span>
+          <button class="heart-btn" type="button" aria-label="Save" (click)="toggleFavorite($event, 3)">♡</button>
+        </div>
+        <div class="listing-content">
+          <div class="listing-price">12,000 <span class="currency">ETB</span><span class="period">/ month</span></div>
+          <h3 class="listing-title">1 room apartment of 40m²</h3>
+          <p class="listing-location">Kazanchis, Addis Ababa</p>
+        </div>
+      </article>
+
+      <article class="listing-card" (click)="goToProperties()">
+        <div class="listing-image listing-image-4">
+          <button class="heart-btn" type="button" aria-label="Save" (click)="toggleFavorite($event, 4)">♡</button>
+        </div>
+        <div class="listing-content">
+          <div class="listing-price">35,000 <span class="currency">ETB</span><span class="period">/ month</span></div>
+          <h3 class="listing-title">3 rooms apartment of 150m²</h3>
+          <p class="listing-location">Sarbet, Addis Ababa</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- AI alert banner -->
+<section class="alert-section">
+  <div class="section-container">
+    <div class="alert-container">
+      <div class="alert-icon">✨</div>
+      <div class="alert-body">
+        <p class="alert-title">Stay updated on new homes that match your preferences</p>
+        <p class="alert-text">Our AI scans every fresh listing and alerts you within seconds.</p>
+        <ul class="alert-features">
+          <li>Up to 7 free notifications per day — never miss a relevant listing</li>
+          <li>Smart matching by city, size, price and type — refine anytime</li>
+          <li>Instant — landlords usually respond to first requests</li>
+        </ul>
+      </div>
+      <a routerLink="/register" class="alert-cta">Create AI alert</a>
+      <span class="badge-new alert-tag">New</span>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="section how-section">
+  <div class="section-container">
+    <div class="section-header-center">
+      <h2 class="section-title">Simple, reliable and stress-free rental</h2>
+      <p class="section-subtitle">ETrental simplifies your rental journey</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="step-number">1</span>
+        <span class="step-icon">🔍</span>
+        <h3 class="step-title">Search</h3>
+        <p class="step-desc">Browse thousands of rental properties across Ethiopia with detailed filters</p>
+      </div>
+      <div class="step-card">
+        <span class="step-number">2</span>
+        <span class="step-icon">💬</span>
+        <h3 class="step-title">Contact</h3>
+        <p class="step-desc">Reach out directly to landlords or agents via messages, calls or schedule viewings</p>
+      </div>
+      <div class="step-card">
+        <span class="step-number">3</span>
+        <span class="step-icon">🏠</span>
+        <h3 class="step-title">Move in</h3>
+        <p class="step-desc">Apply for your chosen property and move into your new home</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Why ETrental -->
+<section class="section why-section">
+  <div class="section-container">
+    <div class="section-header-center">
+      <h2 class="section-title">Why use ETrental</h2>
+      <p class="section-subtitle">Everything you need to find your perfect rental</p>
+    </div>
+    <div class="why-grid">
+      <div class="why-card">
+        <span class="why-icon">🌐</span>
+        <h3 class="why-title">All listings in one place</h3>
+        <p class="why-desc">We aggregate listings from hundreds of trusted rental sites across Ethiopia in real-time</p>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">✅</span>
+        <h3 class="why-title">Verified listings</h3>
+        <p class="why-desc">Our dedicated team evaluates reported listings and cross-checks data daily for accuracy</p>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">🔒</span>
+        <h3 class="why-title">Security & transparency</h3>
+        <p class="why-desc">Your peace of mind is our priority with transparent communication and data protection</p>
+      </div>
+      <div class="why-card">
+        <span class="why-icon">🤖</span>
+        <h3 class="why-title">AI-powered search</h3>
+        <p class="why-desc">Smart algorithms match you with the perfect property based on your preferences</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured properties -->
+<section class="section featured-section">
+  <div class="section-container">
+    <div class="section-header-row">
+      <div>
+        <h2 class="section-title">Featured properties</h2>
+        <p class="section-subtitle">Recently added rentals across Ethiopia</p>
+      </div>
+      <a routerLink="/properties" class="view-all-link">View all properties →</a>
+    </div>
+
+    <div class="featured-grid">
+      <article class="featured-card" (click)="goToProperties()">
+        <div class="featured-image">
+          <span class="badge-featured">Featured</span>
+          <button class="heart-btn" type="button" aria-label="Save" (click)="toggleFavorite($event, 1)">♡</button>
+        </div>
+        <div class="featured-content">
+          <div class="featured-price">25,000 <span class="currency">ETB</span><span class="period">/ month</span></div>
+          <h3 class="featured-title">Modern Apartment in Bole</h3>
+          <p class="featured-location">📍 Bole, Addis Ababa</p>
+          <div class="featured-features">
+            <span>🛏️ 2 beds</span>
+            <span>🛁 2 baths</span>
+            <span>🚗 Parking</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="featured-card" (click)="goToProperties()">
+        <div class="featured-image featured-image-2">
+          <span class="badge-featured">Featured</span>
+          <button class="heart-btn" type="button" aria-label="Save" (click)="toggleFavorite($event, 2)">♡</button>
+        </div>
+        <div class="featured-content">
+          <div class="featured-price">60,000 <span class="currency">ETB</span><span class="period">/ month</span></div>
+          <h3 class="featured-title">Spacious Villa in CMC</h3>
+          <p class="featured-location">📍 CMC, Addis Ababa</p>
+          <div class="featured-features">
+            <span>🛏️ 4 beds</span>
+            <span>🛁 3 baths</span>
+            <span>🌻 Garden</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="featured-card" (click)="goToProperties()">
+        <div class="featured-image featured-image-3">
+          <span class="badge-featured">Featured</span>
+          <button class="heart-btn" type="button" aria-label="Save" (click)="toggleFavorite($event, 3)">♡</button>
+        </div>
+        <div class="featured-content">
+          <div class="featured-price">12,000 <span class="currency">ETB</span><span class="period">/ month</span></div>
+          <h3 class="featured-title">Cozy Studio in Kazanchis</h3>
+          <p class="featured-location">📍 Kazanchis, Addis Ababa</p>
+          <div class="featured-features">
+            <span>🛏️ Studio</span>
+            <span>🛁 1 bath</span>
+            <span>🛗 Elevator</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Rentals by city -->
+<section class="section rentals-city-section">
+  <div class="section-container">
+    <h2 class="section-title">Rentals in main cities</h2>
+    <div class="rentals-city-grid">
+      <div class="rentals-city-card">
+        <h3 class="rentals-city-name">Addis Ababa</h3>
+        <div class="rentals-city-links">
+          <a routerLink="/properties" class="rentals-city-link">Apartments in Addis Ababa</a>
+          <a routerLink="/properties" class="rentals-city-link">Houses in Addis Ababa</a>
+          <a routerLink="/properties" class="rentals-city-link">Rooms in Addis Ababa</a>
+          <a routerLink="/properties" class="rentals-city-link">Commercial in Addis Ababa</a>
+          <a routerLink="/properties" class="rentals-city-link">Student housing in Addis Ababa</a>
+        </div>
+      </div>
+      <div class="rentals-city-card">
+        <h3 class="rentals-city-name">Hawassa</h3>
+        <div class="rentals-city-links">
+          <a routerLink="/properties" class="rentals-city-link">Apartments in Hawassa</a>
+          <a routerLink="/properties" class="rentals-city-link">Houses in Hawassa</a>
+          <a routerLink="/properties" class="rentals-city-link">Rooms in Hawassa</a>
+          <a routerLink="/properties" class="rentals-city-link">Commercial in Hawassa</a>
+          <a routerLink="/properties" class="rentals-city-link">Student housing in Hawassa</a>
+        </div>
+      </div>
+      <div class="rentals-city-card">
+        <h3 class="rentals-city-name">Mekelle</h3>
+        <div class="rentals-city-links">
+          <a routerLink="/properties" class="rentals-city-link">Apartments in Mekelle</a>
+          <a routerLink="/properties" class="rentals-city-link">Houses in Mekelle</a>
+          <a routerLink="/properties" class="rentals-city-link">Rooms in Mekelle</a>
+          <a routerLink="/properties" class="rentals-city-link">Commercial in Mekelle</a>
+          <a routerLink="/properties" class="rentals-city-link">Student housing in Mekelle</a>
+        </div>
+      </div>
+      <div class="rentals-city-card">
+        <h3 class="rentals-city-name">Bahir Dar</h3>
+        <div class="rentals-city-links">
+          <a routerLink="/properties" class="rentals-city-link">Apartments in Bahir Dar</a>
+          <a routerLink="/properties" class="rentals-city-link">Houses in Bahir Dar</a>
+          <a routerLink="/properties" class="rentals-city-link">Rooms in Bahir Dar</a>
+          <a routerLink="/properties" class="rentals-city-link">Commercial in Bahir Dar</a>
+          <a routerLink="/properties" class="rentals-city-link">Student housing in Bahir Dar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Landlord CTA -->
+<section class="section landlord-section">
+  <div class="section-container">
+    <div class="landlord-grid">
+      <div class="landlord-content">
+        <span class="landlord-badge">For landlords</span>
+        <h2 class="landlord-title">List your property and find your next tenant</h2>
+        <p class="landlord-text">
+          Reach thousands of verified renters every month. Add your listing in minutes and start
+          receiving direct inquiries from serious tenants.
+        </p>
+        <ul class="landlord-benefits">
+          <li><span class="check">✓</span> Free professional listing</li>
+          <li><span class="check">✓</span> Direct contact with interested tenants</li>
+          <li><span class="check">✓</span> Featured placement on Google & social</li>
+        </ul>
+        <div class="landlord-actions">
+          <a routerLink="/landlord/add-property" class="btn-primary">List your property</a>
+          <a routerLink="/landlord/dashboard" class="btn-secondary">Landlord dashboard</a>
+        </div>
+      </div>
+      <div class="landlord-stats">
+        <div class="stat-card">
+          <span class="stat-value">800K+</span>
+          <span class="stat-label">Monthly visitors</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">12K+</span>
+          <span class="stat-label">Active listings</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">48h</span>
+          <span class="stat-label">Average time to rent</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">4.9★</span>
+          <span class="stat-label">Tenant satisfaction</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section faq-section">
+  <div class="section-container faq-container">
+    <div class="section-header-center">
+      <h2 class="section-title">Frequently asked questions</h2>
+      <p class="section-subtitle">Everything you need to know about renting on ETrental</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item" open>
+        <summary class="faq-question">How do I search for a rental property?</summary>
+        <p class="faq-answer">Use the search bar to enter a location, property type or budget. You can also browse by popular locations and rental types to quickly narrow down your options.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-question">Is it free to contact landlords?</summary>
+        <p class="faq-answer">Yes. Creating an account and contacting landlords through messages or appointment requests is completely free for renters.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-question">How do I list my property?</summary>
+        <p class="faq-answer">Click "List your property", add your details and photos, and publish. Your listing reaches thousands of renters searching every month.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-question">How do I schedule a viewing?</summary>
+        <p class="faq-answer">Open any property you like and request an appointment. The landlord will confirm a time that works for both of you.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="section-container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a routerLink="/" class="logo">
+          <span class="logo-mark">ET</span>
+          <span class="logo-text">rental</span>
+        </a>
+        <p class="footer-tagline">Rentals made simple across Ethiopia.</p>
+      </div>
+      <div class="footer-col">
+        <h4 class="footer-heading">Renters</h4>
+        <a routerLink="/properties" class="footer-link">Browse rentals</a>
+        <a routerLink="/favorites" class="footer-link">Favorites</a>
+        <a routerLink="/saved-searches" class="footer-link">Saved searches</a>
+      </div>
+      <div class="footer-col">
+        <h4 class="footer-heading">Landlords</h4>
+        <a routerLink="/landlord/add-property" class="footer-link">List a property</a>
+        <a routerLink="/landlord/dashboard" class="footer-link">Dashboard</a>
+        <a routerLink="/landlord/my-properties" class="footer-link">My listings</a>
+      </div>
+      <div class="footer-col">
+        <h4 class="footer-heading">Company</h4>
+        <a routerLink="/login" class="footer-link">Log in</a>
+        <a routerLink="/register" class="footer-link">Sign up</a>
+        <a routerLink="/" class="footer-link">About us</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 ETrental. All rights reserved.</p>
+      <div class="footer-legal">
+        <a routerLink="/" class="footer-link">Privacy</a>
+        <a routerLink="/" class="footer-link">Terms</a>
+      </div>
+    </div>
+  </div>
+</footer>

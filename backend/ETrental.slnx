@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ETrental.Application/ETrental.Application.csproj" />
+    <Project Path="src/ETrental.Domain/ETrental.Domain.csproj" />
+    <Project Path="src/ETrental.Infrastructure/ETrental.Infrastructure.csproj" />
+    <Project Path="src/ETrental.Presentation/ETrental.Presentation.csproj" />
+  </Folder>
+</Solution>

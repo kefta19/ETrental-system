@@ -1,0 +1,216 @@
+<div class="my-properties-page container">
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">Landlord Portfolio</span>
+      <h1>My Properties</h1>
+      <p>Manage your listings, track moderation status, and mark units as rented</p>
+    </div>
+    <a routerLink="/landlord/add-property" class="btn btn-primary">
+      <span>+</span> Add New Property
+    </a>
+  </div>
+
+  <div class="status-filter-bar">
+    <button 
+      class="filter-chip" 
+      [class.active]="selectedStatus === undefined" 
+      (click)="setStatus(undefined)"
+    >
+      All Properties
+    </button>
+    <button 
+      class="filter-chip" 
+      [class.active]="selectedStatus === 0" 
+      (click)="setStatus(0)"
+    >
+      Draft
+    </button>
+    <button 
+      class="filter-chip" 
+      [class.active]="selectedStatus === 1" 
+      (click)="setStatus(1)"
+    >
+      Pending Review
+    </button>
+    <button 
+      class="filter-chip" 
+      [class.active]="selectedStatus === 2" 
+      (click)="setStatus(2)"
+    >
+      Approved
+    </button>
+    <button 
+      class="filter-chip" 
+      [class.active]="selectedStatus === 4" 
+      (click)="setStatus(4)"
+    >
+      Published
+    </button>
+    <button 
+      class="filter-chip" 
+      [class.active]="selectedStatus === 6" 
+      (click)="setStatus(6)"
+    >
+      Rented
+    </button>
+    <button 
+      class="filter-chip" 
+      [class.active]="selectedStatus === 5" 
+      (click)="setStatus(5)"
+    >
+      Unavailable
+    </button>
+    <button 
+      class="filter-chip" 
+      [class.active]="selectedStatus === 3" 
+      (click)="setStatus(3)"
+    >
+      Rejected
+    </button>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading your properties...</p>
+    </div>
+  } @else if (properties.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">🏠</div>
+      <h3>No properties found</h3>
+      <p>You don't have any properties in this category yet.</p>
+      <a routerLink="/landlord/add-property" class="btn btn-primary">Create Your First Listing</a>
+    </div>
+  } @else {
+    <div class="properties-list">
+      @for (prop of properties; track prop.id) {
+        <div class="property-list-card">
+          <div class="property-image-section">
+            <img 
+              [src]="prop.primaryImageUrl || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400'" 
+              [alt]="prop.title"
+              class="property-thumbnail"
+            />
+            <span class="status-badge" [class]="'status-' + prop.status">
+              {{ getStatusLabel(prop.status) }}
+            </span>
+          </div>
+
+          <div class="property-details-section">
+            <div class="property-main-info">
+              <h3 class="property-title">{{ prop.title }}</h3>
+              <p class="property-location">
+                📍 {{ prop.neighborhood }}, {{ prop.subCity }}, {{ prop.city }}
+              </p>
+              <div class="property-specs">
+                <span class="spec-item">🛏️ {{ prop.bedrooms }} Bed</span>
+                <span class="spec-item">🛁 {{ prop.bathrooms }} Bath</span>
+                @if (prop.areaSquareMeters) {
+                  <span class="spec-item">📐 {{ prop.areaSquareMeters }} m²</span>
+                }
+                <span class="spec-item">🛋️ {{ ['Unfurnished', 'Semi-Furnished', 'Fully Furnished'][prop.furnishing] }}</span>
+              </div>
+            </div>
+
+            <div class="property-price-section">
+              <div class="price-amount">{{ prop.rentAmountETB | number }} ETB</div>
+              <div class="price-period">/ month</div>
+              <div class="price-details">+ {{ prop.advanceMonthsRequired }} mo. advance</div>
+            </div>
+
+            <div class="property-actions-section">
+              <a [routerLink]="['/properties', prop.id]" class="btn-action" title="View Property">
+                👁️ View
+              </a>
+              
+              @if (prop.status === 0) {
+                <button class="btn-action btn-action-primary" (click)="submitForReview(prop.id)" title="Submit for Review">
+                  ✅ Submit for Review
+                </button>
+              }
+              
+              @if (prop.status === 4) {
+                <button class="btn-action" (click)="toggleAvailability(prop.id)" title="Mark Unavailable">
+                  ⏸️ Unpublish
+                </button>
+                <button class="btn-action btn-action-success" (click)="openRentedModal(prop)" title="Mark as Rented">
+                  🔑 Mark as Rented
+                </button>
+              }
+              
+              @if (prop.status === 5) {
+                <button class="btn-action btn-action-primary" (click)="toggleAvailability(prop.id)" title="Publish Again">
+                  ▶️ Publish
+                </button>
+              }
+              
+              @if (prop.status === 3) {
+                <button class="btn-action btn-action-warning" (click)="submitForReview(prop.id)" title="Resubmit">
+                  🔄 Resubmit
+                </button>
+              }
+              
+              <button class="btn-action btn-action-danger" (click)="deleteProperty(prop.id)" title="Delete">
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Mark as Rented Modal -->
+@if (selectedPropForRented) {
+  <div class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Mark Property as Rented</h3>
+        <button class="close-x" (click)="selectedPropForRented = null">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-property-info">
+          <strong>{{ selectedPropForRented.title }}</strong><br>
+          <span>{{ selectedPropForRented.neighborhood }}, {{ selectedPropForRented.subCity }}</span>
+        </p>
+        
+        <div class="form-group">
+          <label class="form-label">Tenant Full Name</label>
+          <input type="text" [(ngModel)]="rentedTenantName" class="form-control" placeholder="Enter tenant's full name" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Agreed Monthly Rent (ETB)</label>
+          <input type="number" [(ngModel)]="rentedAmountETB" class="form-control" />
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group col">
+            <label class="form-label">Lease Duration (Months)</label>
+            <select [(ngModel)]="rentedLeaseMonths" class="form-control">
+              <option [ngValue]="6">6 Months</option>
+              <option [ngValue]="12">12 Months</option>
+              <option [ngValue]="24">24 Months</option>
+              <option [ngValue]="36">36 Months</option>
+            </select>
+          </div>
+          <div class="form-group col">
+            <label class="form-label">Tenancy Start Date</label>
+            <input type="date" [(ngModel)]="rentedStartDate" class="form-control" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="selectedPropForRented = null">Cancel</button>
+        <button 
+          class="btn btn-primary" 
+          [disabled]="isSubmitting || !rentedTenantName.trim()" 
+          (click)="confirmMarkAsRented()"
+        >
+          {{ isSubmitting ? 'Saving...' : 'Confirm & Mark as Rented' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
