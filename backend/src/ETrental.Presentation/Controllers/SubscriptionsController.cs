@@ -62,6 +62,19 @@ public class SubscriptionsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPut("pending-payment")]
+    [Authorize]
+    public async Task<IActionResult> UpdatePendingPayment([FromBody] StartSubscriptionDto dto)
+    {
+        var userId = CurrentUserId;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var result = await _subscriptionService.UpdatePendingPaymentAsync(userId, dto);
+        if (!result.Succeeded) return BadRequest(result);
+
+        return Ok(result);
+    }
+
     [HttpPost("cancel")]
     [Authorize]
     public async Task<IActionResult> CancelSubscription([FromBody] CancelSubscriptionDto dto)

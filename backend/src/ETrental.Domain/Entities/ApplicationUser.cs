@@ -25,7 +25,6 @@ public class ApplicationUser : IdentityUser
     // Navigation properties
     public RenterProfile? RenterProfile { get; set; }
     public LandlordProfile? LandlordProfile { get; set; }
-    public AgencyMembership? AgencyMembership { get; set; }
     public ICollection<Property> OwnedProperties { get; set; } = new List<Property>();
     public ICollection<PropertyInquiry> SentInquiries { get; set; } = new List<PropertyInquiry>();
     public ICollection<ViewingAppointment> Appointments { get; set; } = new List<ViewingAppointment>();

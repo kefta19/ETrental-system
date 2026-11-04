@@ -1,0 +1,241 @@
+<div class="fluent-page">
+  <!-- Top Page Header -->
+  <header class="fluent-page-header">
+    <div class="page-title-block">
+      <h1>Home</h1>
+      <p>Welcome back, {{ auth.currentUser()?.firstName || 'there' }}. Manage your rental search and activity.</p>
+    </div>
+    <div class="header-right-actions">
+      <a routerLink="/properties" class="btn-fluent-primary">
+        <span class="material-icons-outlined" aria-hidden="true">search</span>
+        <span>Browse all rentals</span>
+      </a>
+    </div>
+  </header>
+
+  @if (dashboardError(); as message) {
+    <div class="fluent-alert-card error" role="alert">
+      <span class="material-icons-outlined alert-icon" aria-hidden="true">error_outline</span>
+      <div class="alert-content">
+        <strong>Your account overview could not be loaded</strong>
+        <p>{{ message }}</p>
+      </div>
+      <button type="button" class="btn-fluent-secondary" (click)="loadDashboard()">Try again</button>
+    </div>
+  }
+
+  <!-- Two-Column Windows 11 Card Grid -->
+  <div class="fluent-card-grid">
+    <!-- Left Column: Search & Alerts -->
+    <div class="grid-column-main">
+      <!-- Search Card (Matches "It's all here with Microsoft account" Card) -->
+      <section class="fluent-card search-card">
+        <div class="card-brand-row">
+          <div class="fluent-brand-grid">
+            <span class="brand-square s1"></span>
+            <span class="brand-square s2"></span>
+            <span class="brand-square s3"></span>
+            <span class="brand-square s4"></span>
+          </div>
+          <span class="card-tag">SMART DISCOVERY</span>
+        </div>
+        <h3 class="card-hero-title">Find a place that feels right</h3>
+        <p class="card-hero-desc">Search rentals across Ethiopia by area, property type, or your exact monthly budget.</p>
+
+        <!-- Search Input Bar -->
+        <form class="fluent-search-bar" (ngSubmit)="onSearch()">
+          <span class="material-icons-outlined search-icon" aria-hidden="true">search</span>
+          <input
+            id="renter-search"
+            type="search"
+            name="query"
+            [(ngModel)]="query"
+            placeholder="Try “2-bedroom in Bole under 30,000 ETB”"
+          />
+          <button type="submit" class="btn-search-go">Search</button>
+        </form>
+
+        <!-- Category Pill Row (Matches app badges in screenshot) -->
+        <div class="category-pill-row">
+          <span class="pill-title">Popular searches:</span>
+          <button type="button" class="category-chip" (click)="useExample('2-bedroom in Bole under 30,000 birr')">
+            <span class="chip-dot"></span> Bole 2-Bed
+          </button>
+          <button type="button" class="category-chip" (click)="useExample('Apartment with parking in CMC')">
+            <span class="chip-dot"></span> CMC Parking
+          </button>
+          <button type="button" class="category-chip" (click)="useExample('Studio under 15,000 birr')">
+            <span class="chip-dot"></span> Studio Under 15k
+          </button>
+        </div>
+      </section>
+
+      <!-- Search Alerts List Card (Matches Bluetooth Devices Card in Screenshot) -->
+      <section class="fluent-card alerts-section">
+        <div class="card-header-row">
+          <div>
+            <h3>Search alerts & notifications</h3>
+            <p>Manage instant match notifications for newly posted properties</p>
+          </div>
+          <a routerLink="/renter/saved-searches" class="card-header-action">Manage all &gt;</a>
+        </div>
+
+        @if (savedSearchesLoading()) {
+          <div class="fluent-loading-row">
+            <div class="spinner-sm"></div>
+            <span>Loading search alerts…</span>
+          </div>
+        } @else if (savedSearches().length === 0) {
+          <div class="fluent-empty-row">
+            <span class="material-icons-outlined empty-icon" aria-hidden="true">notifications_none</span>
+            <div class="empty-text">
+              <strong>No active search alerts</strong>
+              <p>Save searches to get notified when matched Ethiopian homes are published.</p>
+            </div>
+            <a routerLink="/properties" class="btn-fluent-secondary sm">Create alert</a>
+          </div>
+        } @else {
+          <div class="fluent-row-group">
+            @for (search of savedSearches().slice(0, 3); track search.id) {
+              <div class="fluent-row-item">
+                <span class="material-icons-outlined row-icon" aria-hidden="true">search</span>
+                <div class="row-details">
+                  <strong>{{ search.name }}</strong>
+                  <span>{{ savedSearchSummary(search) }}</span>
+                </div>
+                <div class="row-actions">
+                  <span class="fluent-status-pill" [class.active]="search.alertEmailEnabled">
+                    {{ search.alertEmailEnabled ? 'Active' : 'Paused' }}
+                  </span>
+                  <button type="button" class="btn-icon" (click)="runSavedSearch(search)" title="View homes">
+                    <span class="material-icons-outlined" aria-hidden="true">chevron_right</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </div>
+
+    <!-- Right Column: Recommended Settings & Personalize Style Cards -->
+    <div class="grid-column-side">
+      <!-- "Recommended settings" Style Card (Matches Screenshot) -->
+      <section class="fluent-card list-card">
+        <div class="card-header-row">
+          <div>
+            <h3>Recommended actions</h3>
+            <p>Recent and commonly used tools</p>
+          </div>
+        </div>
+
+        <div class="fluent-row-group no-border-top">
+          <!-- Row 1: Saved Homes -->
+          <a routerLink="/renter/favorites" class="fluent-nav-row">
+            <span class="material-icons-outlined nav-row-icon green" aria-hidden="true">favorite</span>
+            <div class="nav-row-copy">
+              <strong>Saved homes</strong>
+              <span>{{ (dashboard()?.favoriteCount || 0) }} shortlisted properties</span>
+            </div>
+            <span class="material-icons-outlined chevron" aria-hidden="true">chevron_right</span>
+          </a>
+
+          <!-- Row 2: Upcoming Viewings -->
+          <a routerLink="/renter/appointments" class="fluent-nav-row">
+            <span class="material-icons-outlined nav-row-icon blue" aria-hidden="true">calendar_month</span>
+            <div class="nav-row-copy">
+              <strong>Property viewings</strong>
+              <span>{{ (dashboard()?.upcomingAppointmentCount || 0) }} scheduled appointments</span>
+            </div>
+            <span class="material-icons-outlined chevron" aria-hidden="true">chevron_right</span>
+          </a>
+
+          <!-- Row 3: Rental Applications -->
+          <a routerLink="/renter/applications" class="fluent-nav-row">
+            <span class="material-icons-outlined nav-row-icon amber" aria-hidden="true">description</span>
+            <div class="nav-row-copy">
+              <strong>Active applications</strong>
+              <span>{{ (dashboard()?.activeApplicationCount || 0) }} submitted</span>
+            </div>
+            <span class="material-icons-outlined chevron" aria-hidden="true">chevron_right</span>
+          </a>
+
+          <!-- Row 4: Messages -->
+          <a routerLink="/renter/messages" class="fluent-nav-row">
+            <span class="material-icons-outlined nav-row-icon teal" aria-hidden="true">mail</span>
+            <div class="nav-row-copy">
+              <strong>Landlord inquiries</strong>
+              <span>{{ (dashboard()?.unreadInquiryCount || 0) }} unread messages</span>
+            </div>
+            <span class="material-icons-outlined chevron" aria-hidden="true">chevron_right</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- "Personalize your device" Style Card (Matches Screenshot mini-tiles) -->
+      <section class="fluent-card gallery-card">
+        <div class="card-header-row">
+          <div>
+            <h3>Explore Addis Ababa</h3>
+            <p>Popular rental neighborhoods</p>
+          </div>
+        </div>
+
+        <div class="area-tile-grid">
+          <a routerLink="/properties" [queryParams]="{ location: 'Bole' }" class="area-tile">
+            <img src="https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=300&q=80" alt="Bole" class="tile-img" />
+            <div class="tile-overlay">
+              <span>Bole</span>
+            </div>
+          </a>
+          <a routerLink="/properties" [queryParams]="{ location: 'CMC' }" class="area-tile">
+            <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=300&q=80" alt="CMC" class="tile-img" />
+            <div class="tile-overlay">
+              <span>CMC</span>
+            </div>
+          </a>
+          <a routerLink="/properties" [queryParams]="{ location: 'Kazanchis' }" class="area-tile">
+            <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=300&q=80" alt="Kazanchis" class="tile-img" />
+            <div class="tile-overlay">
+              <span>Kazanchis</span>
+            </div>
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Recommended Rentals Gallery Section -->
+  <section class="fluent-card recommendations-card" aria-labelledby="recommendations-title">
+    <div class="card-header-row">
+      <div>
+        <h3 id="recommendations-title">Fresh property listings</h3>
+        <p>Recently reviewed and approved homes ready for inspection</p>
+      </div>
+      <a routerLink="/properties" class="card-header-action">See all properties &gt;</a>
+    </div>
+
+    @if (recommendedState() === 'loading') {
+      <div class="fluent-loading-row">
+        <div class="spinner-sm"></div>
+        <span>Finding matching rentals…</span>
+      </div>
+    } @else if (recommendedState() === 'error') {
+      <div class="fluent-empty-row">
+        <span>Could not load new homes right now.</span>
+        <a routerLink="/properties" class="btn-fluent-secondary sm">Browse catalog</a>
+      </div>
+    } @else if (recommended().length === 0) {
+      <div class="fluent-empty-row">
+        <span>No new property listings available.</span>
+        <a routerLink="/properties" class="btn-fluent-secondary sm">Explore rentals</a>
+      </div>
+    } @else {
+      <div class="property-grid">
+        @for (home of recommended().slice(0, 4); track home.id) {
+          <app-property-card [property]="home"></app-property-card>
+        }
+      </div>
+    }
+  </section>
+</div>

@@ -30,17 +30,3 @@ export interface LandlordDashboard {
   monthlyPortfolioValueETB: number;
   unreadNotificationCount: number;
 }
-
-export interface AgencyDashboard {
-  agencyName: string;
-  agencyStatus: string;
-  totalProperties: number;
-  publishedProperties: number;
-  pendingReviewProperties: number;
-  rentedProperties: number;
-  unreadInquiries: number;
-  pendingApplications: number;
-  upcomingAppointments: number;
-  activeStaff: number;
-  unreadNotificationCount: number;
-}

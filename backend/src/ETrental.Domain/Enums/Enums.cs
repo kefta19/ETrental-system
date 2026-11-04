@@ -2,11 +2,10 @@ namespace ETrental.Domain.Enums;
 
 public enum UserRole
 {
-    Renter,
-    Landlord,
-    Agency,
-    Support,
-    Admin
+    Renter = 0,
+    Landlord = 1,
+    Support = 3,
+    Admin = 4
 }
 
 public enum PropertyType
@@ -39,21 +38,6 @@ public enum FurnishingStatus
     FullyFurnished
 }
 
-public enum AgencyStatus
-{
-    Pending,
-    Verified,
-    Rejected,
-    Suspended
-}
-
-public enum AgencyStaffRole
-{
-    AgencyManager,
-    Agent,
-    Viewer
-}
-
 public enum AppointmentStatus
 {
     Requested,
@@ -83,16 +67,15 @@ public enum TicketStatus
 
 public enum TicketCategory
 {
-    Account,
-    Listing,
-    Agency,
-    SubscriptionBilling,
-    Technical,
-    SafetyFraud,
-    Payment,
-    InquiryAppointment,
-    Privacy,
-    Other
+    Account = 0,
+    Listing = 1,
+    SubscriptionBilling = 3,
+    Technical = 4,
+    SafetyFraud = 5,
+    Payment = 6,
+    InquiryAppointment = 7,
+    Privacy = 8,
+    Other = 9
 }
 
 public enum TicketPriority
@@ -159,6 +142,14 @@ public enum PaymentStatus
     Cancelled
 }
 
+public enum ListingFeeStatus
+{
+    NotRequired,
+    Pending,
+    Verified,
+    Rejected
+}
+
 public enum RentalAgreementStatus
 {
     Draft,
@@ -170,14 +161,13 @@ public enum RentalAgreementStatus
 
 public enum NotificationType
 {
-    Account,
-    Listing,
-    Inquiry,
-    Appointment,
-    Application,
-    Agency,
-    Support,
-    Subscription,
-    Security,
-    System
+    Account = 0,
+    Listing = 1,
+    Inquiry = 2,
+    Appointment = 3,
+    Application = 4,
+    Support = 6,
+    Subscription = 7,
+    Security = 8,
+    System = 9
 }

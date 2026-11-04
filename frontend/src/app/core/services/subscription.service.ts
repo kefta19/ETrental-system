@@ -34,6 +34,10 @@ export class SubscriptionService {
     return this.http.post<ApiResponse<Subscription>>(`${this.API_URL}/start`, dto);
   }
 
+  updatePendingPayment(dto: StartSubscriptionDto): Observable<ApiResponse<Subscription>> {
+    return this.http.put<ApiResponse<Subscription>>(`${this.API_URL}/pending-payment`, dto);
+  }
+
   cancelSubscription(reason?: string): Observable<ApiResponse<Subscription>> {
     return this.http.post<ApiResponse<Subscription>>(`${this.API_URL}/cancel`, { reason: reason ?? null });
   }
@@ -41,4 +45,5 @@ export class SubscriptionService {
   getMyPaymentTransactions(): Observable<ApiResponse<PaymentTransaction[]>> {
     return this.http.get<ApiResponse<PaymentTransaction[]>>(`${this.API_URL}/payments`);
   }
+
 }

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using ETrental.Application.DTOs.Admin;
 using ETrental.Application.DTOs.Subscriptions;
 using ETrental.Application.Interfaces;
-using ETrental.Domain.Enums;
 
 namespace ETrental.Presentation.Controllers;
 
@@ -69,25 +68,6 @@ public class AdminController : ControllerBase
         if (string.IsNullOrEmpty(adminId)) return Unauthorized();
 
         var result = await _adminService.SetUserActiveAsync(userId, dto.IsRestricted, dto.Reason ?? "Policy action", adminId);
-        if (!result.Succeeded) return BadRequest(result);
-
-        return Ok(result);
-    }
-
-    [HttpGet("agencies")]
-    public async Task<IActionResult> GetAgencies([FromQuery] AgencyStatus? status)
-    {
-        var result = await _adminService.GetAgenciesAsync(status);
-        return Ok(result);
-    }
-
-    [HttpPost("agencies/{agencyId:guid}/verification")]
-    public async Task<IActionResult> VerifyAgency(Guid agencyId, [FromBody] AgencyVerificationDto dto)
-    {
-        var adminId = CurrentUserId;
-        if (string.IsNullOrEmpty(adminId)) return Unauthorized();
-
-        var result = await _adminService.VerifyAgencyAsync(agencyId, dto, adminId);
         if (!result.Succeeded) return BadRequest(result);
 
         return Ok(result);

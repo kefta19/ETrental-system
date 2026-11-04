@@ -19,8 +19,7 @@ public class AdminUserDto
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? LastLoginAtUtc { get; set; }
     public string SubscriptionTier { get; set; } = "Free";
-    public string? AgencyName { get; set; }
-    public Guid? AgencyId { get; set; }
+    public bool HasPaidPremium { get; set; }
     public int PropertyCount { get; set; }
 }
 
@@ -31,18 +30,6 @@ public class RestrictUserDto
 
     [StringLength(500)]
     public string? Reason { get; set; }
-}
-
-public class AgencyVerificationDto
-{
-    [Required]
-    public bool Approved { get; set; }
-
-    [StringLength(100)]
-    public string? RejectionReason { get; set; }
-
-    [StringLength(1000)]
-    public string? VerificationNotes { get; set; }
 }
 
 public class PlatformSettingDto
@@ -100,7 +87,6 @@ public class AdminDashboardDto
     public int TotalUsers { get; set; }
     public int TotalRenters { get; set; }
     public int TotalLandlords { get; set; }
-    public int TotalAgencies { get; set; }
     public int TotalSupportAgents { get; set; }
     public int ActiveUsers { get; set; }
     public int RestrictedUsers { get; set; }
@@ -114,8 +100,6 @@ public class AdminDashboardDto
     public int TotalApplications { get; set; }
     public int OpenReports { get; set; }
     public int OpenTickets { get; set; }
-    public int PendingAgencyVerifications { get; set; }
     public int ActivePremiumSubscriptions { get; set; }
     public decimal TotalSubscriptionRevenueETB { get; set; }
-    public int VerifiedAgencies { get; set; }
 }

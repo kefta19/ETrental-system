@@ -118,8 +118,6 @@ public static class DependencyInjection
         services.AddScoped<IDateTime, DateTimeService>();
 
         // 5. Marketplace operations services
-        services.AddScoped<IAgencyAccessService, AgencyAccessService>();
-        services.AddScoped<IAgencyService, AgencyService>();
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<ISupportService, SupportService>();
         services.AddScoped<ISubscriptionService, EntitlementService>();

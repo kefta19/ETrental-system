@@ -22,158 +22,6 @@ namespace ETrental.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ETrental.Domain.Entities.Agency", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("BusinessLicenseNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModifiedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("LogoUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("OfficeAddress")
-                        .HasColumnType("text");
-
-                    b.Property<string>("OfficialEmail")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("OfficialPhone")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("SubCity")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("SubmittedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("TaxIdentificationNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("VerificationDocumentUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("VerificationNotes")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("VerifiedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("VerifiedBy")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Agencies");
-                });
-
-            modelBuilder.Entity("ETrental.Domain.Entities.AgencyMembership", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AgencyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("JoinedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.HasIndex("AgencyId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("AgencyMemberships");
-                });
-
-            modelBuilder.Entity("ETrental.Domain.Entities.AgencyPropertyAssignment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AgencyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("AssignedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("PropertyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PropertyId");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("AgencyId", "UserId", "PropertyId")
-                        .IsUnique();
-
-                    b.ToTable("AgencyPropertyAssignments");
-                });
-
             modelBuilder.Entity("ETrental.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -348,6 +196,54 @@ namespace ETrental.Infrastructure.Persistence.Migrations
                     b.ToTable("Favorites");
                 });
 
+            modelBuilder.Entity("ETrental.Domain.Entities.InquiryMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(1500)
+                        .HasColumnType("character varying(1500)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PropertyInquiryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SenderUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderUserId");
+
+                    b.HasIndex("PropertyInquiryId", "CreatedAtUtc");
+
+                    b.ToTable("InquiryMessages");
+                });
+
             modelBuilder.Entity("ETrental.Domain.Entities.LandlordProfile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -507,6 +403,9 @@ namespace ETrental.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("DeletedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("EvidenceFileName")
+                        .HasColumnType("text");
+
                     b.Property<string>("ExternalReference")
                         .HasColumnType("text");
 
@@ -606,9 +505,6 @@ namespace ETrental.Infrastructure.Persistence.Migrations
                     b.Property<int>("AdvanceMonthsRequired")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("AgencyId")
-                        .HasColumnType("uuid");
-
                     b.Property<int?>("AgreedLeaseMonths")
                         .HasColumnType("integer");
 
@@ -617,9 +513,6 @@ namespace ETrental.Infrastructure.Persistence.Migrations
 
                     b.Property<double?>("AreaSquareMeters")
                         .HasColumnType("double precision");
-
-                    b.Property<string>("AssignedAgentId")
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("AvailableFromDate")
                         .HasColumnType("timestamp with time zone");
@@ -697,6 +590,28 @@ namespace ETrental.Infrastructure.Persistence.Migrations
                     b.Property<double?>("Latitude")
                         .HasColumnType("double precision");
 
+                    b.Property<decimal>("ListingFeeAmountETB")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("ListingFeeProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ListingFeeReference")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ListingFeeStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ListingFeeTransactionUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ListingFeeVerifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ListingFeeVerifiedBy")
+                        .HasColumnType("text");
+
                     b.Property<double?>("Longitude")
                         .HasColumnType("double precision");
 
@@ -753,14 +668,13 @@ namespace ETrental.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("VideoUrl")
+                        .HasColumnType("text");
+
                     b.Property<bool>("WaterBillIncluded")
                         .HasColumnType("boolean");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AgencyId");
-
-                    b.HasIndex("AssignedAgentId");
 
                     b.HasIndex("LandlordId");
 
@@ -1552,52 +1466,6 @@ namespace ETrental.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ETrental.Domain.Entities.AgencyMembership", b =>
-                {
-                    b.HasOne("ETrental.Domain.Entities.Agency", "Agency")
-                        .WithMany("Members")
-                        .HasForeignKey("AgencyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ETrental.Domain.Entities.ApplicationUser", "User")
-                        .WithOne("AgencyMembership")
-                        .HasForeignKey("ETrental.Domain.Entities.AgencyMembership", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Agency");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ETrental.Domain.Entities.AgencyPropertyAssignment", b =>
-                {
-                    b.HasOne("ETrental.Domain.Entities.Agency", "Agency")
-                        .WithMany("PropertyAssignments")
-                        .HasForeignKey("AgencyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ETrental.Domain.Entities.Property", "Property")
-                        .WithMany()
-                        .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ETrental.Domain.Entities.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Agency");
-
-                    b.Navigation("Property");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("ETrental.Domain.Entities.Favorite", b =>
                 {
                     b.HasOne("ETrental.Domain.Entities.Property", "Property")
@@ -1615,6 +1483,25 @@ namespace ETrental.Infrastructure.Persistence.Migrations
                     b.Navigation("Property");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ETrental.Domain.Entities.InquiryMessage", b =>
+                {
+                    b.HasOne("ETrental.Domain.Entities.PropertyInquiry", "PropertyInquiry")
+                        .WithMany("Messages")
+                        .HasForeignKey("PropertyInquiryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ETrental.Domain.Entities.ApplicationUser", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PropertyInquiry");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("ETrental.Domain.Entities.LandlordProfile", b =>
@@ -1697,24 +1584,11 @@ namespace ETrental.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ETrental.Domain.Entities.Property", b =>
                 {
-                    b.HasOne("ETrental.Domain.Entities.Agency", "Agency")
-                        .WithMany("Properties")
-                        .HasForeignKey("AgencyId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("ETrental.Domain.Entities.ApplicationUser", "AssignedAgent")
-                        .WithMany()
-                        .HasForeignKey("AssignedAgentId");
-
                     b.HasOne("ETrental.Domain.Entities.ApplicationUser", "Landlord")
                         .WithMany("OwnedProperties")
                         .HasForeignKey("LandlordId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Agency");
-
-                    b.Navigation("AssignedAgent");
 
                     b.Navigation("Landlord");
                 });
@@ -1973,19 +1847,8 @@ namespace ETrental.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ETrental.Domain.Entities.Agency", b =>
-                {
-                    b.Navigation("Members");
-
-                    b.Navigation("Properties");
-
-                    b.Navigation("PropertyAssignments");
-                });
-
             modelBuilder.Entity("ETrental.Domain.Entities.ApplicationUser", b =>
                 {
-                    b.Navigation("AgencyMembership");
-
                     b.Navigation("Appointments");
 
                     b.Navigation("Favorites");
@@ -2028,6 +1891,11 @@ namespace ETrental.Infrastructure.Persistence.Migrations
                     b.Navigation("Inquiries");
 
                     b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("ETrental.Domain.Entities.PropertyInquiry", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("ETrental.Domain.Entities.SupportTicket", b =>

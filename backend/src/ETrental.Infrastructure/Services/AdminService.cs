@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ETrental.Application.Common.Interfaces;
 using ETrental.Application.Common.Models;
+using ETrental.Application.Common;
 using ETrental.Application.DTOs.Admin;
-using ETrental.Application.DTOs.Agencies;
 using ETrental.Application.DTOs.Properties;
 using ETrental.Application.DTOs.Subscriptions;
 using ETrental.Application.Interfaces;
@@ -19,7 +19,7 @@ public class AdminService : IAdminService
     private readonly INotificationService _notificationService;
     private readonly IAuditService _auditService;
 
-    private static readonly string[] AllRoles = { "Renter", "Landlord", "Agency", "Support", "Admin" };
+    private static readonly string[] AllRoles = { "Renter", "Landlord", "Support", "Admin" };
 
     public AdminService(
         IApplicationDbContext context,
@@ -59,8 +59,6 @@ public class AdminService : IAdminService
         var users = await _context.Users.AsNoTracking().ToListAsync();
 
         var properties = await _context.Properties.AsNoTracking().Select(p => p.Status).ToListAsync();
-        var agencies = await _context.Agencies.AsNoTracking().ToListAsync();
-
         var dashboard = new AdminDashboardDto
         {
             TotalUsers = users.Count,
@@ -68,7 +66,6 @@ public class AdminService : IAdminService
             RestrictedUsers = users.Count(u => u.IsRestricted),
             TotalRenters = roleMap.Values.Count(r => r.Contains("Renter")),
             TotalLandlords = roleMap.Values.Count(r => r.Contains("Landlord")),
-            TotalAgencies = roleMap.Values.Count(r => r.Contains("Agency")),
             TotalSupportAgents = roleMap.Values.Count(r => r.Contains("Support")),
             TotalProperties = properties.Count,
             PublishedProperties = properties.Count(s => s == PropertyStatus.Published),
@@ -80,8 +77,6 @@ public class AdminService : IAdminService
             TotalApplications = await _context.RentalApplications.CountAsync(),
             OpenReports = await _context.UserReports.CountAsync(r => r.Status == ReportStatus.Open || r.Status == ReportStatus.UnderReview || r.Status == ReportStatus.ActionRequired),
             OpenTickets = await _context.SupportTickets.CountAsync(t => t.Status != TicketStatus.Resolved),
-            PendingAgencyVerifications = agencies.Count(a => a.Status == AgencyStatus.Pending),
-            VerifiedAgencies = agencies.Count(a => a.Status == AgencyStatus.Verified),
             ActivePremiumSubscriptions = await _context.Subscriptions
                 .Include(s => s.Plan)
                 .CountAsync(s => s.Status == SubscriptionStatus.Active && s.Plan.Tier == SubscriptionTier.Premium),
@@ -127,11 +122,6 @@ public class AdminService : IAdminService
 
         var pageItems = users.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-        var agencyMemberships = await _context.AgencyMemberships
-            .Include(m => m.Agency)
-            .Where(m => pageItems.Select(p => p.Id).Contains(m.UserId))
-            .ToListAsync();
-
         var propertyCounts = await _context.Properties
             .Where(p => pageItems.Select(x => x.Id).Contains(p.LandlordId))
             .GroupBy(p => p.LandlordId)
@@ -143,10 +133,17 @@ public class AdminService : IAdminService
             .Where(s => pageItems.Select(x => x.Id).Contains(s.UserId) && s.Status == SubscriptionStatus.Active)
             .ToListAsync();
 
+        var usersWithCompletedPremiumPayments = await _context.PaymentTransactions
+            .Where(t => pageItems.Select(u => u.Id).Contains(t.UserId)
+                && t.Status == PaymentStatus.Completed
+                && t.Plan.Tier == SubscriptionTier.Premium)
+            .Select(t => t.UserId)
+            .Distinct()
+            .ToListAsync();
+
         var items = pageItems.Select(u =>
         {
             roleMap.TryGetValue(u.Id, out var roles);
-            var membership = agencyMemberships.FirstOrDefault(m => m.UserId == u.Id);
             var subscription = subscriptions.FirstOrDefault(s => s.UserId == u.Id);
 
             return new AdminUserDto
@@ -165,8 +162,7 @@ public class AdminService : IAdminService
                 CreatedAtUtc = u.CreatedAtUtc,
                 LastLoginAtUtc = u.LastLoginAtUtc,
                 SubscriptionTier = subscription?.Plan.Name ?? "Free",
-                AgencyId = membership?.AgencyId,
-                AgencyName = membership?.Agency.Name,
+                HasPaidPremium = usersWithCompletedPremiumPayments.Contains(u.Id),
                 PropertyCount = propertyCounts.TryGetValue(u.Id, out var count) ? count : 0
             };
         }).ToList();
@@ -189,9 +185,12 @@ public class AdminService : IAdminService
         }
 
         var roles = await _userManager.GetRolesAsync(user);
-        var membership = await _context.AgencyMemberships.Include(m => m.Agency).FirstOrDefaultAsync(m => m.UserId == userId);
         var subscription = await _context.Subscriptions.Include(s => s.Plan).FirstOrDefaultAsync(s => s.UserId == userId && s.Status == SubscriptionStatus.Active);
         var propertyCount = await _context.Properties.CountAsync(p => p.LandlordId == userId);
+        var hasPaidPremium = await _context.PaymentTransactions.AnyAsync(t =>
+            t.UserId == userId
+            && t.Status == PaymentStatus.Completed
+            && t.Plan.Tier == SubscriptionTier.Premium);
 
         return Result<AdminUserDto>.Success(new AdminUserDto
         {
@@ -209,8 +208,7 @@ public class AdminService : IAdminService
             CreatedAtUtc = user.CreatedAtUtc,
             LastLoginAtUtc = user.LastLoginAtUtc,
             SubscriptionTier = subscription?.Plan.Name ?? "Free",
-            AgencyId = membership?.AgencyId,
-            AgencyName = membership?.Agency.Name,
+            HasPaidPremium = hasPaidPremium,
             PropertyCount = propertyCount
         });
     }
@@ -238,7 +236,7 @@ public class AdminService : IAdminService
         user.RestrictedAtUtc = dto.IsRestricted ? DateTime.UtcNow : null;
         user.RestrictedBy = dto.IsRestricted ? adminId : null;
         user.RestrictionLiftedAtUtc = dto.IsRestricted ? null : DateTime.UtcNow;
-        user.IsActive = dto.IsRestricted ? false : user.IsActive;
+        user.IsActive = !dto.IsRestricted;
 
         await _context.SaveChangesAsync();
         await _auditService.LogAsync(adminId, dto.IsRestricted ? "UserRestricted" : "UserRestrictionLifted",
@@ -279,117 +277,6 @@ public class AdminService : IAdminService
             "/support");
 
         return await GetUserAsync(targetUserId);
-    }
-
-    public async Task<Result<List<AgencyDto>>> GetAgenciesAsync(AgencyStatus? status)
-    {
-        var query = _context.Agencies.AsNoTracking();
-
-        if (status.HasValue)
-        {
-            query = query.Where(a => a.Status == status.Value);
-        }
-
-        var agencies = await query.OrderBy(a => a.Status).ThenBy(a => a.Name).ToListAsync();
-        var memberCounts = await _context.AgencyMemberships
-            .GroupBy(m => m.AgencyId)
-            .Select(g => new { AgencyId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.AgencyId, x => x.Count);
-        var propertyCounts = await _context.Properties
-            .Where(p => p.AgencyId != null)
-            .GroupBy(p => p.AgencyId)
-            .Select(g => new { AgencyId = g.Key!.Value, Count = g.Count() })
-            .ToDictionaryAsync(x => x.AgencyId, x => x.Count);
-
-        var result = agencies.Select(a => new AgencyDto
-        {
-            Id = a.Id,
-            Name = a.Name,
-            Description = a.Description,
-            LogoUrl = a.LogoUrl,
-            TaxIdentificationNumber = a.TaxIdentificationNumber,
-            BusinessLicenseNumber = a.BusinessLicenseNumber,
-            City = a.City,
-            SubCity = a.SubCity,
-            OfficeAddress = a.OfficeAddress,
-            OfficialPhone = a.OfficialPhone,
-            OfficialEmail = a.OfficialEmail,
-            Status = a.Status,
-            VerificationNotes = a.VerificationNotes,
-            RejectionReason = a.RejectionReason,
-            VerifiedAtUtc = a.VerifiedAtUtc,
-            SubmittedAtUtc = a.SubmittedAtUtc,
-            MemberCount = memberCounts.TryGetValue(a.Id, out var mc) ? mc : 0,
-            PropertyCount = propertyCounts.TryGetValue(a.Id, out var pc) ? pc : 0
-        }).ToList();
-
-        return Result<List<AgencyDto>>.Success(result);
-    }
-
-    public async Task<Result<AgencyDto>> VerifyAgencyAsync(Guid agencyId, AgencyVerificationDto dto, string adminId)
-    {
-        var agency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == agencyId);
-        if (agency == null)
-        {
-            return Result<AgencyDto>.Failure("Agency not found.");
-        }
-
-        if (!dto.Approved && string.IsNullOrWhiteSpace(dto.RejectionReason))
-        {
-            return Result<AgencyDto>.Failure("A rejection reason is required.");
-        }
-
-        var previousStatus = agency.Status;
-
-        agency.Status = dto.Approved ? AgencyStatus.Verified : AgencyStatus.Rejected;
-        agency.RejectionReason = dto.Approved ? null : dto.RejectionReason;
-        agency.VerificationNotes = dto.VerificationNotes;
-        agency.VerifiedAtUtc = dto.Approved ? DateTime.UtcNow : null;
-        agency.VerifiedBy = dto.Approved ? adminId : null;
-
-        await _context.SaveChangesAsync();
-        await _auditService.LogAsync(adminId, dto.Approved ? "AgencyVerified" : "AgencyRejected",
-            "Agency", agency.Id.ToString(), dto.RejectionReason ?? dto.VerificationNotes, previousStatus.ToString(), agency.Status.ToString());
-
-        var managers = await _context.AgencyMemberships
-            .Where(m => m.AgencyId == agencyId && m.IsActive)
-            .Select(m => m.UserId)
-            .ToListAsync();
-
-        foreach (var managerId in managers)
-        {
-            await _notificationService.CreateAsync(managerId, NotificationType.Agency,
-                dto.Approved ? "Agency verified" : "Agency verification rejected",
-                dto.Approved
-                    ? $"{agency.Name} is now verified. Your listings show a verified badge."
-                    : $"{agency.Name} verification was rejected. Reason: {dto.RejectionReason}",
-                "/agency");
-        }
-
-        var memberCount = await _context.AgencyMemberships.CountAsync(m => m.AgencyId == agencyId && m.IsActive);
-        var propertyCount = await _context.Properties.CountAsync(p => p.AgencyId == agencyId);
-
-        return Result<AgencyDto>.Success(new AgencyDto
-        {
-            Id = agency.Id,
-            Name = agency.Name,
-            Description = agency.Description,
-            LogoUrl = agency.LogoUrl,
-            TaxIdentificationNumber = agency.TaxIdentificationNumber,
-            BusinessLicenseNumber = agency.BusinessLicenseNumber,
-            City = agency.City,
-            SubCity = agency.SubCity,
-            OfficeAddress = agency.OfficeAddress,
-            OfficialPhone = agency.OfficialPhone,
-            OfficialEmail = agency.OfficialEmail,
-            Status = agency.Status,
-            VerificationNotes = agency.VerificationNotes,
-            RejectionReason = agency.RejectionReason,
-            VerifiedAtUtc = agency.VerifiedAtUtc,
-            SubmittedAtUtc = agency.SubmittedAtUtc,
-            MemberCount = memberCount,
-            PropertyCount = propertyCount
-        });
     }
 
     public async Task<Result<List<PlatformSettingDto>>> GetSettingsAsync()
@@ -513,7 +400,10 @@ public class AdminService : IAdminService
             {
                 Id = t.Id,
                 UserId = t.UserId,
+                PlanId = t.PlanId,
                 UserEmail = t.User.Email ?? string.Empty,
+                UserFullName = t.User.FirstName + " " + t.User.LastName,
+                UserPhoneNumber = t.User.PhoneNumber,
                 PlanName = t.Plan.Name,
                 AmountETB = t.AmountETB,
                 Provider = t.Provider,
@@ -524,6 +414,11 @@ public class AdminService : IAdminService
                 CreatedAtUtc = t.CreatedAtUtc
             })
             .ToListAsync();
+
+        foreach (var transaction in transactions)
+        {
+            transaction.HasEvidenceUrl = PaymentReferenceValidator.IsSecureTransactionUrl(transaction.ExternalReference);
+        }
 
         return Result<List<PaymentTransactionDto>>.Success(transactions);
     }
@@ -608,11 +503,15 @@ public class AdminService : IAdminService
         {
             Id = transaction.Id,
             UserId = transaction.UserId,
+            PlanId = transaction.PlanId,
             UserEmail = transaction.User.Email ?? string.Empty,
+            UserFullName = transaction.User.FullName,
+            UserPhoneNumber = transaction.User.PhoneNumber,
             PlanName = transaction.Plan.Name,
             AmountETB = transaction.AmountETB,
             Provider = transaction.Provider,
             ExternalReference = transaction.ExternalReference,
+            HasEvidenceUrl = PaymentReferenceValidator.IsSecureTransactionUrl(transaction.ExternalReference),
             Status = transaction.Status,
             FailureReason = transaction.FailureReason,
             VerifiedAtUtc = transaction.VerifiedAtUtc,

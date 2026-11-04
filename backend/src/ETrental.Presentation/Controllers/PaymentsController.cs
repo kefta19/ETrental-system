@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Threading;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ETrental.Application.Common.Interfaces;
@@ -31,6 +32,7 @@ public class PaymentsController : ControllerBase
         _auditService = auditService;
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("webhook")]
     public async Task<IActionResult> PaymentWebhook([FromBody] PaymentWebhookDto dto, CancellationToken ct)
     {
@@ -108,6 +110,7 @@ public class PaymentsController : ControllerBase
         return Ok(new { succeeded = true });
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("verify")]
     public async Task<IActionResult> VerifyPayment([FromBody] VerifyPaymentDto dto)
     {

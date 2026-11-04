@@ -30,10 +30,7 @@ export class RegisterComponent {
       Validators.minLength(8),
       Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
     ]],
-    role: ['renter', Validators.required],
-    agencyName: [''],
-    taxIdentificationNumber: [''],
-    subCity: ['']
+    role: ['renter', Validators.required]
   });
 
   get passwordStrengthMessage(): string {
@@ -55,7 +52,10 @@ export class RegisterComponent {
   }
 
   onSubmit() {
-    if (this.registerForm.invalid) return;
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
+      return;
+    }
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -68,26 +68,18 @@ export class RegisterComponent {
       phoneNumber: val.phoneNumber,
       password: val.password,
       role: val.role,
-      agencyName: val.agencyName,
-      taxIdentificationNumber: val.taxIdentificationNumber,
-      subCity: val.subCity,
       city: 'Addis Ababa'
     };
 
     this.authService.register(payload).subscribe({
       next: (res) => {
         this.isLoading = false;
-        // Redirect based on role returned from the server
-        const roles = res.data?.user?.roles || [];
-        if (roles.includes('Agency')) {
-          this.router.navigate(['/agency/dashboard']);
-        } else if (roles.includes('Landlord')) {
-          this.router.navigate(['/landlord/dashboard']);
-        } else if (roles.includes('Renter')) {
-          this.router.navigate(['/renter/dashboard']);
-        } else {
-          this.router.navigate(['/']);
+        if (!res.succeeded || !res.data?.user) {
+          this.errorMessage =
+            res.errors?.[0] || 'Registration did not complete. Please check your details and try again.';
+          return;
         }
+        this.router.navigateByUrl(this.authService.dashboardRoute(res.data.user));
       },
       error: (err) => {
         this.isLoading = false;

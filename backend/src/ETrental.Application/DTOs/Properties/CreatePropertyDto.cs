@@ -31,6 +31,8 @@ public class CreatePropertyDto
 
     public string? Landmark { get; set; }
     public string? StreetAddress { get; set; }
+    [StringLength(500)]
+    public string? VideoUrl { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
 
@@ -77,6 +79,15 @@ public class CreatePropertyDto
 
     // Save as Draft or Submit directly for review
     public bool SubmitForReview { get; set; } = true;
+
+    [StringLength(20)]
+    public string? ListingFeeProvider { get; set; }
+
+    [StringLength(200)]
+    public string? ListingFeeReference { get; set; }
+
+    [StringLength(2048)]
+    public string? ListingFeeTransactionUrl { get; set; }
 }
 
 public class UpdatePropertyDto : CreatePropertyDto

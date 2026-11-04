@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ETrental.Application.Common.Interfaces;
 using ETrental.Application.Common.Models;
@@ -11,20 +12,20 @@ namespace ETrental.Infrastructure.Services;
 public class PropertyService : IPropertyService
 {
     private readonly IApplicationDbContext _context;
-    private readonly IAgencyAccessService _agencyAccess;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ISubscriptionService _subscriptionService;
     private readonly INotificationService _notificationService;
     private readonly IAuditService _auditService;
 
     public PropertyService(
         IApplicationDbContext context,
-        IAgencyAccessService agencyAccess,
+        UserManager<ApplicationUser> userManager,
         ISubscriptionService subscriptionService,
         INotificationService notificationService,
         IAuditService auditService)
     {
         _context = context;
-        _agencyAccess = agencyAccess;
+        _userManager = userManager;
         _subscriptionService = subscriptionService;
         _notificationService = notificationService;
         _auditService = auditService;
@@ -162,7 +163,7 @@ public class PropertyService : IPropertyService
                 PrimaryImageUrl = p.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).FirstOrDefault(),
                 ImageUrls = p.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).ToList(),
                 LandlordName = p.Landlord.FullName,
-                IsVerifiedHost = p.AgencyId != null,
+                IsVerifiedHost = false,
                 CreatedAtUtc = p.CreatedAtUtc
             })
             .ToListAsync();
@@ -181,7 +182,6 @@ public class PropertyService : IPropertyService
         var property = await _context.Properties
             .Include(p => p.Images)
             .Include(p => p.Landlord)
-            .Include(p => p.Agency)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (property == null)
@@ -194,19 +194,18 @@ public class PropertyService : IPropertyService
 
         if (!string.IsNullOrEmpty(currentUserId))
         {
-            canManage = await _agencyAccess.CanManagePropertyAsync(currentUserId, property);
-            canViewUnpublished = canManage || await _agencyAccess.CanAccessPropertyAsync(currentUserId, property);
+            canManage = property.LandlordId == currentUserId;
+            canViewUnpublished = canManage;
         }
 
-        // Security Invariant: Non-published listings can only be viewed by the owner,
-        // an authorised agency member or an administrator.
+        // Non-published listings are visible only to the owner or an administrator.
         if (property.Status != PropertyStatus.Published && !canViewUnpublished && !isAdmin)
         {
             return Result<PropertyDto>.Failure("Property listing not found.");
         }
 
         // Contact details are a premium entitlement for visitors, but always visible
-        // to the owner, the agency and administrators.
+        // to the owner and administrators.
         var showContact = isAdmin || canManage;
         if (!showContact && !string.IsNullOrEmpty(currentUserId))
         {
@@ -217,8 +216,38 @@ public class PropertyService : IPropertyService
         return Result<PropertyDto>.Success(MapToDto(property, showContact));
     }
 
-    public async Task<Result<PropertyDto>> CreatePropertyAsync(CreatePropertyDto dto, string landlordId, Guid? agencyId = null)
+    public async Task<Result<PropertyDto>> CreatePropertyAsync(CreatePropertyDto dto, string landlordId)
     {
+        if (dto.SubmitForReview &&
+            (string.IsNullOrWhiteSpace(dto.ListingFeeProvider)
+                || (dto.ListingFeeProvider != "Telebirr" && dto.ListingFeeProvider != "CBE")
+                || string.IsNullOrWhiteSpace(dto.ListingFeeReference)))
+        {
+            return Result<PropertyDto>.Failure(
+                "Choose a supported payment method and enter the listing-fee transaction reference.");
+        }
+
+        if (dto.SubmitForReview &&
+            (string.IsNullOrWhiteSpace(dto.ListingFeeTransactionUrl)
+                || !IsValidTransactionUrl(dto.ListingFeeTransactionUrl)))
+        {
+            return Result<PropertyDto>.Failure("Provide the payment provider’s HTTPS transaction link.");
+        }
+
+        if (!IsValidTikTokUrl(dto.VideoUrl))
+        {
+            return Result<PropertyDto>.Failure("Enter a valid HTTPS TikTok video or post link.");
+        }
+
+        if (dto.SubmitForReview &&
+            await _context.Properties.AnyAsync(p =>
+                p.ListingFeeProvider == dto.ListingFeeProvider
+                && p.ListingFeeReference == dto.ListingFeeReference!.Trim()
+                && p.ListingFeeStatus != ListingFeeStatus.NotRequired))
+        {
+            return Result<PropertyDto>.Failure("This payment reference has already been used for a listing.");
+        }
+
         // Duplicate detection: same owner, same location and same rent is treated as a duplicate.
         var duplicate = await _context.Properties.AnyAsync(p =>
             p.LandlordId == landlordId &&
@@ -237,12 +266,18 @@ public class PropertyService : IPropertyService
             Description = dto.Description.Trim(),
             PropertyType = dto.PropertyType,
             Status = dto.SubmitForReview ? PropertyStatus.PendingReview : PropertyStatus.Draft,
+            ListingFeeAmountETB = dto.SubmitForReview ? Property.RequiredListingFeeETB : 0,
+            ListingFeeProvider = dto.SubmitForReview ? dto.ListingFeeProvider!.Trim() : null,
+            ListingFeeReference = dto.SubmitForReview ? dto.ListingFeeReference!.Trim() : null,
+            ListingFeeTransactionUrl = dto.SubmitForReview ? dto.ListingFeeTransactionUrl?.Trim() : null,
+            ListingFeeStatus = dto.SubmitForReview ? ListingFeeStatus.Pending : ListingFeeStatus.NotRequired,
             Region = dto.Region.Trim(),
             City = dto.City.Trim(),
             SubCity = dto.SubCity.Trim(),
             Neighborhood = dto.Neighborhood.Trim(),
             Landmark = dto.Landmark?.Trim(),
             StreetAddress = dto.StreetAddress?.Trim(),
+            VideoUrl = dto.VideoUrl?.Trim(),
             Latitude = dto.Latitude,
             Longitude = dto.Longitude,
             RentAmountETB = dto.RentAmountETB,
@@ -263,8 +298,7 @@ public class PropertyService : IPropertyService
             HasBalcony = dto.HasBalcony,
             WaterBillIncluded = dto.WaterBillIncluded,
             ElectricityBillIncluded = dto.ElectricityBillIncluded,
-            LandlordId = landlordId,
-            AgencyId = agencyId
+            LandlordId = landlordId
         };
 
         // Attach Images
@@ -299,7 +333,6 @@ public class PropertyService : IPropertyService
         var property = await _context.Properties
             .Include(p => p.Images)
             .Include(p => p.Landlord)
-            .Include(p => p.Agency)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (property == null)
@@ -307,8 +340,7 @@ public class PropertyService : IPropertyService
             return Result<PropertyDto>.Failure("Property listing not found.");
         }
 
-        // IDOR / agency isolation check
-        var canManage = await _agencyAccess.CanManagePropertyAsync(currentUserId, property);
+        var canManage = property.LandlordId == currentUserId;
         if (!canManage && !isAdmin)
         {
             return Result<PropertyDto>.Failure("You do not have permission to modify this property.");
@@ -317,6 +349,27 @@ public class PropertyService : IPropertyService
         // A published listing cannot be silently edited and stay published: edits
         // send it back through moderation.
         var wasPublished = property.Status == PropertyStatus.Published;
+        if (dto.SubmitForReview
+            && !wasPublished
+            && (property.Status == PropertyStatus.Draft || property.Status == PropertyStatus.Rejected)
+            && property.ListingFeeStatus != ListingFeeStatus.Pending
+            && property.ListingFeeStatus != ListingFeeStatus.Verified)
+        {
+            return Result<PropertyDto>.Failure(
+                "Submit the listing-fee payment before requesting admin review.");
+        }
+
+        if (dto.SubmitForReview
+            && string.IsNullOrWhiteSpace(dto.ListingFeeTransactionUrl)
+            && string.IsNullOrWhiteSpace(property.ListingFeeTransactionUrl))
+        {
+            return Result<PropertyDto>.Failure("Provide the payment provider’s HTTPS transaction link.");
+        }
+
+        if (!IsValidTransactionUrl(dto.ListingFeeTransactionUrl))
+        {
+            return Result<PropertyDto>.Failure("Enter a valid HTTPS transaction link.");
+        }
 
         property.Title = dto.Title.Trim();
         property.Description = dto.Description.Trim();
@@ -327,6 +380,11 @@ public class PropertyService : IPropertyService
         property.Neighborhood = dto.Neighborhood.Trim();
         property.Landmark = dto.Landmark?.Trim();
         property.StreetAddress = dto.StreetAddress?.Trim();
+        if (!IsValidTikTokUrl(dto.VideoUrl))
+        {
+            return Result<PropertyDto>.Failure("Enter a valid HTTPS TikTok video or post link.");
+        }
+        property.VideoUrl = dto.VideoUrl?.Trim();
         property.Latitude = dto.Latitude;
         property.Longitude = dto.Longitude;
         property.RentAmountETB = dto.RentAmountETB;
@@ -347,6 +405,10 @@ public class PropertyService : IPropertyService
         property.HasBalcony = dto.HasBalcony;
         property.WaterBillIncluded = dto.WaterBillIncluded;
         property.ElectricityBillIncluded = dto.ElectricityBillIncluded;
+        if (!string.IsNullOrWhiteSpace(dto.ListingFeeTransactionUrl))
+        {
+            property.ListingFeeTransactionUrl = dto.ListingFeeTransactionUrl.Trim();
+        }
 
         // Re-synchronise images if a new list is provided
         if (dto.ImageUrls.Any())
@@ -394,22 +456,10 @@ public class PropertyService : IPropertyService
 
     public async Task<Result<List<PropertySummaryDto>>> GetLandlordPropertiesAsync(string landlordId, PropertyStatus? status = null)
     {
-        var agencyContext = await _agencyAccess.GetContextAsync(landlordId);
-
         var query = _context.Properties
             .Include(p => p.Images)
             .Include(p => p.Landlord)
             .Where(p => p.LandlordId == landlordId);
-
-        // Agency managers and agents also see the listings of their agency.
-        if (agencyContext != null)
-        {
-            var agencyId = agencyContext.AgencyId;
-            query = _context.Properties
-                .Include(p => p.Images)
-                .Include(p => p.Landlord)
-                .Where(p => p.LandlordId == landlordId || (p.AgencyId != null && p.AgencyId == agencyId));
-        }
 
         if (status.HasValue)
         {
@@ -456,12 +506,11 @@ public class PropertyService : IPropertyService
         var property = await _context.Properties
             .Include(p => p.Images)
             .Include(p => p.Landlord)
-            .Include(p => p.Agency)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (property == null) return Result<PropertyDto>.Failure("Property not found.");
 
-        if (!await _agencyAccess.CanManagePropertyAsync(currentUserId, property))
+        if (property.LandlordId != currentUserId)
         {
             return Result<PropertyDto>.Failure("Unauthorized.");
         }
@@ -469,6 +518,17 @@ public class PropertyService : IPropertyService
         if (!PropertyStatusTransitions.CanTransition(property.Status, PropertyStatus.PendingReview))
         {
             return Result<PropertyDto>.Failure(PropertyStatusTransitions.Describe(property.Status, PropertyStatus.PendingReview));
+        }
+
+        if (property.ListingFeeAmountETB != Property.RequiredListingFeeETB
+            || (property.ListingFeeStatus != ListingFeeStatus.Pending
+                && property.ListingFeeStatus != ListingFeeStatus.Verified)
+            || string.IsNullOrWhiteSpace(property.ListingFeeProvider)
+            || string.IsNullOrWhiteSpace(property.ListingFeeReference)
+            || !IsValidTransactionUrl(property.ListingFeeTransactionUrl ?? property.ListingFeeReference))
+        {
+            return Result<PropertyDto>.Failure(
+                "Submit the listing-fee payment before requesting admin review.");
         }
 
         property.Status = PropertyStatus.PendingReview;
@@ -487,12 +547,11 @@ public class PropertyService : IPropertyService
         var property = await _context.Properties
             .Include(p => p.Images)
             .Include(p => p.Landlord)
-            .Include(p => p.Agency)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (property == null) return Result<PropertyDto>.Failure("Property not found.");
 
-        if (!await _agencyAccess.CanManagePropertyAsync(currentUserId, property))
+        if (property.LandlordId != currentUserId)
         {
             return Result<PropertyDto>.Failure("Unauthorized.");
         }
@@ -519,12 +578,11 @@ public class PropertyService : IPropertyService
         var property = await _context.Properties
             .Include(p => p.Images)
             .Include(p => p.Landlord)
-            .Include(p => p.Agency)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (property == null) return Result<PropertyDto>.Failure("Property not found.");
 
-        if (!await _agencyAccess.CanManagePropertyAsync(currentUserId, property))
+        if (property.LandlordId != currentUserId)
         {
             return Result<PropertyDto>.Failure("Unauthorized.");
         }
@@ -553,7 +611,7 @@ public class PropertyService : IPropertyService
         var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id);
         if (property == null) return Result<PropertyDto>.Failure("Property not found.");
 
-        var canManage = await _agencyAccess.CanManagePropertyAsync(currentUserId, property);
+        var canManage = property.LandlordId == currentUserId;
         if (!canManage && !isAdmin) return Result<PropertyDto>.Failure("Unauthorized.");
 
         if (!PropertyStatusTransitions.CanTransition(property.Status, PropertyStatus.Archived))
@@ -573,7 +631,7 @@ public class PropertyService : IPropertyService
         var property = await _context.Properties.FirstOrDefaultAsync(p => p.Id == id);
         if (property == null) return Result<bool>.Failure("Property not found.");
 
-        var canManage = await _agencyAccess.CanManagePropertyAsync(currentUserId, property);
+        var canManage = property.LandlordId == currentUserId;
         if (!canManage && !isAdmin) return Result<bool>.Failure("Unauthorized.");
 
         property.IsDeleted = true;
@@ -587,32 +645,10 @@ public class PropertyService : IPropertyService
 
     private async Task NotifyAdminsOfPendingReviewAsync(Property property)
     {
-        var admins = await _context.Users
-            .Where(u => u.IsActive && u.IsRestricted == false)
-            .ToListAsync();
-
-        var adminIds = new List<string>();
-        foreach (var admin in admins)
+        var admins = await _userManager.GetUsersInRoleAsync("Admin");
+        foreach (var admin in admins.Where(user => user.IsActive && !user.IsRestricted))
         {
-            adminIds.Add(admin.Id);
-        }
-
-        var agencyAdmins = await _context.AgencyMemberships
-            .Where(m => m.Role == AgencyStaffRole.AgencyManager && m.IsActive)
-            .Select(m => m.UserId)
-            .ToListAsync();
-
-        var recipients = adminIds.Concat(agencyAdmins).Distinct().ToList();
-
-        foreach (var recipient in recipients)
-        {
-            var isAgency = agencyAdmins.Contains(recipient);
-            if (isAgency)
-            {
-                continue;
-            }
-
-            await _notificationService.CreateAsync(recipient, NotificationType.Listing,
+            await _notificationService.CreateAsync(admin.Id, NotificationType.Listing,
                 "New listing awaiting review",
                 $"\"{property.Title}\" in {property.SubCity}, {property.City} was submitted for review.",
                 "/admin/moderation");
@@ -634,6 +670,7 @@ public class PropertyService : IPropertyService
             Neighborhood = p.Neighborhood,
             Landmark = p.Landmark,
             StreetAddress = p.StreetAddress,
+            VideoUrl = p.VideoUrl,
             Latitude = p.Latitude,
             Longitude = p.Longitude,
             RentAmountETB = p.RentAmountETB,
@@ -660,11 +697,15 @@ public class PropertyService : IPropertyService
             LandlordName = p.Landlord.FullName,
             LandlordPhone = includeContact ? (p.Landlord.PhoneNumber ?? string.Empty) : MaskPhone(p.Landlord.PhoneNumber),
             LandlordEmail = includeContact ? (p.Landlord.Email ?? string.Empty) : string.Empty,
-            AgencyId = p.AgencyId,
-            AgencyName = p.Agency?.Name,
-            IsVerifiedHost = p.AgencyId != null,
+            IsVerifiedHost = false,
             RejectionReason = p.RejectionReason,
             RejectionCategory = p.RejectionCategory,
+            ListingFeeAmountETB = p.ListingFeeAmountETB,
+            ListingFeeProvider = p.ListingFeeProvider,
+            ListingFeeReference = p.ListingFeeReference,
+            ListingFeeTransactionUrl = p.ListingFeeTransactionUrl,
+            ListingFeeStatus = p.ListingFeeStatus,
+            ListingFeeVerifiedAtUtc = p.ListingFeeVerifiedAtUtc,
             TenancyStartDateUtc = p.TenancyStartDateUtc,
             AgreedRentAmountETB = p.AgreedRentAmountETB,
             AgreedLeaseMonths = p.AgreedLeaseMonths,
@@ -687,5 +728,26 @@ public class PropertyService : IPropertyService
         }
 
         return $"••• {new string(digits[^4..])}";
+    }
+
+    private static bool IsValidTikTokUrl(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return true;
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps
+            && (uri.Host.Equals("tiktok.com", StringComparison.OrdinalIgnoreCase)
+                || uri.Host.Equals("www.tiktok.com", StringComparison.OrdinalIgnoreCase)
+                || uri.Host.Equals("m.tiktok.com", StringComparison.OrdinalIgnoreCase)
+                || uri.Host.Equals("vm.tiktok.com", StringComparison.OrdinalIgnoreCase))
+            && string.IsNullOrEmpty(uri.UserInfo);
+    }
+
+    private static bool IsValidTransactionUrl(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return true;
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps
+            && !string.IsNullOrEmpty(uri.Host)
+            && string.IsNullOrEmpty(uri.UserInfo);
     }
 }

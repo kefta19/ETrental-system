@@ -4,7 +4,6 @@ export enum NotificationType {
   Inquiry = 2,
   Appointment = 3,
   Application = 4,
-  Agency = 5,
   Support = 6,
   Subscription = 7,
   Security = 8,

@@ -20,11 +20,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
 
     public DbSet<RenterProfile> RenterProfiles => Set<RenterProfile>();
     public DbSet<LandlordProfile> LandlordProfiles => Set<LandlordProfile>();
-    public DbSet<Agency> Agencies => Set<Agency>();
-    public DbSet<AgencyMembership> AgencyMemberships => Set<AgencyMembership>();
     public DbSet<Property> Properties => Set<Property>();
     public DbSet<PropertyImage> PropertyImages => Set<PropertyImage>();
     public DbSet<PropertyInquiry> PropertyInquiries => Set<PropertyInquiry>();
+    public DbSet<InquiryMessage> InquiryMessages => Set<InquiryMessage>();
     public DbSet<ViewingAppointment> ViewingAppointments => Set<ViewingAppointment>();
     public DbSet<RentalApplication> RentalApplications => Set<RentalApplication>();
     public DbSet<Favorite> Favorites => Set<Favorite>();
@@ -39,7 +38,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
     public DbSet<ListingReview> ListingReviews => Set<ListingReview>();
-    public DbSet<AgencyPropertyAssignment> AgencyPropertyAssignments => Set<AgencyPropertyAssignment>();
     public DbSet<RentalAgreement> RentalAgreements => Set<RentalAgreement>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
@@ -52,30 +50,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
         {
             entity.Property(p => p.RentAmountETB).HasPrecision(18, 2);
             entity.Property(p => p.DepositAmountETB).HasPrecision(18, 2);
+            entity.Property(p => p.ListingFeeAmountETB).HasPrecision(18, 2);
             
             entity.HasOne(p => p.Landlord)
                   .WithMany(u => u.OwnedProperties)
                   .HasForeignKey(p => p.LandlordId)
                   .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(p => p.Agency)
-                  .WithMany(a => a.Properties)
-                  .HasForeignKey(p => p.AgencyId)
-                  .OnDelete(DeleteBehavior.SetNull);
-
             // Composite indexes for fast Ethiopian location & budget search
             entity.HasIndex(p => new { p.Status, p.City, p.SubCity, p.RentAmountETB });
             entity.HasIndex(p => p.LandlordId);
-            entity.HasIndex(p => p.AgencyId);
-
-            // Soft-delete query filter
             entity.HasQueryFilter(p => !p.IsDeleted);
-
-            // Agency tenant isolation: non-admin users can only query properties of their own agency
-            entity.HasQueryFilter(p =>
-                        (_currentUserService != null && _currentUserService.IsAdmin) ||
-                p.AgencyId == null ||
-                p.AgencyId == _currentUserService.AgencyId);
         });
 
         builder.Entity<PropertyImage>(entity =>
@@ -140,21 +125,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        builder.Entity<AgencyMembership>(entity =>
-        {
-            entity.HasIndex(am => new { am.AgencyId, am.UserId }).IsUnique();
-
-            entity.HasOne(am => am.Agency)
-                  .WithMany(a => a.Members)
-                  .HasForeignKey(am => am.AgencyId)
-                  .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(am => am.User)
-                  .WithOne(u => u.AgencyMembership)
-                  .HasForeignKey<AgencyMembership>(am => am.UserId)
-                  .OnDelete(DeleteBehavior.Cascade);
-        });
-
         builder.Entity<SubscriptionPlan>(entity =>
         {
             entity.Property(sp => sp.PriceETB).HasPrecision(18, 2);
@@ -201,6 +171,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
+        builder.Entity<InquiryMessage>(entity =>
+        {
+            entity.Property(m => m.Body).HasMaxLength(1500).IsRequired();
+            entity.HasIndex(m => new { m.PropertyInquiryId, m.CreatedAtUtc });
+
+            entity.HasOne(m => m.PropertyInquiry)
+                  .WithMany(i => i.Messages)
+                  .HasForeignKey(m => m.PropertyInquiryId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(m => m.Sender)
+                  .WithMany()
+                  .HasForeignKey(m => m.SenderUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
         builder.Entity<Notification>(entity =>
         {
             entity.HasIndex(n => new { n.UserId, n.IsRead });
@@ -245,26 +231,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
             entity.HasOne(r => r.Property)
                   .WithMany(p => p.Reviews)
                   .HasForeignKey(r => r.PropertyId)
-                  .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        builder.Entity<AgencyPropertyAssignment>(entity =>
-        {
-            entity.HasIndex(a => new { a.AgencyId, a.UserId, a.PropertyId }).IsUnique();
-
-            entity.HasOne(a => a.Agency)
-                  .WithMany(a => a.PropertyAssignments)
-                  .HasForeignKey(a => a.AgencyId)
-                  .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(a => a.User)
-                  .WithMany()
-                  .HasForeignKey(a => a.UserId)
-                  .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(a => a.Property)
-                  .WithMany()
-                  .HasForeignKey(a => a.PropertyId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
 

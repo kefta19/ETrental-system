@@ -53,11 +53,15 @@ public class PaymentTransactionDto
 {
     public Guid Id { get; set; }
     public string UserId { get; set; } = string.Empty;
+    public Guid PlanId { get; set; }
     public string UserEmail { get; set; } = string.Empty;
+    public string UserFullName { get; set; } = string.Empty;
+    public string? UserPhoneNumber { get; set; }
     public string PlanName { get; set; } = string.Empty;
     public decimal AmountETB { get; set; }
     public string Provider { get; set; } = string.Empty;
     public string? ExternalReference { get; set; }
+    public bool HasEvidenceUrl { get; set; }
     public PaymentStatus Status { get; set; }
     public string? FailureReason { get; set; }
     public DateTime? VerifiedAtUtc { get; set; }

@@ -54,6 +54,11 @@ public class SupportService : ISupportService
 
     public async Task<Result<SupportTicketDto>> CreateTicketAsync(string userId, CreateSupportTicketDto dto)
     {
+        if (!Enum.IsDefined(dto.Category))
+        {
+            return Result<SupportTicketDto>.Failure("Choose a supported support category.");
+        }
+
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
         {
@@ -305,6 +310,11 @@ public class SupportService : ISupportService
 
     public async Task<Result<SupportTicketDto>> UpdateTicketAsync(Guid ticketId, UpdateSupportTicketDto dto, string staffId)
     {
+        if (dto.Category.HasValue && !Enum.IsDefined(dto.Category.Value))
+        {
+            return Result<SupportTicketDto>.Failure("Choose a supported support category.");
+        }
+
         var ticket = await _context.SupportTickets.FirstOrDefaultAsync(t => t.Id == ticketId);
         if (ticket == null)
         {

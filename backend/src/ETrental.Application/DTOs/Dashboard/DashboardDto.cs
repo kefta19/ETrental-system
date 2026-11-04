@@ -36,18 +36,3 @@ public class LandlordDashboardDto
     public decimal MonthlyPortfolioValueETB { get; set; }
     public int UnreadNotificationCount { get; set; }
 }
-
-public class AgencyDashboardDto
-{
-    public string AgencyName { get; set; } = string.Empty;
-    public string AgencyStatus { get; set; } = "Pending";
-    public int TotalProperties { get; set; }
-    public int PublishedProperties { get; set; }
-    public int PendingReviewProperties { get; set; }
-    public int RentedProperties { get; set; }
-    public int UnreadInquiries { get; set; }
-    public int PendingApplications { get; set; }
-    public int UpcomingAppointments { get; set; }
-    public int ActiveStaff { get; set; }
-    public int UnreadNotificationCount { get; set; }
-}

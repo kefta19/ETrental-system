@@ -14,6 +14,7 @@ public class PaymentTransaction : AuditableEntity
     public decimal AmountETB { get; set; }
     public string Provider { get; set; } = "Manual";
     public string? ExternalReference { get; set; }
+    public string? EvidenceFileName { get; set; }
     public string? IdempotencyKey { get; set; }
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     public string? FailureReason { get; set; }

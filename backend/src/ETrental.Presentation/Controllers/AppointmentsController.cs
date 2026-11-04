@@ -36,7 +36,7 @@ public class AppointmentsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        var isLandlord = User.IsInRole("Landlord") || User.IsInRole("Agency") || User.IsInRole("Admin");
+        var isLandlord = User.IsInRole("Landlord") || User.IsInRole("Admin");
         var result = await _interactionService.GetMyAppointmentsAsync(userId, isLandlord, ct);
         return Ok(result);
     }

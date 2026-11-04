@@ -12,20 +12,17 @@ namespace ETrental.Infrastructure.Services;
 public class InteractionService : IInteractionService
 {
     private readonly IApplicationDbContext _context;
-    private readonly IAgencyAccessService _agencyAccess;
     private readonly ISubscriptionService _subscriptionService;
     private readonly INotificationService _notificationService;
     private readonly IAuditService _auditService;
 
     public InteractionService(
         IApplicationDbContext context,
-        IAgencyAccessService agencyAccess,
         ISubscriptionService subscriptionService,
         INotificationService notificationService,
         IAuditService auditService)
     {
         _context = context;
-        _agencyAccess = agencyAccess;
         _subscriptionService = subscriptionService;
         _notificationService = notificationService;
         _auditService = auditService;
@@ -278,6 +275,8 @@ public class InteractionService : IInteractionService
             .Include(i => i.Property)
                 .ThenInclude(p => p.Landlord)
             .Include(i => i.Renter)
+            .Include(i => i.Messages)
+                .ThenInclude(m => m.Sender)
             .Where(i => i.RenterId == renterId)
             .OrderByDescending(i => i.CreatedAtUtc)
             .ToListAsync(ct);
@@ -288,21 +287,16 @@ public class InteractionService : IInteractionService
 
     public async Task<Result<List<PropertyInquiryDto>>> GetInquiriesReceivedAsync(string hostId, CancellationToken ct = default)
     {
-        var agencyContext = await _agencyAccess.GetContextAsync(hostId);
-        var agencyId = agencyContext?.AgencyId;
-
         IQueryable<PropertyInquiry> query = _context.PropertyInquiries
             .Include(i => i.Property)
                 .ThenInclude(p => p.Images)
             .Include(i => i.Property)
                 .ThenInclude(p => p.Landlord)
-            .Include(i => i.Renter);
+            .Include(i => i.Renter)
+            .Include(i => i.Messages)
+                .ThenInclude(m => m.Sender);
 
-        query = agencyId.HasValue
-            ? query.Where(i => i.Property.LandlordId == hostId
-                || i.Property.AssignedAgentId == hostId
-                || (i.Property.AgencyId != null && i.Property.AgencyId == agencyId.Value))
-            : query.Where(i => i.Property.LandlordId == hostId || i.Property.AssignedAgentId == hostId);
+        query = query.Where(i => i.Property.LandlordId == hostId);
 
         var inquiries = await query
             .OrderByDescending(i => i.CreatedAtUtc)
@@ -312,7 +306,11 @@ public class InteractionService : IInteractionService
         return Result<List<PropertyInquiryDto>>.Success(dtos);
     }
 
-    public async Task<Result<PropertyInquiryDto>> ReplyInquiryAsync(Guid inquiryId, ReplyInquiryDto dto, string hostId, CancellationToken ct = default)
+    public async Task<Result<PropertyInquiryDto>> SendInquiryMessageAsync(
+        Guid inquiryId,
+        ReplyInquiryDto dto,
+        string senderId,
+        CancellationToken ct = default)
     {
         var inquiry = await _context.PropertyInquiries
             .Include(i => i.Property)
@@ -320,30 +318,80 @@ public class InteractionService : IInteractionService
             .Include(i => i.Property)
                 .ThenInclude(p => p.Landlord)
             .Include(i => i.Renter)
+            .Include(i => i.Messages)
+                .ThenInclude(m => m.Sender)
             .FirstOrDefaultAsync(i => i.Id == inquiryId, ct);
 
         if (inquiry == null) return Result<PropertyInquiryDto>.Failure("Inquiry not found.");
 
-        var canReply = await _agencyAccess.CanManagePropertyAsync(hostId, inquiry.Property);
-        if (!canReply)
-            return Result<PropertyInquiryDto>.Failure("Unauthorized to reply to this inquiry.");
+        var isRenter = inquiry.RenterId == senderId;
+        var isLandlord = inquiry.Property.LandlordId == senderId;
+        if (!isRenter && !isLandlord)
+            return Result<PropertyInquiryDto>.Failure("You are not a participant in this conversation.");
 
-        inquiry.LandlordReply = dto.Reply;
-        inquiry.RepliedAtUtc = DateTime.UtcNow;
-        inquiry.IsReadByLandlord = true;
-        inquiry.IsReadByRenter = false;
+        var messageBody = dto.Reply.Trim();
+        if (messageBody.Length < 2 || messageBody.Length > 1500)
+            return Result<PropertyInquiryDto>.Failure("Message must be between 2 and 1500 characters.");
+
+        if (inquiry.Messages.Count == 0 && !string.IsNullOrWhiteSpace(inquiry.LandlordReply))
+        {
+            _context.InquiryMessages.Add(new InquiryMessage
+            {
+                PropertyInquiryId = inquiry.Id,
+                PropertyInquiry = inquiry,
+                SenderUserId = inquiry.Property.LandlordId,
+                Sender = inquiry.Property.Landlord,
+                Body = inquiry.LandlordReply,
+                SentAtUtc = inquiry.RepliedAtUtc ?? inquiry.CreatedAtUtc
+            });
+        }
+
+        var sentAtUtc = DateTime.UtcNow;
+        var message = new InquiryMessage
+        {
+            PropertyInquiryId = inquiry.Id,
+            PropertyInquiry = inquiry,
+            SenderUserId = senderId,
+            Sender = isRenter ? inquiry.Renter : inquiry.Property.Landlord,
+            Body = messageBody,
+            SentAtUtc = sentAtUtc
+        };
+        _context.InquiryMessages.Add(message);
+
+        if (isLandlord)
+        {
+            inquiry.LandlordReply = messageBody;
+            inquiry.RepliedAtUtc = sentAtUtc;
+            inquiry.IsReadByLandlord = true;
+            inquiry.IsReadByRenter = false;
+        }
+        else
+        {
+            inquiry.IsReadByRenter = true;
+            inquiry.IsReadByLandlord = false;
+        }
 
         await _context.SaveChangesAsync(ct);
 
-        await _notificationService.CreateAsync(inquiry.RenterId, NotificationType.Inquiry,
-            "Your inquiry received a reply",
-            $"The host of \"{inquiry.Property.Title}\" replied to your message.",
-            "/renter/inquiries");
+        var recipientId = isLandlord ? inquiry.RenterId : inquiry.Property.LandlordId;
+        await _notificationService.CreateAsync(
+            recipientId,
+            NotificationType.Inquiry,
+            isLandlord ? "Your landlord replied" : "A renter replied to your message",
+            $"{(isLandlord ? inquiry.Property.Landlord.FullName : inquiry.Renter.FullName)} replied about \"{inquiry.Property.Title}\".",
+            isLandlord ? "/renter/messages" : "/landlord/messages");
 
-        await _auditService.LogAsync(hostId, "InquiryReplied", "PropertyInquiry", inquiry.Id.ToString());
+        await _auditService.LogAsync(senderId, "InquiryMessageSent", "PropertyInquiry", inquiry.Id.ToString());
 
         return Result<PropertyInquiryDto>.Success(MapToInquiryDto(inquiry, inquiry.Property, inquiry.Renter));
     }
+
+    public Task<Result<PropertyInquiryDto>> ReplyInquiryAsync(
+        Guid inquiryId,
+        ReplyInquiryDto dto,
+        string hostId,
+        CancellationToken ct = default) =>
+        SendInquiryMessageAsync(inquiryId, dto, hostId, ct);
 
     public async Task<Result<bool>> MarkInquiryAsReadAsync(Guid inquiryId, string userId, CancellationToken ct = default)
     {
@@ -357,7 +405,7 @@ public class InteractionService : IInteractionService
         {
             inquiry.IsReadByRenter = true;
         }
-        else if (await _agencyAccess.CanAccessPropertyAsync(userId, inquiry.Property))
+        else if (inquiry.Property.LandlordId == userId)
         {
             inquiry.IsReadByLandlord = true;
         }
@@ -438,14 +486,7 @@ public class InteractionService : IInteractionService
 
         if (isLandlord)
         {
-            var agencyContext = await _agencyAccess.GetContextAsync(userId);
-            var agencyId = agencyContext?.AgencyId;
-
-            query = agencyId.HasValue
-                ? query.Where(a => a.Property.LandlordId == userId
-                    || a.Property.AssignedAgentId == userId
-                    || (a.Property.AgencyId != null && a.Property.AgencyId == agencyId.Value))
-                : query.Where(a => a.Property.LandlordId == userId || a.Property.AssignedAgentId == userId);
+            query = query.Where(a => a.Property.LandlordId == userId);
         }
         else
         {
@@ -472,7 +513,7 @@ public class InteractionService : IInteractionService
 
         if (appointment == null) return Result<ViewingAppointmentDto>.Failure("Appointment not found.");
 
-        var isHost = await _agencyAccess.CanManagePropertyAsync(userId, appointment.Property);
+        var isHost = appointment.Property.LandlordId == userId;
         var isRenter = appointment.RenterId == userId;
 
         if (!isHost && !isRenter) return Result<ViewingAppointmentDto>.Failure("Unauthorized.");
@@ -581,9 +622,6 @@ public class InteractionService : IInteractionService
 
     public async Task<Result<List<RentalApplicationDto>>> GetReceivedApplicationsAsync(string hostId, Guid? propertyId = null, CancellationToken ct = default)
     {
-        var agencyContext = await _agencyAccess.GetContextAsync(hostId);
-        var agencyId = agencyContext?.AgencyId;
-
         IQueryable<RentalApplication> query = _context.RentalApplications
             .Include(a => a.Property)
                 .ThenInclude(p => p.Images)
@@ -591,11 +629,7 @@ public class InteractionService : IInteractionService
                 .ThenInclude(p => p.Landlord)
             .Include(a => a.Applicant);
 
-        query = agencyId.HasValue
-            ? query.Where(a => a.Property.LandlordId == hostId
-                || a.Property.AssignedAgentId == hostId
-                || (a.Property.AgencyId != null && a.Property.AgencyId == agencyId.Value))
-            : query.Where(a => a.Property.LandlordId == hostId || a.Property.AssignedAgentId == hostId);
+        query = query.Where(a => a.Property.LandlordId == hostId);
 
         if (propertyId.HasValue)
         {
@@ -622,7 +656,7 @@ public class InteractionService : IInteractionService
 
         if (application == null) return Result<RentalApplicationDto>.Failure("Application not found.");
 
-        var canReview = await _agencyAccess.CanManagePropertyAsync(hostId, application.Property);
+        var canReview = application.Property.LandlordId == hostId;
         if (!canReview)
             return Result<RentalApplicationDto>.Failure("Unauthorized to review this application.");
 
@@ -685,6 +719,50 @@ public class InteractionService : IInteractionService
 
     private static PropertyInquiryDto MapToInquiryDto(PropertyInquiry i, Property p, ApplicationUser r)
     {
+        var messages = new List<InquiryMessageDto>
+        {
+            new()
+            {
+                Id = $"{i.Id}:initial",
+                SenderId = i.RenterId,
+                SenderName = r.FullName,
+                Message = i.InitialMessage,
+                IsFromLandlord = false,
+                CreatedAtUtc = i.CreatedAtUtc
+            }
+        };
+
+        if (i.Messages.Count == 0 && !string.IsNullOrWhiteSpace(i.LandlordReply))
+        {
+            messages.Add(new InquiryMessageDto
+            {
+                Id = $"{i.Id}:legacy-reply",
+                SenderId = p.LandlordId,
+                SenderName = p.Landlord?.FullName ?? "Landlord",
+                Message = i.LandlordReply,
+                IsFromLandlord = true,
+                CreatedAtUtc = i.RepliedAtUtc ?? i.CreatedAtUtc
+            });
+        }
+
+        messages.AddRange(i.Messages
+            .OrderBy(message => message.SentAtUtc)
+            .ThenBy(message => message.Id)
+            .Select(message => new InquiryMessageDto
+            {
+                Id = message.Id.ToString(),
+                SenderId = message.SenderUserId,
+                SenderName = message.Sender?.FullName ?? "User",
+                Message = message.Body,
+                IsFromLandlord = message.SenderUserId == p.LandlordId,
+                CreatedAtUtc = message.SentAtUtc
+            }));
+
+        var latestLandlordMessage = i.Messages
+            .Where(message => message.SenderUserId == p.LandlordId)
+            .OrderByDescending(message => message.SentAtUtc)
+            .FirstOrDefault();
+
         return new PropertyInquiryDto
         {
             Id = i.Id,
@@ -695,11 +773,12 @@ public class InteractionService : IInteractionService
             RenterEmail = r.Email,
             RenterPhone = r.PhoneNumber,
             InitialMessage = i.InitialMessage,
-            LandlordReply = i.LandlordReply,
-            RepliedAtUtc = i.RepliedAtUtc,
+            LandlordReply = latestLandlordMessage?.Body ?? i.LandlordReply,
+            RepliedAtUtc = latestLandlordMessage?.SentAtUtc ?? i.RepliedAtUtc,
             IsReadByLandlord = i.IsReadByLandlord,
             IsReadByRenter = i.IsReadByRenter,
-            CreatedAtUtc = i.CreatedAtUtc
+            CreatedAtUtc = i.CreatedAtUtc,
+            Messages = messages
         };
     }
 

@@ -18,6 +18,17 @@ public class PropertyInquiryDto
     public bool IsReadByLandlord { get; set; }
     public bool IsReadByRenter { get; set; }
     public DateTime CreatedAtUtc { get; set; }
+    public List<InquiryMessageDto> Messages { get; set; } = [];
+}
+
+public class InquiryMessageDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string SenderId { get; set; } = string.Empty;
+    public string SenderName { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public bool IsFromLandlord { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
 }
 
 public class CreateInquiryDto

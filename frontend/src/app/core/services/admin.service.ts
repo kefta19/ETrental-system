@@ -1,13 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
 import { ApiResponse } from '../models/auth.model';
 import { PaginatedResult } from '../models/property.model';
 import {
   AdminDashboard,
   AdminUser,
-  AgencyVerificationDto,
   AuditLogEntry,
   PlatformSetting,
   RestrictUserDto,
@@ -15,7 +14,6 @@ import {
   UpdateSubscriptionPlanDto,
   VerifyPaymentDto
 } from '../models/admin.model';
-import { AgencyProfile, AgencyStatus } from '../models/agency.model';
 import { PaymentTransaction } from '../models/subscription.model';
 
 @Injectable({
@@ -24,6 +22,13 @@ import { PaymentTransaction } from '../models/subscription.model';
 export class AdminService {
   private http = inject(HttpClient);
   private readonly API_URL = `${API_BASE_URL}/admin`;
+  private readonly pageRefreshRequested = new Subject<void>();
+
+  readonly pageRefreshRequested$ = this.pageRefreshRequested.asObservable();
+
+  requestPageRefresh(): void {
+    this.pageRefreshRequested.next();
+  }
 
   getDashboard(): Observable<ApiResponse<AdminDashboard>> {
     return this.http.get<ApiResponse<AdminDashboard>>(`${this.API_URL}/dashboard`);
@@ -57,19 +62,9 @@ export class AdminService {
 
   setActive(userId: string, isActive: boolean, reason: string): Observable<ApiResponse<AdminUser>> {
     return this.http.post<ApiResponse<AdminUser>>(`${this.API_URL}/users/${userId}/active`, {
-      isRestricted: !isActive,
+      isRestricted: isActive,
       reason
     });
-  }
-
-  getAgencies(status?: AgencyStatus): Observable<ApiResponse<AgencyProfile[]>> {
-    let params = new HttpParams();
-    if (status !== undefined && status !== null) params = params.set('status', status.toString());
-    return this.http.get<ApiResponse<AgencyProfile[]>>(`${this.API_URL}/agencies`, { params });
-  }
-
-  verifyAgency(agencyId: string, dto: AgencyVerificationDto): Observable<ApiResponse<AgencyProfile>> {
-    return this.http.post<ApiResponse<AgencyProfile>>(`${this.API_URL}/agencies/${agencyId}/verification`, dto);
   }
 
   getSettings(): Observable<ApiResponse<PlatformSetting[]>> {

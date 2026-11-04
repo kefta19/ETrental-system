@@ -16,7 +16,7 @@ The public discovery interface is the renter's primary gateway into ETrental. It
 
 ```
 +-----------------------------------------------------------------------------------------+
-|  [ ETrental Logo ]     Browse Listings    Add Property    For Agencies    [ Login / Register ] |
+|  [ ETrental Logo ]     Browse Listings    Add Property    For Landlords    [ Login / Register ] |
 +-----------------------------------------------------------------------------------------+
 |                                                                                         |
 |       FIND YOUR NEXT HOME IN ETHIOPIA — SIMPLE, VERIFIED, DIRECT                        |
@@ -83,7 +83,7 @@ Each property card in the search listing presents:
 - **Price Badge:** Prominently rendered in Ethiopian Birr (e.g., `45,000 ETB / month`).
 - **Advance Terms Pill:** e.g., `3 Mo. Advance + 1 Mo. Deposit`.
 - **Key Attributes:** Bed count, bath count, floor area ($m^2$).
-- **Verification Badge:** `Verified Landlord` or `Verified Agency`.
+- **Verification Badge:** `Verified Landlord`.
 - **Favorite Toggle:** Interactive heart icon (authenticates user, checks subscription limit).
 - **Direct Navigation:** Clickable card routing to `/properties/{id}`.
 
@@ -233,7 +233,7 @@ flowchart TD
     C -->|Yes| E[Fill Application Form: Move-in Date, Lease Duration, Occupants]
     E --> F[Submit Application: POST /api/applications]
     F --> G[Status: SUBMITTED]
-    G --> H[Landlord / Agency Reviews Profile]
+    G --> H[Landlord Reviews Profile]
     
     H --> Decision{Landlord Decision}
     Decision -->|Accept| J[Status: ACCEPTED]

@@ -1,0 +1,308 @@
+<main class="wizard-container">
+  <div class="wizard-workspace">
+    <header class="wizard-header">
+      <a routerLink="/landlord/my-properties" class="back-link" aria-label="Back to my listings">←</a>
+      <div class="header-title">
+        <h1>List your rental property</h1>
+        <p>Three steps to submit your property for review</p>
+      </div>
+      <nav class="step-tracker" aria-label="Listing steps">
+        <div class="tracker-step" [class.active]="currentStep === 1" [class.done]="currentStep > 1">
+          <span class="step-num">1</span>
+          <span class="step-txt">Property</span>
+        </div>
+        <span class="tracker-line"></span>
+        <div class="tracker-step" [class.active]="currentStep === 2" [class.done]="currentStep > 2">
+          <span class="step-num">2</span>
+          <span class="step-txt">Contact</span>
+        </div>
+        <span class="tracker-line"></span>
+        <div class="tracker-step" [class.active]="currentStep === 3">
+          <span class="step-num">3</span>
+          <span class="step-txt">Payment</span>
+        </div>
+      </nav>
+    </header>
+
+    <section class="wizard-card" [class.has-error]="errorMessage">
+      @if (errorMessage) {
+        <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+      }
+      @if (currentStep === 1) {
+        <div class="step-pane">
+        <p class="eyebrow">STEP 1 OF 3</p>
+        <h2>Tell renters about your property</h2>
+        <p class="step-sub">Add the property details, rental terms, amenities, and photos.</p>
+
+        <form [formGroup]="propertyForm">
+          <h3>Basic information</h3>
+          <div class="form-group">
+            <label class="form-label" for="title">Listing title</label>
+            <input id="title" type="text" formControlName="title" class="form-control"
+              placeholder="e.g. Modern 3-bedroom apartment in Bole" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea id="description" formControlName="description" class="form-control" rows="4"
+              placeholder="Describe the home, neighborhood, and any rental requirements."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label class="form-label" for="propertyType">Property type</label>
+              <select id="propertyType" formControlName="propertyType" class="form-control">
+                <option [ngValue]="0">Apartment</option>
+                <option [ngValue]="1">Condominium</option>
+                <option [ngValue]="2">Villa</option>
+                <option [ngValue]="3">G+1 family home</option>
+                <option [ngValue]="4">Studio / single unit</option>
+                <option [ngValue]="5">Service quarter</option>
+                <option [ngValue]="6">Commercial space</option>
+              </select>
+            </div>
+            <div class="form-group col">
+              <label class="form-label" for="furnishing">Furnishing</label>
+              <select id="furnishing" formControlName="furnishing" class="form-control">
+                <option [ngValue]="0">Unfurnished</option>
+                <option [ngValue]="1">Semi-furnished</option>
+                <option [ngValue]="2">Fully furnished</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label class="form-label" for="bedrooms">Bedrooms</label>
+              <input id="bedrooms" type="number" min="0" formControlName="bedrooms" class="form-control" />
+            </div>
+            <div class="form-group col">
+              <label class="form-label" for="bathrooms">Bathrooms</label>
+              <input id="bathrooms" type="number" min="1" formControlName="bathrooms" class="form-control" />
+            </div>
+            <div class="form-group col">
+              <label class="form-label" for="area">Area (m²)</label>
+              <input id="area" type="number" min="1" formControlName="areaSquareMeters" class="form-control" />
+            </div>
+          </div>
+
+          <h3>Location</h3>
+          <div class="form-row">
+            <div class="form-group col">
+              <label class="form-label" for="region">Region</label>
+              <input id="region" type="text" formControlName="region" class="form-control" />
+            </div>
+            <div class="form-group col">
+              <label class="form-label" for="city">City</label>
+              <input id="city" type="text" formControlName="city" class="form-control" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label class="form-label" for="subCity">Sub-city</label>
+              <input id="subCity" type="text" formControlName="subCity" class="form-control" />
+            </div>
+            <div class="form-group col">
+              <label class="form-label" for="neighborhood">Neighborhood / sefer</label>
+              <input id="neighborhood" type="text" formControlName="neighborhood" class="form-control" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label class="form-label" for="landmark">Nearby landmark (optional)</label>
+              <input id="landmark" type="text" formControlName="landmark" class="form-control" />
+            </div>
+            <div class="form-group col">
+              <label class="form-label" for="streetAddress">Street / house number (optional)</label>
+              <input id="streetAddress" type="text" formControlName="streetAddress" class="form-control" />
+            </div>
+          </div>
+
+          <h3>Rent and availability</h3>
+          <div class="form-row">
+            <div class="form-group col">
+              <label class="form-label" for="rent">Monthly rent (ETB)</label>
+              <input id="rent" type="number" min="100" formControlName="rentAmountETB" class="form-control" />
+            </div>
+            <div class="form-group col">
+              <label class="form-label" for="deposit">Deposit (ETB)</label>
+              <input id="deposit" type="number" min="0" formControlName="depositAmountETB" class="form-control" />
+            </div>
+            <div class="form-group col">
+              <label class="form-label" for="advance">Advance months</label>
+              <input id="advance" type="number" min="1" max="24" formControlName="advanceMonthsRequired" class="form-control" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label class="form-label" for="lease">Minimum lease (months)</label>
+              <input id="lease" type="number" min="1" max="60" formControlName="minimumLeaseMonths" class="form-control" />
+            </div>
+            <div class="form-group col">
+              <label class="form-label" for="availableFrom">Available from</label>
+              <input id="availableFrom" type="date" formControlName="availableFromDate" class="form-control" />
+            </div>
+          </div>
+
+          <h3>Amenities and bills</h3>
+          <div class="amenities-selection-grid">
+            <label class="amenity-card-toggle"><input type="checkbox" formControlName="hasWaterTank" /><span class="card-inner"><strong>Water tank</strong></span></label>
+            <label class="amenity-card-toggle"><input type="checkbox" formControlName="hasGenerator" /><span class="card-inner"><strong>Generator</strong></span></label>
+            <label class="amenity-card-toggle"><input type="checkbox" formControlName="hasSecurityGuard" /><span class="card-inner"><strong>Security guard</strong></span></label>
+            <label class="amenity-card-toggle"><input type="checkbox" formControlName="hasParking" /><span class="card-inner"><strong>Parking</strong></span></label>
+            <label class="amenity-card-toggle"><input type="checkbox" formControlName="hasElevator" /><span class="card-inner"><strong>Elevator</strong></span></label>
+            <label class="amenity-card-toggle"><input type="checkbox" formControlName="hasWifi" /><span class="card-inner"><strong>Wi-Fi</strong></span></label>
+            <label class="amenity-card-toggle"><input type="checkbox" formControlName="hasBalcony" /><span class="card-inner"><strong>Balcony</strong></span></label>
+          </div>
+          <div class="checkbox-group">
+            <label class="check-label"><input type="checkbox" formControlName="waterBillIncluded" /> Water bill included in rent</label>
+            <label class="check-label"><input type="checkbox" formControlName="electricityBillIncluded" /> Electricity bill included in rent</label>
+          </div>
+
+          <h3>Property photos</h3>
+          <p class="step-sub">Select multiple clear JPEG, PNG, or WebP photos at once (up to 5 MB each, 15 photos total).</p>
+          <div class="upload-dropzone">
+            <input #fileInput type="file" (change)="onFileSelected($event)"
+              accept="image/png,image/jpeg,image/webp" multiple class="hidden-file-input"
+              [disabled]="isUploading || imageUrls.length >= maxPhotos" />
+            <button type="button" class="btn btn-outline" (click)="fileInput.click()"
+              [disabled]="isUploading || imageUrls.length >= maxPhotos">
+              {{ isUploading ? 'Uploading photos…' : '+ Add photos' }}
+            </button>
+          </div>
+          <p class="upload-hint">{{ imageUrls.length }} of {{ maxPhotos }} photos added</p>
+          <div class="photos-preview-grid">
+            @for (url of imageUrls; track $index) {
+              <div class="photo-thumb-card">
+                <img [src]="url" alt="Property photo preview" />
+                <button type="button" class="remove-btn" (click)="removeImage($index)" aria-label="Remove photo">×</button>
+                @if ($index === 0) { <span class="primary-badge">Cover photo</span> }
+                </div>
+              }
+          </div>
+
+          <h3>Property video <span class="optional-label">Optional</span></h3>
+          <p class="step-sub">Add a TikTok post with a walkthrough of the home. It will appear on your public listing after approval.</p>
+          <div class="form-group">
+            <label class="form-label" for="videoUrl">TikTok video link</label>
+            <input id="videoUrl" type="url" formControlName="videoUrl" class="form-control"
+              placeholder="https://www.tiktok.com/@username/video/…" />
+            @if (propertyForm.controls.videoUrl.touched && propertyForm.controls.videoUrl.invalid) {
+              <small class="field-error">Enter a valid HTTPS TikTok post link.</small>
+            }
+          </div>
+          @if (propertyForm.controls.videoUrl.value) {
+            <a class="video-link-preview" [href]="propertyForm.controls.videoUrl.value"
+              target="_blank" rel="noopener noreferrer"><span class="material-icons-outlined" aria-hidden="true">open_in_new</span> Preview TikTok post</a>
+          }
+        </form>
+      </div>
+    }
+
+      @if (currentStep === 2) {
+      <div class="step-pane">
+        <p class="eyebrow">STEP 2 OF 3</p>
+        <h2>Confirm your contact details</h2>
+        <p class="step-sub">These details are linked to your landlord account and will be shown to renters when their access allows it.</p>
+        @if (isLoadingContact) {
+          <p>Loading your account details…</p>
+        } @else {
+          <form [formGroup]="contactForm">
+            <div class="form-row">
+              <div class="form-group col">
+                <label class="form-label" for="firstName">First name</label>
+                <input id="firstName" type="text" formControlName="firstName" class="form-control" />
+              </div>
+              <div class="form-group col">
+                <label class="form-label" for="lastName">Last name</label>
+                <input id="lastName" type="text" formControlName="lastName" class="form-control" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ownerPhone">Phone number</label>
+              <input id="ownerPhone" type="tel" formControlName="phoneNumber" class="form-control"
+                placeholder="+251 9…" autocomplete="tel" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ownerEmail">Account email</label>
+              <input id="ownerEmail" type="email" [value]="ownerEmail" class="form-control" readonly />
+              <small class="upload-hint">Email changes require account verification and can’t be edited from a listing.</small>
+            </div>
+          </form>
+          }
+      </div>
+    }
+
+      @if (currentStep === 3) {
+      <div class="step-pane">
+        <p class="eyebrow">STEP 3 OF 3</p>
+        <h2>Pay the listing fee and submit for review</h2>
+        <p class="step-sub">Your listing stays private until payment and listing details are reviewed by an administrator.</p>
+
+        <div class="review-box">
+          <h3>{{ propertyForm.controls.title.value }}</h3>
+          <p>{{ propertyForm.controls.neighborhood.value }}, {{ propertyForm.controls.subCity.value }}, {{ propertyForm.controls.city.value }}</p>
+          <p class="review-price">{{ propertyForm.controls.rentAmountETB.value | number }} ETB <span>/ month rent</span></p>
+          <p>{{ propertyForm.controls.bedrooms.value }} bedrooms · {{ propertyForm.controls.bathrooms.value }} bathrooms · {{ imageUrls.length }} photos</p>
+          <p>Owner: {{ contactForm.controls.firstName.value }} {{ contactForm.controls.lastName.value }} · {{ ownerEmail }}</p>
+        </div>
+
+        <div class="listing-payment-notice" role="note">
+          <strong>Listing fee: {{ listingFeeETB | number }} ETB per property</strong>
+          <p>Transfer the exact fee, then enter the transaction reference and the HTTPS transaction link supplied by your payment provider. An administrator will verify payment and review your listing. Approval publishes it; submission alone does not.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="paymentMethod">Payment method</label>
+          <select id="paymentMethod" class="form-control" [(ngModel)]="paymentMethod" [ngModelOptions]="{standalone: true}">
+            <option value="">Choose a payment method</option>
+            <option value="Telebirr">Telebirr</option>
+            <option value="CBE">CBE bank transfer</option>
+          </select>
+        </div>
+        @if (paymentMethod === 'Telebirr') {
+          <div class="destination-card">
+            <strong>Telebirr recipient</strong>
+            <span>Kefale Gedefaw</span>
+            <span>0955117065</span>
+          </div>
+        } @else if (paymentMethod === 'CBE') {
+          <div class="destination-card">
+            <strong>CBE account</strong>
+            <span>Kefale Gedefaw</span>
+            <span>1000207193481</span>
+          </div>
+          }
+        <p class="payment-reminder">Please confirm the recipient details before sending money.</p>
+        <div class="form-group">
+          <label class="form-label" for="paymentReference">Transaction reference</label>
+          <input id="paymentReference" type="text" class="form-control" maxlength="200"
+            [(ngModel)]="paymentReference" [ngModelOptions]="{standalone: true}"
+            placeholder="Enter the transfer reference" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="paymentTransactionUrl">Payment transaction link</label>
+          <input id="paymentTransactionUrl" type="url" class="form-control" maxlength="2048" required
+            [(ngModel)]="paymentTransactionUrl" [ngModelOptions]="{standalone: true}"
+            placeholder="Paste the HTTPS transaction or receipt link from your provider" />
+          <small>Required. Admins will open this exact link to review your transaction. Use the link provided by your payment provider.</small>
+        </div>
+      </div>
+    }
+
+      <footer class="wizard-nav-buttons">
+      @if (currentStep > 1) {
+        <button type="button" class="btn btn-outline" (click)="prevStep()" [disabled]="isSubmitting">‹ Previous</button>
+      } @else {
+        <span></span>
+      }
+      @if (currentStep < 3) {
+        <button type="button" class="btn btn-primary" (click)="nextStep()"
+          [disabled]="isUploading || isLoadingContact">Continue ›</button>
+      } @else {
+        <button type="button" class="btn btn-primary" (click)="submitListing()"
+          [disabled]="isSubmitting || isUploading || !paymentMethod || !paymentReference.trim() || !paymentTransactionUrl.trim()">
+          {{ isSubmitting ? 'Submitting listing…' : 'Submit for admin review' }}
+        </button>
+      }
+      </footer>
+    </section>
+  </div>
+</main>

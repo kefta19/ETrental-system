@@ -1,13 +1,15 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AdminService } from '../../../core/services/admin.service';
 import { PlatformSetting } from '../../../core/models/admin.model';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="admin-page">
       <header class="admin-header">
@@ -15,8 +17,10 @@ import { PlatformSetting } from '../../../core/models/admin.model';
           <h1>Platform Settings</h1>
           <p>Configure platform-wide settings and policies</p>
         </div>
+        <a class="plans-link" routerLink="/admin/plans">Manage subscription plans</a>
       </header>
       <div class="admin-content">
+        @if (error) { <div class="error-state" role="alert">{{ error }}</div> }
         @if (isLoading) {
           <div class="loading-state">
             <div class="spinner"></div>
@@ -24,7 +28,7 @@ import { PlatformSetting } from '../../../core/models/admin.model';
           </div>
         } @else if (settings.length === 0) {
           <div class="empty-state">
-            <span class="empty-emoji">⚙️</span>
+            <span class="empty-emoji material-icons-outlined" aria-hidden="true">settings</span>
             <h2>No Settings Found</h2>
             <p>No platform settings are configured.</p>
           </div>
@@ -44,8 +48,12 @@ import { PlatformSetting } from '../../../core/models/admin.model';
                       type="text" 
                       [(ngModel)]="setting.value" 
                       class="value-input"
-                      (blur)="updateSetting(setting)"
                     />
+                    <button class="save-setting" [disabled]="savingKey === setting.key" (click)="updateSetting(setting)">
+                      {{ savingKey === setting.key ? 'Saving…' : 'Save setting' }}
+                    </button>
+                    @if (savedKey === setting.key) { <span class="save-message">Saved</span> }
+                    @if (settingErrors[setting.key]) { <span class="error-message">{{ settingErrors[setting.key] }}</span> }
                   </div>
                   <div class="meta-info">
                     <span class="meta-label">Last updated:</span>
@@ -73,6 +81,10 @@ import { PlatformSetting } from '../../../core/models/admin.model';
       background: white;
       padding: 1.5rem 2rem;
       border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
     }
     .admin-header h1 {
       font-size: 1.5rem;
@@ -195,6 +207,21 @@ import { PlatformSetting } from '../../../core/models/admin.model';
       border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
+    .save-setting {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border: 0;
+      border-radius: 7px;
+      background: #217c64;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .save-setting:disabled { opacity: 0.6; cursor: wait; }
+    .save-message { margin-left: 0.5rem; color: #237044; font-size: 0.8rem; }
+    .error-message, .error-state { color: #991b1b; }
+    .error-state { margin-bottom: 1rem; padding: 0.75rem; background: #fff1f2; border: 1px solid #fecaca; border-radius: 8px; }
+    .plans-link { color: #217c64; font-weight: 700; text-decoration: none; }
     .meta-info {
       display: flex;
       flex-wrap: wrap;
@@ -214,9 +241,21 @@ import { PlatformSetting } from '../../../core/models/admin.model';
 })
 export class SettingsComponent implements OnInit {
   private adminService = inject(AdminService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   settings: PlatformSetting[] = [];
   isLoading = true;
+  error = '';
+  savingKey = '';
+  savedKey = '';
+  settingErrors: Record<string, string> = {};
+  private savedValues: Record<string, string> = {};
+
+  constructor() {
+    this.adminService.pageRefreshRequested$
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.loadSettings());
+  }
 
   ngOnInit() {
     this.loadSettings();
@@ -224,26 +263,45 @@ export class SettingsComponent implements OnInit {
 
   loadSettings() {
     this.isLoading = true;
+    this.error = '';
     this.adminService.getSettings().subscribe({
       next: (res) => {
         this.isLoading = false;
+        this.changeDetector.markForCheck();
         if (res.succeeded && res.data) {
           this.settings = res.data;
+          this.savedValues = Object.fromEntries(res.data.map(setting => [setting.key, setting.value]));
         }
+        this.changeDetector.markForCheck();
       },
-      error: () => {
+      error: (error) => {
         this.isLoading = false;
+        this.error = error.error?.errors?.[0] || 'Unable to load platform settings.';
+        this.changeDetector.markForCheck();
       }
     });
   }
 
   updateSetting(setting: PlatformSetting) {
+    this.savingKey = setting.key;
+    this.savedKey = '';
+    delete this.settingErrors[setting.key];
     this.adminService.updateSetting(setting.key, setting.value).subscribe({
-      next: () => {
-        // Settings updated successfully
+      next: (res) => {
+        this.savingKey = '';
+        if (!res.succeeded || !res.data) {
+          setting.value = this.savedValues[setting.key] ?? setting.value;
+          this.settingErrors[setting.key] = res.errors?.[0] || 'Unable to save this setting.';
+          return;
+        }
+        this.savedValues[setting.key] = res.data.value;
+        setting.value = res.data.value;
+        this.savedKey = setting.key;
       },
-      error: () => {
-        // Handle error
+      error: (error) => {
+        this.savingKey = '';
+        setting.value = this.savedValues[setting.key] ?? setting.value;
+        this.settingErrors[setting.key] = error.error?.errors?.[0] || 'Unable to save this setting.';
       }
     });
   }

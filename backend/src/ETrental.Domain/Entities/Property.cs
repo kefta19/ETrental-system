@@ -5,6 +5,8 @@ namespace ETrental.Domain.Entities;
 
 public class Property : AuditableEntity
 {
+    public const decimal RequiredListingFeeETB = 1000m;
+
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public PropertyType PropertyType { get; set; }
@@ -17,6 +19,7 @@ public class Property : AuditableEntity
     public string Neighborhood { get; set; } = string.Empty;
     public string? Landmark { get; set; }
     public string? StreetAddress { get; set; }
+    public string? VideoUrl { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
 
@@ -49,14 +52,17 @@ public class Property : AuditableEntity
     public string? RejectionCategory { get; set; }
     public DateTime? ModeratedAtUtc { get; set; }
     public string? ModeratedBy { get; set; }
+    public decimal ListingFeeAmountETB { get; set; }
+    public string? ListingFeeProvider { get; set; }
+    public string? ListingFeeReference { get; set; }
+    public string? ListingFeeTransactionUrl { get; set; }
+    public ListingFeeStatus ListingFeeStatus { get; set; } = ListingFeeStatus.NotRequired;
+    public DateTime? ListingFeeVerifiedAtUtc { get; set; }
+    public string? ListingFeeVerifiedBy { get; set; }
 
     // Ownership & Foreign Keys
     public string LandlordId { get; set; } = string.Empty;
     public ApplicationUser Landlord { get; set; } = null!;
-    public Guid? AgencyId { get; set; }
-    public Agency? Agency { get; set; }
-    public string? AssignedAgentId { get; set; }
-    public ApplicationUser? AssignedAgent { get; set; }
 
     // Tenancy & Completed Rental Info
     public DateTime? TenancyStartDateUtc { get; set; }

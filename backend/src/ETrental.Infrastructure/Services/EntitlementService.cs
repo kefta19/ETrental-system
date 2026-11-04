@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ETrental.Application.Common.Interfaces;
 using ETrental.Application.Common.Models;
+using ETrental.Application.Common;
 using ETrental.Application.DTOs.Subscriptions;
 using ETrental.Application.Interfaces;
 using ETrental.Domain.Entities;
@@ -159,6 +160,12 @@ public class EntitlementService : ISubscriptionService
 
     public async Task<Result<SubscriptionDto>> StartSubscriptionAsync(string userId, StartSubscriptionDto dto)
     {
+        var paymentReference = dto.PaymentReference?.Trim();
+        if (!PaymentReferenceValidator.IsSecureTransactionUrl(paymentReference))
+        {
+            return Result<SubscriptionDto>.Failure("Enter the HTTPS transaction URL for this payment.");
+        }
+
         var plan = await _context.SubscriptionPlans
             .FirstOrDefaultAsync(p => p.Id == dto.PlanId && p.IsActive);
 
@@ -190,7 +197,7 @@ public class EntitlementService : ISubscriptionService
             Status = SubscriptionStatus.PendingPayment,
             StartDateUtc = DateTime.UtcNow,
             AmountPaidETB = plan.PriceETB,
-            PaymentTransactionReference = dto.PaymentReference
+            PaymentTransactionReference = paymentReference
         };
 
         _context.Subscriptions.Add(subscription);
@@ -202,7 +209,7 @@ public class EntitlementService : ISubscriptionService
             SubscriptionId = subscription.Id,
             AmountETB = plan.PriceETB,
             Provider = string.IsNullOrWhiteSpace(dto.Provider) ? "Manual" : dto.Provider!,
-            ExternalReference = dto.PaymentReference,
+            ExternalReference = paymentReference,
             IdempotencyKey = $"{userId}:{plan.Id}",
             Status = PaymentStatus.Pending
         };
@@ -226,6 +233,89 @@ public class EntitlementService : ISubscriptionService
             Tier = plan.Tier,
             Status = subscription.Status,
             StartDateUtc = subscription.StartDateUtc,
+            AmountPaidETB = subscription.AmountPaidETB,
+            PaymentTransactionReference = subscription.PaymentTransactionReference,
+            CreatedAtUtc = subscription.CreatedAtUtc
+        });
+    }
+
+    public async Task<Result<SubscriptionDto>> UpdatePendingPaymentAsync(
+        string userId,
+        StartSubscriptionDto dto)
+    {
+        var paymentReference = dto.PaymentReference?.Trim();
+        var provider = dto.Provider?.Trim();
+        if (string.IsNullOrWhiteSpace(paymentReference))
+        {
+            return Result<SubscriptionDto>.Failure("Enter the HTTPS transaction URL for this payment.");
+        }
+
+        if (paymentReference.Length > 200)
+        {
+            return Result<SubscriptionDto>.Failure("The payment reference cannot exceed 200 characters.");
+        }
+
+        if (!PaymentReferenceValidator.IsSecureTransactionUrl(paymentReference))
+        {
+            return Result<SubscriptionDto>.Failure("Enter a valid HTTPS transaction URL for this payment.");
+        }
+
+        if (provider is not ("Telebirr" or "CBE"))
+        {
+            return Result<SubscriptionDto>.Failure("Choose a supported payment method.");
+        }
+
+        var transaction = await _context.PaymentTransactions
+            .Include(t => t.Plan)
+            .FirstOrDefaultAsync(t =>
+                t.UserId == userId &&
+                t.PlanId == dto.PlanId &&
+                t.Status == PaymentStatus.Pending);
+
+        if (transaction == null)
+        {
+            return Result<SubscriptionDto>.Failure(
+                "There is no pending payment for this plan. Refresh the page and try again.");
+        }
+
+        if (!transaction.SubscriptionId.HasValue)
+        {
+            return Result<SubscriptionDto>.Failure(
+                "This pending payment is not linked to a subscription. Contact support for help.");
+        }
+
+        var subscription = await _context.Subscriptions.FirstOrDefaultAsync(s =>
+            s.Id == transaction.SubscriptionId.Value &&
+            s.UserId == userId &&
+            s.Status == SubscriptionStatus.PendingPayment);
+        if (subscription == null)
+        {
+            return Result<SubscriptionDto>.Failure(
+                "This payment is no longer pending. Refresh the page to see its current status.");
+        }
+
+        subscription.PaymentTransactionReference = paymentReference;
+        transaction.Provider = provider;
+        transaction.ExternalReference = paymentReference;
+        transaction.FailureReason = null;
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogAsync(
+            userId,
+            "PendingPaymentDetailsUpdated",
+            "PaymentTransaction",
+            transaction.Id.ToString(),
+            "Updated the reference and provider for a pending subscription payment.");
+
+        return Result<SubscriptionDto>.Success(new SubscriptionDto
+        {
+            Id = subscription.Id,
+            PlanId = transaction.PlanId,
+            PlanName = transaction.Plan.Name,
+            Tier = transaction.Plan.Tier,
+            Status = subscription.Status,
+            StartDateUtc = subscription.StartDateUtc,
+            EndDateUtc = subscription.EndDateUtc,
             AmountPaidETB = subscription.AmountPaidETB,
             PaymentTransactionReference = subscription.PaymentTransactionReference,
             CreatedAtUtc = subscription.CreatedAtUtc
@@ -280,7 +370,10 @@ public class EntitlementService : ISubscriptionService
             {
                 Id = t.Id,
                 UserId = t.UserId,
+                PlanId = t.PlanId,
                 UserEmail = t.User.Email ?? string.Empty,
+                UserFullName = t.User.FirstName + " " + t.User.LastName,
+                UserPhoneNumber = t.User.PhoneNumber,
                 PlanName = t.Plan.Name,
                 AmountETB = t.AmountETB,
                 Provider = t.Provider,
@@ -291,6 +384,11 @@ public class EntitlementService : ISubscriptionService
                 CreatedAtUtc = t.CreatedAtUtc
             })
             .ToListAsync();
+
+        foreach (var transaction in transactions)
+        {
+            transaction.HasEvidenceUrl = PaymentReferenceValidator.IsSecureTransactionUrl(transaction.ExternalReference);
+        }
 
         return Result<List<PaymentTransactionDto>>.Success(transactions);
     }

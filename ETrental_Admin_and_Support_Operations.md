@@ -21,11 +21,10 @@ The Administrative and Support portals are designed to operate, govern, and main
 |  [ Platform KPIs ]  |  +----------------+  +----------------+  +----------------+       |
 |  [ Listing Moderation]| Total Users     |  | Total Properties| | Pending Reviews |       |
 |  [ User Management ]|     4,250        |  |     1,820      |  |    14 Listings  |       |
-|  [ Agency Approvals]|  +----------------+  +----------------+  +----------------+       |
 |  [ Reports/Trust ]  |                                                                   |
 |  [ Support Tickets ]|  URGENT MODERATION QUEUE                                          |
 |  [ Audit Logs ]     |  • Listing #1402: "Furnished G+1 Villa in Bole" (Submitted 1h ago)|
-|  [ System Settings ]|  • Agency #45: "Habesha Realty PLC" (Awaiting TIN Verification)   |
+|  [ System Settings ]|                                                                   |
 |                     |  • User Report #89: Suspicious advance payment request in CMC     |
 +-----------------------------------------------------------------------------------------+
 ```
@@ -151,7 +150,7 @@ To guarantee non-repudiation and regulatory compliance, all sensitive administra
 | `UserId` | `string` | ID of the administrator or support agent |
 | `UserEmail` | `string` | Email of the acting administrator |
 | `Action` | `string` | e.g., `ListingApproved`, `ListingRejected`, `UserSuspended`, `SettingModified` |
-| `EntityName` | `string` | Target entity: `Property`, `User`, `Agency`, `PlatformSetting` |
+| `EntityName` | `string` | Target entity: `Property`, `User`, `PlatformSetting` |
 | `EntityId` | `string` | Primary key identifier of the affected record |
 | `IpAddress` | `string` | Originating client IP address |
 | `OldValues` | `nvarchar(max)` | JSON serialization of state prior to change |

@@ -13,7 +13,7 @@ public static class ApplicationDbContextSeed
         RoleManager<IdentityRole> roleManager)
     {
         // 1. Seed Roles
-        var roles = new[] { "Admin", "Support", "Landlord", "Agency", "Renter" };
+        var roles = new[] { "Admin", "Support", "Landlord", "Renter" };
         foreach (var role in roles)
         {
             if (!await roleManager.RoleExistsAsync(role))
@@ -321,7 +321,11 @@ public static class ApplicationDbContextSeed
         await SeedDemoUsersAsync(context, userManager);
 
         // 6. Seed platform configuration
+                // 6. Seed platform configuration
         await SeedPlatformSettingsAsync(context);
+
+        // 7. Seed demo interactions
+        await SeedSampleInteractionsAsync(context, userManager);
     }
 
     private static async Task SeedDemoUsersAsync(
@@ -355,7 +359,16 @@ public static class ApplicationDbContextSeed
 
         // 5b. Demo renter
         var renterEmail = "renter@etrental.com";
-        if (await userManager.FindByEmailAsync(renterEmail) == null)
+        var existingRenter = await userManager.FindByEmailAsync(renterEmail);
+        if (existingRenter != null)
+        {
+            existingRenter.PasswordHash = userManager.PasswordHasher.HashPassword(existingRenter, "Renter@123456");
+            existingRenter.IsActive = true;
+            existingRenter.EmailConfirmed = true;
+            existingRenter.LockoutEnd = null;
+            await userManager.UpdateAsync(existingRenter);
+        }
+        else
         {
             var renter = new ApplicationUser
             {
@@ -387,235 +400,6 @@ public static class ApplicationDbContextSeed
             }
         }
 
-        // 5c. Verified agency with a manager and an agent
-        var agencyManagerEmail = "agency@etrental.com";
-        var agencyManager = await userManager.FindByEmailAsync(agencyManagerEmail);
-
-        if (agencyManager == null)
-        {
-            agencyManager = new ApplicationUser
-            {
-                UserName = agencyManagerEmail,
-                Email = agencyManagerEmail,
-                EmailConfirmed = true,
-                PhoneNumber = "+251911100100",
-                PhoneNumberConfirmed = true,
-                FirstName = "Daniel",
-                LastName = "Mekonnen",
-                CreatedAtUtc = DateTime.UtcNow,
-                IsActive = true
-            };
-
-            var result = await userManager.CreateAsync(agencyManager, "Agency@123456");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(agencyManager, "Agency");
-            }
-        }
-
-        if (agencyManager != null)
-        {
-            var agency = await context.Agencies.FirstOrDefaultAsync(a => a.OfficialEmail == agencyManagerEmail);
-
-            if (agency == null)
-            {
-                agency = new Agency
-                {
-                    Name = "Habesha Homes Realty",
-                    Description = "A full service property management company in Addis Ababa managing residential and commercial rentals.",
-                    LogoUrl = null,
-                    TaxIdentificationNumber = "0012984765",
-                    BusinessLicenseNumber = "BL-AA-2019-4471",
-                    City = "Addis Ababa",
-                    SubCity = "Bole",
-                    OfficeAddress = "Bole Medhanealem, Millennium Hall, Office 402",
-                    OfficialPhone = "+251911100100",
-                    OfficialEmail = agencyManagerEmail,
-                    Status = AgencyStatus.Verified,
-                    VerifiedAtUtc = DateTime.UtcNow,
-                    VerifiedBy = "seed",
-                    SubmittedAtUtc = DateTime.UtcNow.AddDays(-120)
-                };
-                context.Agencies.Add(agency);
-                await context.SaveChangesAsync();
-            }
-
-            var managerMembership = await context.AgencyMemberships
-                .FirstOrDefaultAsync(m => m.UserId == agencyManager.Id);
-
-            if (managerMembership == null)
-            {
-                context.AgencyMemberships.Add(new AgencyMembership
-                {
-                    AgencyId = agency.Id,
-                    UserId = agencyManager.Id,
-                    Role = AgencyStaffRole.AgencyManager,
-                    IsActive = true,
-                    JoinedAtUtc = DateTime.UtcNow.AddDays(-120)
-                });
-            }
-            else
-            {
-                managerMembership.IsActive = true;
-                managerMembership.Role = AgencyStaffRole.AgencyManager;
-            }
-
-            // Agency agent
-            var agentEmail = "agent@etrental.com";
-            var agent = await userManager.FindByEmailAsync(agentEmail);
-            if (agent == null)
-            {
-                agent = new ApplicationUser
-                {
-                    UserName = agentEmail,
-                    Email = agentEmail,
-                    EmailConfirmed = true,
-                    PhoneNumber = "+251911100200",
-                    PhoneNumberConfirmed = true,
-                    FirstName = "Yonas",
-                    LastName = "Getachew",
-                    CreatedAtUtc = DateTime.UtcNow,
-                    IsActive = true
-                };
-
-                var result = await userManager.CreateAsync(agent, "Agent@123456");
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(agent, "Agency");
-                }
-            }
-
-            if (agent != null)
-            {
-                var agentMembership = await context.AgencyMemberships
-                    .FirstOrDefaultAsync(m => m.UserId == agent.Id);
-
-                if (agentMembership == null)
-                {
-                    context.AgencyMemberships.Add(new AgencyMembership
-                    {
-                        AgencyId = agency.Id,
-                        UserId = agent.Id,
-                        Role = AgencyStaffRole.Agent,
-                        IsActive = true,
-                        JoinedAtUtc = DateTime.UtcNow.AddDays(-60)
-                    });
-                }
-            }
-
-            await context.SaveChangesAsync();
-
-            // One agency owned listing
-            var agencyPropertyExists = await context.Properties
-                .AnyAsync(p => p.AgencyId == agency.Id);
-
-            if (!agencyPropertyExists)
-            {
-                context.Properties.Add(new Property
-                {
-                    Title = "Modern 2-Bedroom Apartment in Bole Sakura managed by Habesha Homes",
-                    Description = "Professionally managed apartment in a gated compound in Bole Sakura. The unit has a fitted kitchen, a private balcony, a water tank with booster pump and a standby generator for the building.",
-                    PropertyType = PropertyType.Apartment,
-                    Status = PropertyStatus.Published,
-                    Region = "Addis Ababa",
-                    City = "Addis Ababa",
-                    SubCity = "Bole",
-                    Neighborhood = "Bole Sakura",
-                    Landmark = "Across from Friendship City Center",
-                    RentAmountETB = 42000,
-                    DepositAmountETB = 42000,
-                    AdvanceMonthsRequired = 3,
-                    MinimumLeaseMonths = 12,
-                    AvailableFromDate = DateTime.UtcNow,
-                    Bedrooms = 2,
-                    Bathrooms = 2,
-                    AreaSquareMeters = 110,
-                    Furnishing = FurnishingStatus.SemiFurnished,
-                    HasWaterTank = true,
-                    HasGenerator = true,
-                    HasSecurityGuard = true,
-                    HasParking = true,
-                    HasElevator = true,
-                    HasWifi = true,
-                    HasBalcony = true,
-                    WaterBillIncluded = false,
-                    ElectricityBillIncluded = false,
-                    LandlordId = agencyManager.Id,
-                    AgencyId = agency.Id,
-                    Images = new List<PropertyImage>
-                    {
-                        new() { ImageUrl = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800", IsPrimary = true, DisplayOrder = 0 }
-                    }
-                });
-
-                await context.SaveChangesAsync();
-            }
-        }
-
-        // 5d. A second agency, used to prove that agencies cannot see each other's data
-        var otherAgencyEmail = "otheragency@etrental.com";
-        var otherManager = await userManager.FindByEmailAsync(otherAgencyEmail);
-
-        if (otherManager == null)
-        {
-            otherManager = new ApplicationUser
-            {
-                UserName = otherAgencyEmail,
-                Email = otherAgencyEmail,
-                EmailConfirmed = true,
-                PhoneNumber = "+251911300300",
-                PhoneNumberConfirmed = true,
-                FirstName = "Hiwot",
-                LastName = "Alemu",
-                CreatedAtUtc = DateTime.UtcNow,
-                IsActive = true
-            };
-
-            var result = await userManager.CreateAsync(otherManager, "OtherAgency@123456");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(otherManager, "Agency");
-            }
-        }
-
-        if (otherManager != null)
-        {
-            var otherAgency = await context.Agencies.FirstOrDefaultAsync(a => a.OfficialEmail == otherAgencyEmail);
-
-            if (otherAgency == null)
-            {
-                otherAgency = new Agency
-                {
-                    Name = "Blue Nile Property Services",
-                    Description = "An independent property services company based in Kirkos.",
-                    TaxIdentificationNumber = "0044556677",
-                    BusinessLicenseNumber = "BL-AA-2021-8830",
-                    City = "Addis Ababa",
-                    SubCity = "Kirkos",
-                    OfficeAddress = "Kirkos, Kg City Center, Office 12",
-                    OfficialPhone = "+251911300300",
-                    OfficialEmail = otherAgencyEmail,
-                    Status = AgencyStatus.Pending,
-                    SubmittedAtUtc = DateTime.UtcNow.AddDays(-5)
-                };
-                context.Agencies.Add(otherAgency);
-                await context.SaveChangesAsync();
-            }
-
-            var otherMembership = await context.AgencyMemberships.FirstOrDefaultAsync(m => m.UserId == otherManager.Id);
-            if (otherMembership == null)
-            {
-                context.AgencyMemberships.Add(new AgencyMembership
-                {
-                    AgencyId = otherAgency.Id,
-                    UserId = otherManager.Id,
-                    Role = AgencyStaffRole.AgencyManager,
-                    IsActive = true,
-                    JoinedAtUtc = DateTime.UtcNow.AddDays(-5)
-                });
-                await context.SaveChangesAsync();
-            }
-        }
     }
 
     private static async Task SeedPlatformSettingsAsync(ApplicationDbContext context)
@@ -637,7 +421,6 @@ public static class ApplicationDbContextSeed
             new() { Key = "Favorite.FreeLimit", Value = "5", Description = "Number of properties a Free renter can save to favourites.", Category = "Subscriptions" },
             new() { Key = "Support.ResponseSlaHours", Value = "24", Description = "Target first response time for a support ticket.", Category = "Support" },
             new() { Key = "Support.SafetySlaHours", Value = "2", Description = "Target response time for safety and fraud reports.", Category = "Support" },
-            new() { Key = "Agency.VerificationSlaHours", Value = "72", Description = "Target turnaround time for agency verification.", Category = "Agencies" },
             new() { Key = "Platform.MaintenanceMode", Value = "false", Description = "When true the public search pages show a maintenance notice.", Category = "Platform" },
             new() { Key = "Platform.SupportEmail", Value = "support@etrental.com", Description = "Public support email address displayed to users.", Category = "Platform" },
             new() { Key = "Platform.Currency", Value = "ETB", Description = "Currency used for every price on the platform.", Category = "Platform" }
@@ -646,4 +429,165 @@ public static class ApplicationDbContextSeed
         context.PlatformSettings.AddRange(settings);
         await context.SaveChangesAsync();
     }
+    private static async Task SeedSampleInteractionsAsync(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager)
+    {
+        var renter = await userManager.FindByEmailAsync("renter@etrental.com");
+        var properties = await context.Properties.Take(3).ToListAsync();
+
+        if (renter == null || properties.Count == 0) return;
+
+        var prop1 = properties[0];
+        var prop2 = properties.Count > 1 ? properties[1] : prop1;
+
+        // 1. Favorites
+        if (!await context.Favorites.AnyAsync(f => f.UserId == renter.Id))
+        {
+            context.Favorites.Add(new Favorite
+            {
+                UserId = renter.Id,
+                PropertyId = prop1.Id,
+                CreatedAtUtc = DateTime.UtcNow.AddDays(-3)
+            });
+            if (prop2.Id != prop1.Id)
+            {
+                context.Favorites.Add(new Favorite
+                {
+                    UserId = renter.Id,
+                    PropertyId = prop2.Id,
+                    CreatedAtUtc = DateTime.UtcNow.AddDays(-1)
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+
+        // 2. Saved Searches
+        if (!await context.SavedSearches.AnyAsync(s => s.UserId == renter.Id))
+        {
+            context.SavedSearches.AddRange(
+                new SavedSearch
+                {
+                    UserId = renter.Id,
+                    Name = "Bole 2-Bedroom Apartment",
+                    City = "Addis Ababa",
+                    SubCity = "Bole",
+                    MinPriceETB = 25000,
+                    MaxPriceETB = 55000,
+                    MinBedrooms = 2,
+                    PropertyType = "Apartment",
+                    AlertEmailEnabled = true,
+                    CreatedAtUtc = DateTime.UtcNow.AddDays(-10)
+                },
+                new SavedSearch
+                {
+                    UserId = renter.Id,
+                    Name = "CMC Modern Condominium",
+                    City = "Addis Ababa",
+                    SubCity = "CMC",
+                    MinPriceETB = 20000,
+                    MaxPriceETB = 40000,
+                    MinBedrooms = 2,
+                    PropertyType = "Condominium",
+                    AlertEmailEnabled = true,
+                    CreatedAtUtc = DateTime.UtcNow.AddDays(-5)
+                }
+            );
+            await context.SaveChangesAsync();
+        }
+
+        // 3. Inquiries
+        if (!await context.PropertyInquiries.AnyAsync(i => i.RenterId == renter.Id))
+        {
+            context.PropertyInquiries.AddRange(
+                new PropertyInquiry
+                {
+                    PropertyId = prop1.Id,
+                    RenterId = renter.Id,
+                    InitialMessage = "Hello! Is this property still available for move-in next month? I would love to schedule a visit.",
+                    LandlordReply = "Hello! Yes, it is available. The advance requested is 3 months and viewing is available this Saturday.",
+                    RepliedAtUtc = DateTime.UtcNow.AddDays(-1),
+                    IsReadByLandlord = true,
+                    IsReadByRenter = false,
+                    CreatedAtUtc = DateTime.UtcNow.AddDays(-2)
+                },
+                new PropertyInquiry
+                {
+                    PropertyId = prop2.Id,
+                    RenterId = renter.Id,
+                    InitialMessage = "Greetings, does the monthly rent include water, parking, and standby backup generator?",
+                    LandlordReply = "Good morning! Yes, generator fuel for common power and 1 dedicated parking bay are included.",
+                    RepliedAtUtc = DateTime.UtcNow.AddHours(-14),
+                    IsReadByLandlord = true,
+                    IsReadByRenter = true,
+                    CreatedAtUtc = DateTime.UtcNow.AddDays(-1)
+                }
+            );
+            await context.SaveChangesAsync();
+        }
+
+        // 4. Viewing Appointments
+        if (!await context.ViewingAppointments.AnyAsync(a => a.RenterId == renter.Id))
+        {
+            context.ViewingAppointments.AddRange(
+                new ViewingAppointment
+                {
+                    PropertyId = prop1.Id,
+                    RenterId = renter.Id,
+                    RequestedDateTimeUtc = DateTime.UtcNow.AddDays(2).Date.AddHours(10),
+                    ConfirmedDateTimeUtc = DateTime.UtcNow.AddDays(2).Date.AddHours(10),
+                    Status = AppointmentStatus.Confirmed,
+                    RenterNotes = "I work nearby in Bole Atlas and can come at 10:00 AM sharp.",
+                    HostNotes = "Looking forward to meeting you. Meet at the compound security gate.",
+                    CreatedAtUtc = DateTime.UtcNow.AddDays(-2)
+                },
+                new ViewingAppointment
+                {
+                    PropertyId = prop2.Id,
+                    RenterId = renter.Id,
+                    RequestedDateTimeUtc = DateTime.UtcNow.AddDays(4).Date.AddHours(14),
+                    ConfirmedDateTimeUtc = null,
+                    Status = AppointmentStatus.Requested,
+                    RenterNotes = "Would love to see the compound amenities.",
+                    CreatedAtUtc = DateTime.UtcNow.AddDays(-1)
+                }
+            );
+            await context.SaveChangesAsync();
+        }
+
+        // 5. Rental Applications
+        if (!await context.RentalApplications.AnyAsync(a => a.ApplicantId == renter.Id))
+        {
+            context.RentalApplications.AddRange(
+                new RentalApplication
+                {
+                    PropertyId = prop1.Id,
+                    ApplicantId = renter.Id,
+                    ProposedMoveInDate = DateTime.UtcNow.AddDays(14).Date,
+                    ProposedLeaseDurationMonths = 12,
+                    ProposedOccupantsCount = 2,
+                    EmploymentOrIncomeSummary = "Senior Software Engineer at Commercial Bank of Ethiopia IT. Monthly Net Salary: 78,000 ETB.",
+                    AdditionalNotes = "Non-smoker, no pets. Can pay 3-6 months advance upon lease signature.",
+                    Status = ApplicationStatus.UnderReview,
+                    CreatedAtUtc = DateTime.UtcNow.AddDays(-3)
+                },
+                new RentalApplication
+                {
+                    PropertyId = prop2.Id,
+                    ApplicantId = renter.Id,
+                    ProposedMoveInDate = DateTime.UtcNow.AddDays(30).Date,
+                    ProposedLeaseDurationMonths = 12,
+                    ProposedOccupantsCount = 1,
+                    EmploymentOrIncomeSummary = "Remote Tech Consultant. Verified steady monthly income over 85,000 ETB.",
+                    AdditionalNotes = "Require quiet residential area with stable internet.",
+                    Status = ApplicationStatus.Accepted,
+                    HostDecisionNotes = "Verified employment letter and national ID. Application approved.",
+                    DecidedAtUtc = DateTime.UtcNow.AddDays(-1),
+                    CreatedAtUtc = DateTime.UtcNow.AddDays(-5)
+                }
+            );
+            await context.SaveChangesAsync();
+        }
+    }
 }
+

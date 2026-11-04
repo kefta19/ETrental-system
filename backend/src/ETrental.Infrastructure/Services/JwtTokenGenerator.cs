@@ -18,7 +18,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         _options = options;
     }
 
-    public (string Token, DateTime Expiration) GenerateToken(ApplicationUser user, IList<string> roles, Guid? agencyId = null)
+    public (string Token, DateTime Expiration) GenerateToken(ApplicationUser user, IList<string> roles)
     {
         var secret = _options.Secret;
         var issuer = _options.Issuer;
@@ -46,11 +46,6 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         foreach (var role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
-        }
-
-        if (agencyId.HasValue)
-        {
-            claims.Add(new Claim("AgencyId", agencyId.Value.ToString()));
         }
 
         var expiration = DateTime.UtcNow.AddMinutes(expirationMinutes);

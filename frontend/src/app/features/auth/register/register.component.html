@@ -1,139 +1,140 @@
-<div class="auth-wrapper">
-  <div class="auth-card">
-    <div class="auth-header">
-      <h2>Create Your ETrental Account</h2>
-      <p>Join the Ethiopian rental property platform.</p>
+<div class="auth-shell">
+  <aside class="auth-visual">
+    <img
+      class="visual-image"
+      src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=85"
+      alt="Modern home with a welcoming outdoor space"
+    />
+    <div class="visual-overlay"></div>
+    <div class="visual-content">
+      <a class="brand" routerLink="/" aria-label="ETrental home">
+        <img class="brand-image" src="/etrental-logo.png" alt="" />
+        <span>ETrental</span>
+      </a>
+      <div class="visual-copy">
+        <span class="eyebrow">Make yourself at home</span>
+        <h1>Your next chapter<br />starts here.</h1>
+        <p>Join a community making it easier to find and offer a place to call home.</p>
+      </div>
+      <span class="visual-caption">Thoughtful homes. Easier moves.</span>
     </div>
+  </aside>
 
-    @if (errorMessage) {
-      <div class="alert alert-danger">{{ errorMessage }}</div>
-    }
-
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-      <div class="role-selector">
-        <button
-          type="button"
-          class="role-tab"
-          [class.active]="registerForm.get('role')?.value === 'renter'"
-          (click)="setRole('renter')"
-        >
-          Renter
-        </button>
-        <button
-          type="button"
-          class="role-tab"
-          [class.active]="registerForm.get('role')?.value === 'landlord'"
-          (click)="setRole('landlord')"
-        >
-          Landlord
-        </button>
-        <button
-          type="button"
-          class="role-tab"
-          [class.active]="registerForm.get('role')?.value === 'agency'"
-          (click)="setRole('agency')"
-        >
-          Agency
-        </button>
+  <main class="auth-content">
+    <section class="auth-card" aria-labelledby="register-title">
+      <a class="form-brand" routerLink="/" aria-label="ETrental home">
+        <img src="/etrental-logo.png" alt="ETrental" />
+      </a>
+      <div class="auth-header">
+        <h2 id="register-title">Create your account</h2>
       </div>
 
-      <div class="form-row">
-        <div class="form-group col">
-          <label class="form-label">First Name</label>
-          <input type="text" formControlName="firstName" class="form-control" placeholder="Abebe" />
-        </div>
-        <div class="form-group col">
-          <label class="form-label">Last Name</label>
-          <input type="text" formControlName="lastName" class="form-control" placeholder="Kebede" />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Email Address</label>
-        <input
-          type="email"
-          formControlName="email"
-          class="form-control"
-          placeholder="abebe@example.com"
-        />
-      </div>
-
-      <div class="form-row">
-        <div class="form-group col">
-          <label class="form-label">Ethiopian Phone Number</label>
-          <input
-            type="tel"
-            formControlName="phoneNumber"
-            class="form-control"
-            placeholder="+251 91 123 4567"
-          />
-        </div>
-        <div class="form-group col">
-          <label class="form-label">Password (Min. 8 chars, uppercase, digit, special char)</label>
-          <div class="password-field">
-            <input
-              [type]="hidePassword ? 'password' : 'text'"
-              formControlName="password"
-              class="form-control"
-              placeholder="••••••••"
-            />
-            <button type="button" class="toggle-password" (click)="togglePassword()">
-              {{ hidePassword ? '👁' : '🙈' }}
-            </button>
-          </div>
-          @if (registerForm.get('password')?.touched && registerForm.get('password')?.invalid) {
-            <div class="password-hint">{{ passwordStrengthMessage }}</div>
-          }
-        </div>
-      </div>
-
-      @if (registerForm.get('role')?.value === 'agency') {
-        <div class="agency-box">
-          <h4 class="agency-title">Agency Registration Details</h4>
-          <div class="form-group">
-            <label class="form-label">Company / Brokerage Name</label>
-            <input
-              type="text"
-              formControlName="agencyName"
-              class="form-control"
-              placeholder="e.g. Addis Prime Real Estate"
-            />
-          </div>
-          <div class="form-row">
-            <div class="form-group col">
-              <label class="form-label">TIN Number</label>
-              <input
-                type="text"
-                formControlName="taxIdentificationNumber"
-                class="form-control"
-                placeholder="0012345678"
-              />
-            </div>
-            <div class="form-group col">
-              <label class="form-label">Sub-City</label>
-              <input
-                type="text"
-                formControlName="subCity"
-                class="form-control"
-                placeholder="Bole"
-              />
-            </div>
-          </div>
-        </div>
+      @if (errorMessage) {
+        <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
       }
 
-      <button
-        type="submit"
-        class="btn btn-primary btn-block"
-        [disabled]="registerForm.invalid || isLoading"
-      >
-        {{ isLoading ? 'Creating Account...' : 'Complete Registration' }}
-      </button>
-    </form>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <div class="role-selector" aria-label="Choose your account type">
+          <button
+            type="button"
+            class="role-tab"
+            [class.active]="registerForm.get('role')?.value === 'renter'"
+            [attr.aria-pressed]="registerForm.get('role')?.value === 'renter'"
+            (click)="setRole('renter')"
+          >
+            Renter
+          </button>
+          <button
+            type="button"
+            class="role-tab"
+            [class.active]="registerForm.get('role')?.value === 'landlord'"
+            [attr.aria-pressed]="registerForm.get('role')?.value === 'landlord'"
+            (click)="setRole('landlord')"
+          >
+            Landlord
+          </button>
+        </div>
 
-    <div class="auth-footer">
-      Already have an account?
-      <a routerLink="/login" class="link-primary">Sign In</a>
-    </div>
-  </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label class="form-label" for="register-first-name">First name</label>
+            <input id="register-first-name" type="text" formControlName="firstName" class="form-control" placeholder="Abebe" autocomplete="given-name" />
+          </div>
+          <div class="form-group col">
+            <label class="form-label" for="register-last-name">Last name</label>
+            <input id="register-last-name" type="text" formControlName="lastName" class="form-control" placeholder="Kebede" autocomplete="family-name" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="register-email">Email address</label>
+          <input
+            id="register-email"
+            type="email"
+            formControlName="email"
+            class="form-control"
+            placeholder="abebe@example.com"
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col">
+            <label class="form-label" for="register-phone">Phone number</label>
+            <input
+              id="register-phone"
+              type="tel"
+              formControlName="phoneNumber"
+              class="form-control"
+              placeholder="+251 91 123 4567"
+              autocomplete="tel"
+            />
+          </div>
+          <div class="form-group col">
+            <label class="form-label" for="register-password">Password</label>
+            <div class="password-field">
+              <input
+                id="register-password"
+                [type]="hidePassword ? 'password' : 'text'"
+                formControlName="password"
+                class="form-control"
+                placeholder="8+ characters"
+                autocomplete="new-password"
+                aria-describedby="password-requirement"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                (click)="togglePassword()"
+                [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'"
+              >
+                <span class="material-icons-outlined" aria-hidden="true">
+                  {{ hidePassword ? 'visibility' : 'visibility_off' }}
+                </span>
+              </button>
+            </div>
+            <p id="password-requirement" class="visually-hidden">
+              Use 8+ characters with an uppercase letter, number, and special character.
+            </p>
+            @if (registerForm.get('password')?.touched && registerForm.get('password')?.invalid) {
+              <div class="password-error">{{ passwordStrengthMessage }}</div>
+            }
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="btn-block"
+          [disabled]="registerForm.invalid || isLoading"
+        >
+          {{ isLoading ? 'Creating Account...' : 'Create account' }}
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Already have an account?
+        <a routerLink="/login" class="link-primary">Sign in</a>
+      </div>
+    </section>
+  </main>
 </div>

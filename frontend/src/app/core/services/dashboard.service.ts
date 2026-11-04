@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../config/api.config';
 import { ApiResponse } from '../models/auth.model';
-import { AgencyDashboard, LandlordDashboard, RenterDashboard } from '../models/dashboard.model';
+import { LandlordDashboard, RenterDashboard } from '../models/dashboard.model';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +20,4 @@ export class DashboardService {
     return this.http.get<ApiResponse<LandlordDashboard>>(`${this.API_URL}/landlord`);
   }
 
-  getAgencyDashboard(): Observable<ApiResponse<AgencyDashboard>> {
-    return this.http.get<ApiResponse<AgencyDashboard>>(`${this.API_URL}/agency`);
-  }
 }

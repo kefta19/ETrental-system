@@ -7,8 +7,6 @@ export interface User {
   phoneNumber: string;
   profilePictureUrl?: string | null;
   roles: string[];
-  agencyId?: string | null;
-  agencyName?: string | null;
   subscriptionTier: string;
 }
 

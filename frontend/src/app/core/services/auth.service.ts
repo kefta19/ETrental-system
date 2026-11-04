@@ -21,18 +21,37 @@ export class AuthService {
   currentUser = signal<User | null>(this.getStoredUser());
   isAuthenticated = computed(() => !!this.currentUser());
   userRole = computed(() => this.currentUser()?.roles[0] || null);
-  isLandlord = computed(() => this.currentUser()?.roles.includes('Landlord') ?? false);
-  isAgency = computed(() => this.currentUser()?.roles.includes('Agency') ?? false);
-  isAdmin = computed(() => this.currentUser()?.roles.includes('Admin') ?? false);
-  isRenter = computed(() => this.currentUser()?.roles.includes('Renter') ?? false);
+  isLandlord = computed(() => this.hasRole('Landlord'));
+  isAdmin = computed(() => this.hasRole('Admin'));
+  isRenter = computed(() => this.hasRole('Renter'));
 
   constructor() {
-    // If token exists, optionally verify with /me
+    // Verify a stored token, but never clear a session that was just created by a
+    // login/register request if this background check fails late.
     if (this.getToken()) {
+      const tokenAtStartup = this.getToken();
       this.fetchCurrentUser().subscribe({
-        error: () => this.logout()
+        error: () => {
+          if (this.getToken() === tokenAtStartup) {
+            this.clearSession();
+          }
+        }
       });
     }
+  }
+
+  /** Case-insensitive role check so roles such as "admin" also work. */
+  hasRole(role: string): boolean {
+    return this.currentUser()?.roles.some(r => r.toLowerCase() === role.toLowerCase()) ?? false;
+  }
+
+  /** Landing page for the signed-in user's role. */
+  dashboardRoute(user: User | null = this.currentUser()): string {
+    const roles = (user?.roles ?? []).map(r => r.toLowerCase());
+    if (roles.includes('admin')) return '/admin/dashboard';
+    if (roles.includes('landlord')) return '/landlord/dashboard';
+    if (roles.includes('renter')) return '/renter/dashboard';
+    return '/renter/dashboard';
   }
 
   register(data: any): Observable<ApiResponse<AuthResponse>> {
@@ -66,12 +85,29 @@ export class AuthService {
     );
   }
 
+  syncProfile(
+    profile: Pick<User, 'firstName' | 'lastName' | 'email' | 'phoneNumber'>
+      & Partial<Pick<User, 'profilePictureUrl'>>,
+  ): void {
+    const current = this.currentUser();
+    if (!current) return;
+
+    const updated: User = { ...current, ...profile, fullName: `${profile.firstName} ${profile.lastName}`.trim() };
+    this.currentUser.set(updated);
+    localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+  }
+
   logout(): void {
+    this.clearSession();
+    this.router.navigate(['/login']);
+  }
+
+  /** Drops the stored session without navigating (used for stale tokens). */
+  private clearSession(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
     this.currentUser.set(null);
-    this.router.navigate(['/login']);
   }
 
   getToken(): string | null {

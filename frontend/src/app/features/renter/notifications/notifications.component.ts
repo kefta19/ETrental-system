@@ -154,7 +154,6 @@ export class NotificationsComponent implements OnInit {
     [NotificationType.Inquiry]: 'Inquiry',
     [NotificationType.Appointment]: 'Appointment',
     [NotificationType.Application]: 'Application',
-    [NotificationType.Agency]: 'Agency',
     [NotificationType.Support]: 'Support',
     [NotificationType.Subscription]: 'Subscription',
     [NotificationType.Security]: 'Security',
@@ -231,8 +230,14 @@ export class NotificationsComponent implements OnInit {
       this.markAsRead(item.id);
     }
     if (item.linkUrl) {
-      this.router.navigateByUrl(item.linkUrl);
+      this.router.navigateByUrl(this.resolveNotificationLink(item.linkUrl));
     }
+  }
+
+  private resolveNotificationLink(linkUrl: string): string {
+    if (linkUrl === '/landlord/inquiries') return '/landlord/messages';
+    if (linkUrl === '/renter/inquiries') return '/renter/messages';
+    return linkUrl;
   }
 
   typeLabel(type: NotificationType): string {

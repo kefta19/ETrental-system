@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProfileService } from '../../../core/services/profile.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ChangePasswordDto, UpdateProfileDto, UserProfile } from '../../../core/models/profile.model';
 
 interface ProfileDetails extends UserProfile {
@@ -18,7 +19,7 @@ interface ProfileDetails extends UserProfile {
         <div>
           <span class="eyebrow">Account Settings</span>
           <h1>My Profile</h1>
-          <p>Keep your contact details current so hosts can reach you quickly.</p>
+          <p>Manage your personal details, account information, and security settings.</p>
         </div>
         @if (profile(); as data) {
           <span class="badge badge-green">{{ data.subscriptionTier }} plan</span>
@@ -38,6 +39,29 @@ interface ProfileDetails extends UserProfile {
           </div>
         </div>
       } @else {
+        @if (profile(); as data) {
+          <section class="profile-hero">
+            @if (data.profilePictureUrl) {
+              <img class="profile-avatar" [src]="data.profilePictureUrl" [alt]="data.fullName + ' profile photo'" />
+            } @else {
+              <span class="profile-avatar profile-avatar-initials">
+                {{ data.firstName.charAt(0) }}{{ data.lastName.charAt(0) }}
+              </span>
+            }
+            <div class="profile-hero-details">
+              <span class="eyebrow">
+                {{ data.roles.includes('Landlord') ? 'LANDLORD ACCOUNT' : 'RENTER ACCOUNT' }}
+              </span>
+              <h2>{{ data.fullName }}</h2>
+              <p>{{ data.email }}</p>
+            </div>
+            <div class="profile-hero-badges">
+              @for (role of data.roles; track role) {
+                <span class="badge badge-green">{{ role }}</span>
+              }
+            </div>
+          </section>
+        }
         @if (saveErrors().length > 0) {
           <div class="alert alert-danger">
             <strong>We could not save your profile.</strong>
@@ -54,7 +78,7 @@ interface ProfileDetails extends UserProfile {
           <div class="panel">
             <div class="panel-header">
               <span class="panel-title">Personal details</span>
-              <span class="muted">Visible to hosts you contact</span>
+              <span class="muted">Used for your account and property listings</span>
             </div>
             <div class="panel-body">
               <div class="form-group">
@@ -121,6 +145,11 @@ interface ProfileDetails extends UserProfile {
             <div class="panel-body">
               @if (profile(); as data) {
                 <div class="fact-row">
+                  <span class="stat-label">Account ID</span>
+                  <span class="fact-value">{{ data.id }}</span>
+                </div>
+                <div class="divider"></div>
+                <div class="fact-row">
                   <span class="stat-label">Email</span>
                   <span class="fact-value">{{ data.email }}</span>
                 </div>
@@ -142,11 +171,6 @@ interface ProfileDetails extends UserProfile {
                 <div class="fact-row">
                   <span class="stat-label">Subscription tier</span>
                   <span class="fact-value">{{ data.subscriptionTier }}</span>
-                </div>
-                <div class="divider"></div>
-                <div class="fact-row">
-                  <span class="stat-label">Agency</span>
-                  <span class="fact-value">{{ data.agencyName || 'Independent renter' }}</span>
                 </div>
                 <div class="divider"></div>
                 <div class="fact-row">
@@ -216,6 +240,53 @@ interface ProfileDetails extends UserProfile {
     </div>
   `,
   styles: [`
+    .profile-hero {
+      display: flex;
+      align-items: center;
+      gap: .9rem;
+      margin-bottom: 1rem;
+      padding: .9rem 1rem;
+      border: 1px solid #e2e9e3;
+      border-radius: 12px;
+      background: linear-gradient(120deg, #fff 0%, #f1f8f3 100%);
+    }
+    .profile-avatar {
+      display: grid;
+      width: 58px;
+      height: 58px;
+      flex: 0 0 58px;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 50%;
+      background: #e2f1e7;
+      color: #176b4d;
+      font-size: 1.1rem;
+      font-weight: 800;
+      object-fit: cover;
+    }
+    .profile-hero-details {
+      min-width: 0;
+      flex: 1;
+    }
+    .profile-hero-details h2 {
+      margin: .1rem 0;
+      color: #142820;
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+    .profile-hero-details p {
+      overflow: hidden;
+      color: #718078;
+      font-size: .82rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .profile-hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: .35rem;
+    }
     .fact-row {
       display: flex;
       flex-wrap: wrap;
@@ -224,6 +295,8 @@ interface ProfileDetails extends UserProfile {
       justify-content: space-between;
     }
     .fact-value {
+      max-width: 70%;
+      overflow-wrap: anywhere;
       font-weight: 600;
       color: var(--secondary);
       text-align: right;
@@ -248,10 +321,23 @@ interface ProfileDetails extends UserProfile {
     .alert-actions {
       margin-top: 0.5rem;
     }
+
+    @media (max-width: 600px) {
+      .profile-hero {
+        flex-wrap: wrap;
+      }
+      .profile-hero-badges {
+        width: 100%;
+        justify-content: flex-start;
+        padding-left: 3.5rem;
+      }
+    }
   `]
 })
 export class ProfileComponent implements OnInit {
   private profileService = inject(ProfileService);
+  private authService = inject(AuthService);
+  private changeDetector = inject(ChangeDetectorRef);
 
   readonly profile = signal<UserProfile | null>(null);
   readonly accountCreated = signal<string | null>(null);
@@ -294,13 +380,16 @@ export class ProfileComponent implements OnInit {
           this.phoneNumber = details.phoneNumber ?? '';
           this.profilePictureUrl = details.profilePictureUrl ?? '';
           this.accountCreated.set(details.createdAtUtc ?? null);
+          this.changeDetector.markForCheck();
           return;
         }
         this.error.set(res.errors.length > 0 ? res.errors.join(' ') : 'The profile service returned an empty response.');
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.loading.set(false);
         this.error.set('We could not reach the server. Please check your connection and try again.');
+        this.changeDetector.markForCheck();
       }
     });
   }
@@ -340,6 +429,13 @@ export class ProfileComponent implements OnInit {
           this.lastName = details.lastName;
           this.phoneNumber = details.phoneNumber ?? '';
           this.profilePictureUrl = details.profilePictureUrl ?? '';
+          this.authService.syncProfile({
+            firstName: details.firstName,
+            lastName: details.lastName,
+            email: details.email,
+            phoneNumber: details.phoneNumber ?? '',
+            profilePictureUrl: details.profilePictureUrl ?? null,
+          });
           this.showValidation = false;
           this.savedMessage.set('Your profile has been updated.');
         } else {

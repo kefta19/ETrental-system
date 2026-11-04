@@ -1,5 +1,7 @@
 # ETrental: Project Assessment and Gap Analysis
 
+> **Historical assessment:** This proposal predates the Agency-role removal. Agency-specific architecture and gap references below are superseded and are not supported product functionality.
+
 **Project Name:** ETrental — Online Rental Property Marketplace  
 **Target Market:** Ethiopia (Prices in Ethiopian Birr — ETB)  
 **Reference Website:** Rentola (`https://rentola.com.br`)  

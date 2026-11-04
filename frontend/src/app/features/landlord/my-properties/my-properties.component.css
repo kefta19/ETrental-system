@@ -478,3 +478,142 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .my-properties-page {
+    padding: 1.25rem 0.75rem 2rem;
+  }
+
+  .page-header {
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .page-header > a {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .status-filter-bar {
+    gap: 0.35rem;
+    margin-bottom: 1.25rem;
+    padding: 0.4rem;
+  }
+
+  .filter-chip {
+    flex: 1 1 auto;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.8rem;
+  }
+
+  .property-image-section {
+    height: 180px;
+  }
+
+  .property-details-section {
+    padding: 1rem;
+  }
+
+  .property-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .property-actions-section {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    min-width: 0;
+  }
+
+  .btn-action {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.55rem 0.4rem;
+    overflow-wrap: anywhere;
+  }
+
+  .modal-card {
+    max-height: calc(100dvh - 2rem);
+  }
+
+  .modal-header,
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .modal-footer {
+    flex-wrap: wrap;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .my-properties-page {
+    padding-right: 0.6rem;
+    padding-left: 0.6rem;
+  }
+
+  .property-price-section {
+    min-width: 0;
+  }
+
+  .price-amount {
+    font-size: 1.25rem;
+  }
+
+  .property-actions-section {
+    grid-template-columns: 1fr;
+  }
+}
+.payment-error {
+  color: #b91c1c;
+  font-size: .875rem;
+}
+
+.listing-fee-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  width: fit-content;
+  border: 1px solid transparent;
+}
+
+.listing-fee-badge.fee-verified {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.listing-fee-badge.fee-pending {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.listing-fee-badge.fee-unpaid {
+  background: #f8fafc;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.listing-fee-badge .fee-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+}

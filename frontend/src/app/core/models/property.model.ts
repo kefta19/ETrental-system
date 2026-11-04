@@ -5,7 +5,7 @@ export enum PropertyType {
   GPlusOne = 3,
   Studio = 4,
   ServiceQuarter = 5,
-  Commercial = 6
+  Commercial = 6,
 }
 
 export enum PropertyStatus {
@@ -16,13 +16,13 @@ export enum PropertyStatus {
   Published = 4,
   Unavailable = 5,
   Rented = 6,
-  Archived = 7
+  Archived = 7,
 }
 
 export enum FurnishingStatus {
   Unfurnished = 0,
   SemiFurnished = 1,
-  FullyFurnished = 2
+  FullyFurnished = 2,
 }
 
 export interface PropertySummary {
@@ -35,6 +35,7 @@ export interface PropertySummary {
   subCity: string;
   neighborhood: string;
   landmark?: string | null;
+  videoUrl?: string | null;
   rentAmountETB: number;
   depositAmountETB: number;
   advanceMonthsRequired: number;
@@ -50,8 +51,15 @@ export interface PropertySummary {
   primaryImageUrl?: string | null;
   imageUrls: string[];
   landlordName: string;
+  landlordPhone?: string | null;
+  landlordEmail?: string | null;
   isVerifiedHost: boolean;
   createdAtUtc: string;
+  listingFeeAmountETB?: number;
+  listingFeeProvider?: string | null;
+  listingFeeReference?: string | null;
+  listingFeeTransactionUrl?: string | null;
+  listingFeeStatus?: number | string;
 }
 
 export interface Property extends PropertySummary {
@@ -66,10 +74,7 @@ export interface Property extends PropertySummary {
   waterBillIncluded: boolean;
   electricityBillIncluded: boolean;
   landlordId: string;
-  landlordPhone: string;
-  landlordEmail: string;
-  agencyId?: string | null;
-  agencyName?: string | null;
+  contactLocked: boolean;
   rejectionReason?: string | null;
   rejectionCategory?: string | null;
   tenancyStartDateUtc?: string | null;
@@ -92,6 +97,10 @@ export interface PropertyFilter {
   maxBedrooms?: number;
   minBathrooms?: number;
   maxAdvanceMonths?: number;
+  location?: string;
+  minArea?: number;
+  hasBalcony?: boolean;
+  furnished?: boolean;
   hasWaterTank?: boolean;
   hasGenerator?: boolean;
   hasSecurityGuard?: boolean;
@@ -122,6 +131,7 @@ export interface CreatePropertyDto {
   subCity: string;
   neighborhood: string;
   landmark?: string;
+  videoUrl?: string | null;
   streetAddress?: string;
   latitude?: number;
   longitude?: number;
@@ -145,12 +155,23 @@ export interface CreatePropertyDto {
   electricityBillIncluded: boolean;
   imageUrls: string[];
   submitForReview: boolean;
+  listingFeeProvider?: string | null;
+  listingFeeReference?: string | null;
+  listingFeeTransactionUrl?: string | null;
 }
 
 export interface ModerationDecisionDto {
   approved: boolean;
+  paymentVerified?: boolean;
+  requestCorrection?: boolean;
   rejectionCategory?: string;
   reason?: string;
+}
+
+export interface ListingFeeSubmissionDto {
+  listingFeeProvider: string;
+  listingFeeReference: string;
+  listingFeeTransactionUrl?: string | null;
 }
 
 export interface MarkAsRentedDto {

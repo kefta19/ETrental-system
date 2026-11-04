@@ -1,48 +1,72 @@
-<div class="auth-wrapper">
-  <div class="auth-card">
-    <div class="auth-header">
-      <div class="auth-logo">E</div>
-      <h2>Welcome back</h2>
-      <p>Sign in to your ETrental account</p>
-    </div>
-
-    @if (errorMessage) {
-      <div class="alert alert-danger">{{ errorMessage }}</div>
-    }
-
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <div class="form-group">
-        <label class="form-label">Email Address</label>
-        <input
-          type="email"
-          formControlName="email"
-          class="form-control"
-          placeholder="e.g. name@example.com"
-        />
+<div class="auth-shell">
+  <aside class="auth-visual">
+    <img
+      class="visual-image"
+      src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=85"
+      alt="Modern home with a welcoming outdoor space"
+    />
+    <div class="visual-overlay"></div>
+    <div class="visual-content">
+      <a class="brand" routerLink="/" aria-label="ETrental home">
+        <img class="brand-image" src="/etrental-logo.png" alt="" />
+        <span>ETrental</span>
+      </a>
+      <div class="visual-copy">
+        <span class="eyebrow">A better way to find home</span>
+        <h1>Find a place<br />to call your own.</h1>
+        <p>Discover trusted rentals and make your next move with confidence.</p>
       </div>
-
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input
-          type="password"
-          formControlName="password"
-          class="form-control"
-          placeholder="••••••••"
-        />
-      </div>
-
-      <button
-        type="submit"
-        class="btn-block"
-        [disabled]="loginForm.invalid || isLoading"
-      >
-        {{ isLoading ? 'Signing In...' : 'Sign In' }}
-      </button>
-    </form>
-
-    <div class="auth-footer">
-      Don't have an account yet?
-      <a routerLink="/register" class="link-primary">Create an Account</a>
+      <span class="visual-caption">Thoughtful homes. Easier moves.</span>
     </div>
-  </div>
+  </aside>
+
+  <main class="auth-content">
+    <section class="auth-card" aria-label="Sign in">
+      <a class="form-brand" routerLink="/" aria-label="ETrental home">
+        <img src="/etrental-logo.png" alt="ETrental" />
+      </a>
+      @if (errorMessage) {
+        <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+      }
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label class="form-label" for="login-email">Email address</label>
+          <input
+            id="login-email"
+            type="email"
+            formControlName="email"
+            class="form-control"
+            placeholder="name@example.com"
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <input
+            id="login-password"
+            type="password"
+            formControlName="password"
+            class="form-control"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="btn-block"
+          [disabled]="loginForm.invalid || isLoading"
+        >
+          {{ isLoading ? 'Signing In...' : 'Sign In' }}
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        New to ETrental?
+        <a routerLink="/register" class="link-primary">Create an account</a>
+      </div>
+    </section>
+  </main>
 </div>

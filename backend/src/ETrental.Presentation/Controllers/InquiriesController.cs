@@ -40,7 +40,7 @@ public class InquiriesController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Roles = "Landlord,Agency,Admin")]
+    [Authorize(Roles = "Landlord,Admin")]
     [HttpGet("received")]
     public async Task<IActionResult> GetInquiriesReceived(CancellationToken ct)
     {
@@ -51,7 +51,7 @@ public class InquiriesController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Roles = "Landlord,Agency,Admin")]
+    [Authorize(Roles = "Landlord,Admin")]
     [HttpPost("{id:guid}/reply")]
     public async Task<IActionResult> ReplyInquiry(Guid id, [FromBody] ReplyInquiryDto dto, CancellationToken ct)
     {
@@ -59,6 +59,18 @@ public class InquiriesController : ControllerBase
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
         var result = await _interactionService.ReplyInquiryAsync(id, dto, userId, ct);
+        if (!result.Succeeded) return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpPost("{id:guid}/messages")]
+    public async Task<IActionResult> SendMessage(Guid id, [FromBody] ReplyInquiryDto dto, CancellationToken ct)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var result = await _interactionService.SendInquiryMessageAsync(id, dto, userId, ct);
         if (!result.Succeeded) return BadRequest(result);
 
         return Ok(result);

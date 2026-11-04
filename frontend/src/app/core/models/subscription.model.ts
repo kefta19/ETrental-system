@@ -14,11 +14,11 @@ export enum SubscriptionStatus {
 }
 
 export enum PaymentStatus {
-  Pending = 0,
-  Completed = 1,
-  Failed = 2,
-  Refunded = 3,
-  Cancelled = 4
+  Pending = 'Pending',
+  Completed = 'Completed',
+  Failed = 'Failed',
+  Refunded = 'Refunded',
+  Cancelled = 'Cancelled'
 }
 
 export interface SubscriptionPlan {
@@ -63,12 +63,16 @@ export interface Entitlement {
 export interface PaymentTransaction {
   id: string;
   userId: string;
+  planId: string;
   userEmail: string;
+  userFullName?: string;
+  userPhoneNumber?: string | null;
   planName: string;
   amountETB: number;
   provider: string;
   externalReference?: string | null;
-  status: PaymentStatus;
+  hasEvidenceUrl?: boolean;
+  status: PaymentStatus | number;
   failureReason?: string | null;
   verifiedAtUtc?: string | null;
   createdAtUtc: string;

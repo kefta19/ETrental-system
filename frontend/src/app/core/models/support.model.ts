@@ -9,7 +9,6 @@ export enum TicketStatus {
 export enum TicketCategory {
   Account = 0,
   Listing = 1,
-  Agency = 2,
   SubscriptionBilling = 3,
   Technical = 4,
   SafetyFraud = 5,

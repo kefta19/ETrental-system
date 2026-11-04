@@ -7,6 +7,8 @@ public class ModerationDecisionDto
     [Required]
     public bool Approved { get; set; }
 
+    public bool PaymentVerified { get; set; }
+
     /// <summary>When true the listing returns to the owner as a draft with the given reason.</summary>
     public bool RequestCorrection { get; set; }
 

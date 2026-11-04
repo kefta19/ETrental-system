@@ -17,8 +17,8 @@ Each requirement is uniquely identified, categorized, prioritized, and linked to
 
 | ID | Feature Name | Role | Priority | Description & Acceptance Criteria |
 |---|---|---|---|---|
-| **FR-AUTH-001** | User Registration | All | Critical | Users can register as Renter, Landlord, or Agency. Inputs (Email, Phone, Password) must be validated. Passwords must require min 8 chars, 1 uppercase, 1 digit, 1 special char. |
-| **FR-AUTH-002** | Secure JWT Login | All | Critical | Authentication issues cryptographically signed JWT tokens with claims (UserId, Email, Roles, AgencyId) and HttpOnly refresh tokens. |
+| **FR-AUTH-001** | User Registration | All | Critical | Users can register as Renter or Landlord. Inputs (Email, Phone, Password) must be validated. Passwords must require min 8 chars, 1 uppercase, 1 digit, 1 special char. |
+| **FR-AUTH-002** | Secure JWT Login | All | Critical | Authentication issues cryptographically signed JWT tokens with claims (UserId, Email, Roles) and HttpOnly refresh tokens. |
 | **FR-AUTH-003** | Password Recovery | All | High | Users can request a secure, time-limited (15-minute) password reset token delivered via email. |
 | **FR-AUTH-004** | Role Separation Guard | All | Critical | Server-side authorization attributes (`[Authorize(Roles = "...")]`) strictly guard endpoints. Unauthorized requests return HTTP 403 Forbidden. |
 | **FR-AUTH-005** | Ethiopian Phone Format | All | Medium | System validates local phone numbers starting with `+2519...` or `+2517...` (Safaricom / Ethio Telecom). |
@@ -57,28 +57,17 @@ Each requirement is uniquely identified, categorized, prioritized, and linked to
 | **FR-LL-006** | Viewing Calendar Management | Landlord | High | Accept, reject, or propose alternative timeslots for requested viewing appointments. |
 | **FR-LL-007** | Mark as Rented | Landlord | High | Landlord records completed tenancy terms, transitioning listing to `RENTED` and closing pending applications. |
 
-### 1.5 Agency Multi-Tenancy Management (FR-AGY)
-
-| ID | Feature Name | Role | Priority | Description & Acceptance Criteria |
-|---|---|---|---|---|
-| **FR-AGY-001** | Agency Profile & TIN | Agency | Critical | Register agency company profile including legal trade name, Ethiopian TIN, business license, and office address. |
-| **FR-AGY-002** | Staff Invitation & RBAC | Agency | High | Invite employees as `AGENCY_MANAGER`, `AGENT`, or `VIEWER` via secure tokenized email links. |
-| **FR-AGY-003** | Property Delegation | Agency | High | Assign properties to specific agents; manage assigned inquiries and client communication. |
-| **FR-AGY-004** | Strict Tenant Isolation | Agency | Critical | Agency members can strictly access only properties, inquiries, and records belonging to their `AgencyId`. |
-| **FR-AGY-005** | Agency Performance Report | Agency | Medium | View operational analytics: active inventory, vacancy rates, average agent inquiry response times. |
-
-### 1.6 Moderation & Administration (FR-ADM)
+### 1.5 Moderation & Administration (FR-ADM)
 
 | ID | Feature Name | Role | Priority | Description & Acceptance Criteria |
 |---|---|---|---|---|
 | **FR-ADM-001** | Listing Moderation Queue | Admin | Critical | Review all `PENDING_REVIEW` listings with actions to `Approve`, `Reject` (with reason category), or `Request Correction`. |
-| **FR-ADM-002** | Agency Verification Review | Admin | High | Audit uploaded business licenses and TINs to transition agency accounts from `PENDING` to `VERIFIED` or `REJECTED`. |
 | **FR-ADM-003** | User Account Governance | Admin | High | Search accounts, review activity, and apply temporary suspensions or permanent bans for policy violations. |
 | **FR-ADM-004** | Trust & Safety Resolution | Admin | High | Manage reported listings/users with status tracking (`OPEN`, `UNDER_REVIEW`, `ACTION_REQUIRED`, `RESOLVED`). |
 | **FR-ADM-005** | Master Catalog Management | Admin | Medium | Add/modify supported Ethiopian regions, cities, sub-cities, and amenity catalog items. |
 | **FR-ADM-006** | Immutable Audit Trail | Admin | Critical | Automatically record all administrative decisions with timestamp, operator ID, target entity, and change delta. |
 
-### 1.7 Customer Support Operations (FR-SUP)
+### 1.6 Customer Support Operations (FR-SUP)
 
 | ID | Feature Name | Role | Priority | Description & Acceptance Criteria |
 |---|---|---|---|---|
@@ -105,14 +94,13 @@ Each requirement is uniquely identified, categorized, prioritized, and linked to
 - **NFR-SEC-002 (Credential Hashing):** Passwords hashed using ASP.NET Core Identity's PBKDF2 with HMAC-SHA256 and unique per-user salt.
 - **NFR-SEC-003 (File Upload Sanitization):** Uploaded images stripped of EXIF metadata, scanned for executable byte headers, and stored under non-guessable GUID filenames.
 - **NFR-SEC-004 (JWT Cryptography):** Access tokens signed using HMAC-SHA512 with a minimum 256-bit secret key; expiration strictly capped at 60 minutes.
-- **NFR-SEC-005 (Tenant Boundary):** Agency multi-tenancy enforced using EF Core Global Query Filters preventing cross-tenant leakage.
+- **NFR-SEC-005 (Listing Ownership):** Landlord property operations verify ownership against the authenticated user.
 
 ### 2.2 Performance & Scalability (NFR-PERF)
 - **NFR-PERF-001 (API Latency):** 95th percentile response time for public property search endpoints $\le 250\text{ ms}$ under 50 concurrent requests.
 - **NFR-PERF-002 (Database Indexing):** Composite database indexes applied on:
   - `(Status, City, SubCity, RentAmountETB)`
   - `(LandlordId, Status)`
-  - `(AgencyId, Status)`
 - **NFR-PERF-003 (Payload Optimization):** Image uploads compressed to modern WebP format where feasible with max dimensions $1920 \times 1080\text{ px}$.
 
 ### 2.3 Reliability & Maintainability (NFR-REL)
@@ -135,9 +123,6 @@ Below is the definitive relational data model to be implemented in `ETrental.Dom
 erDiagram
     User ||--o| RenterProfile : "has"
     User ||--o| LandlordProfile : "has"
-    User ||--o{ AgencyMembership : "belongs to"
-    Agency ||--o{ AgencyMembership : "employs"
-    Agency ||--o{ Property : "owns"
     User ||--o{ Property : "manages as Landlord"
     Property ||--o{ PropertyImage : "contains"
     Property ||--o{ PropertyInquiry : "receives"
@@ -195,11 +180,6 @@ public class Property : AuditableEntity
     // Ownership & Foreign Keys
     public string LandlordId { get; set; } = string.Empty;
     public User Landlord { get; set; } = null!;
-    public Guid? AgencyId { get; set; }
-    public Agency? Agency { get; set; }
-    public string? AssignedAgentId { get; set; }
-    public User? AssignedAgent { get; set; }
-
     // Navigation Collections
     public ICollection<PropertyImage> Images { get; set; } = new List<PropertyImage>();
     public ICollection<PropertyInquiry> Inquiries { get; set; } = new List<PropertyInquiry>();

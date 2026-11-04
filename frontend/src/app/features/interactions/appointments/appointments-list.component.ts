@@ -1,15 +1,16 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { InteractionService } from '../../../core/services/interaction.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ViewingAppointment, AppointmentStatus } from '../../../core/models/interaction.model';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-appointments-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
   template: `
     <div class="appointments-page container">
       <div class="page-header">
@@ -25,21 +26,27 @@ import { ViewingAppointment, AppointmentStatus } from '../../../core/models/inte
         <div class="loading-state">
           <p>Loading viewing appointments...</p>
         </div>
+      } @else if (loadError) {
+        <div class="empty-state" role="alert">
+          <h3>Viewing appointments could not be loaded</h3>
+          <p>{{ loadError }}</p>
+          <button type="button" class="btn btn-primary" (click)="loadAppointments()">Try again</button>
+        </div>
       } @else if (appointments.length === 0) {
         <div class="empty-state">
-          <div class="empty-icon">📅</div>
+          <div class="empty-icon"><span class="material-icons-outlined" aria-hidden="true">calendar_month</span></div>
           <h3>No viewing appointments scheduled</h3>
           <p>When you find an Ethiopian property you like, click "Book a Viewing Tour" on its detail page.</p>
           <a routerLink="/properties" class="btn btn-primary">Browse Properties</a>
         </div>
       } @else {
         <div class="appointments-list">
-          @for (apt of appointments; track apt.id) {
+          @for (apt of pagedAppointments; track apt.id) {
             <div class="apt-card">
               <div class="apt-header">
                 <div class="apt-prop-info">
                   <h3>{{ apt.property?.title }}</h3>
-                  <p class="apt-location">📍 {{ apt.property?.subCity }}, {{ apt.property?.neighborhood }}</p>
+                  <p class="apt-location"><span class="material-icons-outlined" aria-hidden="true">location_on</span> {{ apt.property?.subCity }}, {{ apt.property?.neighborhood }}</p>
                 </div>
                 <div class="status-pill status-{{ getStatusClass(apt.status) }}">
                   {{ getStatusLabel(apt.status) }}
@@ -62,7 +69,7 @@ import { ViewingAppointment, AppointmentStatus } from '../../../core/models/inte
                 <div class="apt-detail-col">
                   <span class="lbl">{{ isHost ? 'Visitor Name:' : 'Host Name:' }}</span>
                   <strong>{{ isHost ? apt.renterName : (apt.hostName || 'Property Landlord') }}</strong>
-                  <span class="contact-sub">📞 {{ isHost ? (apt.renterPhone || 'Not shared') : (apt.hostPhone || 'Revealed on confirmation') }}</span>
+                  <span class="contact-sub"><span class="material-icons-outlined" aria-hidden="true">call</span> {{ isHost ? (apt.renterPhone || 'Not shared') : (apt.hostPhone || 'Revealed on confirmation') }}</span>
                 </div>
               </div>
 
@@ -94,6 +101,13 @@ import { ViewingAppointment, AppointmentStatus } from '../../../core/models/inte
             </div>
           }
         </div>
+
+        <app-pagination
+          [totalItems]="appointments.length"
+          [pageSize]="pageSize"
+          [currentPage]="currentPage"
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
       }
 
       <!-- Cancel / Decline Modal -->
@@ -327,15 +341,30 @@ import { ViewingAppointment, AppointmentStatus } from '../../../core/models/inte
 export class AppointmentsListComponent implements OnInit {
   private interactionService = inject(InteractionService);
   private authService = inject(AuthService);
+  private changeDetector = inject(ChangeDetectorRef);
 
   appointments: ViewingAppointment[] = [];
   isLoading = true;
+  loadError = '';
+
+  currentPage = 1;
+  pageSize = 5;
+
+  get pagedAppointments(): ViewingAppointment[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.appointments.slice(start, start + this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   selectedAptForCancel: ViewingAppointment | null = null;
   cancelReason = '';
 
   get isHost(): boolean {
-    return this.authService.isLandlord() || this.authService.isAgency() || this.authService.isAdmin();
+    return this.authService.isLandlord() || this.authService.isAdmin();
   }
 
   ngOnInit() {
@@ -344,15 +373,21 @@ export class AppointmentsListComponent implements OnInit {
 
   loadAppointments() {
     this.isLoading = true;
+    this.loadError = '';
     this.interactionService.getMyAppointments().subscribe({
       next: (res) => {
         this.isLoading = false;
         if (res.succeeded && res.data) {
           this.appointments = res.data;
+        } else {
+          this.loadError = res.errors?.join(' ') || 'Viewing appointments could not be loaded.';
         }
+        this.changeDetector.markForCheck();
       },
-      error: () => {
+      error: (error) => {
         this.isLoading = false;
+        this.loadError = error.error?.errors?.[0] || 'We could not reach the server. Please try again.';
+        this.changeDetector.markForCheck();
       }
     });
   }

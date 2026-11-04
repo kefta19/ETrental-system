@@ -20,7 +20,7 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Register a new user account (Renter, Landlord, or Agency).
+    /// Register a new user account (Renter or Landlord).
     /// </summary>
     [HttpPost("register")]
     [AllowAnonymous]

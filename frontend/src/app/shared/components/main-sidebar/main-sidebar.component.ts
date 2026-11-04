@@ -33,10 +33,7 @@ const ICONS = {
       <div class="sidebar-header">
         <a routerLink="/" class="brand-logo" (click)="closeDrawer.emit()" aria-label="ETrental home">
           <span class="logo-mark">
-            <svg viewBox="0 0 32 32" fill="none" width="28" height="28">
-              <rect width="32" height="32" rx="8" fill="#10b981"/>
-              <path d="M16 6L6 14v12h7v-7h6v7h7V14z" fill="white"/>
-            </svg>
+            <img src="/etrental-logo.png" alt="" />
           </span>
           <span class="logo-text">ET<span class="logo-accent">rental</span></span>
         </a>
@@ -85,18 +82,6 @@ const ICONS = {
             </div>
           }
 
-          @if (authService.isAgency()) {
-            <div class="nav-group">
-              <span class="nav-group-label">Dashboard</span>
-              <a class="nav-item" routerLink="/agency/dashboard"
-                 [class.active]="isActive('/agency/dashboard')"
-                 [attr.title]="collapsed() ? 'Agency Dashboard' : null">
-                <span class="nav-icon" [innerHTML]="icons.chart"></span>
-                <span class="nav-label">Agency Dashboard</span>
-              </a>
-            </div>
-          }
-
           <div class="nav-group">
             <span class="nav-group-label">My Account</span>
             <a class="nav-item" routerLink="/favorites"
@@ -126,7 +111,7 @@ const ICONS = {
           </div>
         }
 
-        @if (authService.isLandlord() || authService.isAgency() || authService.isAdmin()) {
+        @if (authService.isLandlord() || authService.isAdmin()) {
           <div class="nav-group">
             <span class="nav-group-label">Listings</span>
             <a class="nav-item" routerLink="/landlord/my-properties"
@@ -266,6 +251,7 @@ const ICONS = {
 
     .brand-logo:hover { opacity: 0.8; }
     .logo-mark { flex-shrink: 0; display: flex; align-items: center; }
+    .logo-mark img { display: block; width: 32px; height: 32px; object-fit: contain; }
 
     .logo-text {
       font-size: 1.35rem;

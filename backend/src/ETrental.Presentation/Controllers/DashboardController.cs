@@ -39,15 +39,4 @@ public class DashboardController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("agency")]
-    public async Task<IActionResult> GetAgencyDashboard()
-    {
-        var userId = CurrentUserId;
-        if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-        var result = await _dashboardService.GetAgencyDashboardAsync(userId);
-        if (!result.Succeeded) return BadRequest(result);
-
-        return Ok(result);
-    }
 }

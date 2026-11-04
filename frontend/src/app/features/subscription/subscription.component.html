@@ -1,0 +1,301 @@
+<main
+  class="subscription-page"
+  [class.checkout-modal]="modal"
+  [attr.id]="modal ? 'premium-checkout-dialog' : null"
+  [attr.role]="modal ? 'dialog' : null"
+  [attr.aria-modal]="modal ? 'true' : null"
+  [attr.aria-labelledby]="modal ? 'subscription-title' : null"
+  (click)="onBackdropClick($event)"
+>
+  <div class="page-shell">
+    @if (modal) {
+      <button type="button" class="modal-close" aria-label="Close Premium checkout" (click)="closeModal()">
+        <span class="material-icons-outlined" aria-hidden="true">close</span>
+      </button>
+    } @else {
+      <a
+        class="back-link"
+        [routerLink]="propertyId ? ['/properties', propertyId] : ['/renter/dashboard']"
+      >
+        {{ propertyId ? 'Back to property' : 'Back to dashboard' }}
+      </a>
+    }
+
+    <header class="page-header">
+      <p class="eyebrow">ETRENTAL PREMIUM</p>
+      <h1 id="subscription-title">Unlock more from your home search</h1>
+      <p>Get direct landlord contact details and timely alerts for new listings.</p>
+    </header>
+
+    @if (error(); as message) {
+      <div class="error-banner" role="alert">
+        <span>{{ message }}</span>
+        <button type="button" (click)="loadPage()">Try again</button>
+      </div>
+    }
+
+    @if (notice(); as message) {
+      <div class="notice-banner" role="status">
+        <span>{{ message }}</span>
+        @if (entitlement()?.isPremium && propertyId) {
+          <button type="button" (click)="modal ? closeModal() : continueToProperty()">Show landlord details</button>
+        }
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="loading-card">Loading plans and payment status…</div>
+    } @else {
+      @if (entitlement()?.isPremium) {
+        <section class="active-card">
+          <span class="active-mark" aria-hidden="true">✓</span>
+          <div>
+            <p class="eyebrow">YOUR PLAN</p>
+            <h2>Premium is active</h2>
+            <p>Your plan includes direct phone and email access to landlords.</p>
+          </div>
+          @if (propertyId) {
+            <button
+              type="button"
+              class="primary-button"
+              (click)="modal ? closeModal() : continueToProperty()"
+            >
+              {{ modal ? 'Return to property' : 'Show landlord details' }}
+            </button>
+          }
+        </section>
+      } @else {
+        <nav class="checkout-steps" aria-label="Premium checkout progress">
+          <div class="checkout-step complete">
+            <span class="step-marker material-icons-outlined" aria-hidden="true">check</span>
+            <span>Account</span>
+          </div>
+          <span class="step-connector" aria-hidden="true"></span>
+          <div
+            class="checkout-step"
+            [class.current]="!paymentPending"
+            [class.complete]="paymentPending"
+            [attr.aria-current]="paymentPending ? null : 'step'"
+          >
+            <span class="step-marker">2</span>
+            <span>Plan &amp; payment</span>
+          </div>
+          <span class="step-connector" aria-hidden="true"></span>
+          <div class="checkout-step" [class.current]="paymentPending">
+            <span class="step-marker">3</span>
+            <span>Verification</span>
+          </div>
+        </nav>
+
+        <div class="benefit-strip" aria-label="Premium benefits">
+          <div class="benefit-item">
+            <span class="material-icons-outlined" aria-hidden="true">contact_phone</span>
+            <span>Contact landlords directly</span>
+          </div>
+          <div class="benefit-item">
+            <span class="material-icons-outlined" aria-hidden="true">notifications_active</span>
+            <span>Get alerts for new listings</span>
+          </div>
+        </div>
+
+        <div class="checkout-grid">
+          <section class="plan-column" aria-labelledby="plan-section-title">
+            <div class="section-title">
+              <div>
+                <p class="eyebrow">CHOOSE YOUR PLAN</p>
+                <h2 id="plan-section-title">Premium access</h2>
+              </div>
+              <span class="secure-label">
+                <span class="material-icons-outlined" aria-hidden="true">lock</span>
+                Secure checkout
+              </span>
+            </div>
+
+            @if (plans().length === 0) {
+              <div class="loading-card">No active Premium plans are available at the moment.</div>
+            } @else {
+              @for (plan of plans(); track plan.id) {
+                <button
+                  type="button"
+                  class="plan-card"
+                  [class.selected]="selectedPlanId === plan.id"
+                  [attr.aria-pressed]="selectedPlanId === plan.id"
+                  [disabled]="paymentPending"
+                  (click)="selectedPlanId = plan.id"
+                >
+                  <span class="radio" [class.checked]="selectedPlanId === plan.id"></span>
+                  <span class="plan-copy">
+                    <strong>{{ plan.name }}</strong>
+                    <span>Direct landlord phone and email</span>
+                    <span>Instant search alerts</span>
+                  </span>
+                  <span class="price">
+                    <strong>{{ plan.priceETB | number }} ETB</strong>
+                    <small>for {{ formatPeriod(plan.billingPeriodDays) }}</small>
+                  </span>
+                </button>
+              }
+            }
+
+            <section class="payment-timeline" aria-label="How Premium activation works">
+              <div class="timeline-item">
+                <span class="timeline-icon material-icons-outlined" aria-hidden="true">receipt_long</span>
+                <div>
+                  <strong>Submit your payment details</strong>
+                  <p>Pay the plan amount using your selected payment method and enter its reference.</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <span class="timeline-icon material-icons-outlined" aria-hidden="true">verified_user</span>
+                <div>
+                  <strong>Premium activates after verification</strong>
+                  <p>Our team confirms your payment before releasing landlord contact details.</p>
+                </div>
+              </div>
+            </section>
+
+            <div class="payment-setup" role="note">
+              <span class="material-icons-outlined setup-icon" aria-hidden="true">info</span>
+              <div>
+                <strong>Manual payment — admin verification required</strong>
+                <p>
+                  Send the exact plan amount using one of the methods below, then enter the
+                  transaction reference. Confirm the recipient details before sending. Premium
+                  remains locked until an administrator verifies the payment.
+                </p>
+              </div>
+            </div>
+
+            <div class="payment-fields" aria-label="Payment details">
+              <span class="field-label">Choose a payment method</span>
+              <div class="payment-methods" role="radiogroup" aria-label="Payment method">
+                <label class="payment-method" [class.selected]="provider === 'Telebirr'">
+                  <input
+                    type="radio"
+                    name="provider"
+                    [(ngModel)]="provider"
+                    value="Telebirr"
+                    [disabled]="submitting() || checkingStatus()"
+                  />
+                  <span class="method-icon material-icons-outlined" aria-hidden="true">phone_android</span>
+                  <span class="method-copy">
+                    <strong>Telebirr</strong>
+                    <small>Mobile payment</small>
+                  </span>
+                  <span class="method-check material-icons-outlined" aria-hidden="true">
+                    {{ provider === 'Telebirr' ? 'check_circle' : 'radio_button_unchecked' }}
+                  </span>
+                </label>
+                <label class="payment-method" [class.selected]="provider === 'CBE'">
+                  <input
+                    type="radio"
+                    name="provider"
+                    [(ngModel)]="provider"
+                    value="CBE"
+                    [disabled]="submitting() || checkingStatus()"
+                  />
+                  <span class="method-icon material-icons-outlined" aria-hidden="true">account_balance</span>
+                  <span class="method-copy">
+                    <strong>CBE bank transfer</strong>
+                    <small>Commercial Bank of Ethiopia</small>
+                  </span>
+                  <span class="method-check material-icons-outlined" aria-hidden="true">
+                    {{ provider === 'CBE' ? 'check_circle' : 'radio_button_unchecked' }}
+                  </span>
+                </label>
+              </div>
+
+              @if (provider === 'Telebirr') {
+                <div class="destination-card" role="note">
+                  <span class="destination-title">Telebirr recipient</span>
+                  <strong>Kefale Gedefaw</strong>
+                  <span class="destination-value">0955117065</span>
+                </div>
+              } @else if (provider === 'CBE') {
+                <div class="destination-card" role="note">
+                  <span class="destination-title">CBE account</span>
+                  <strong>Kefale Gedefaw</strong>
+                  <span class="destination-value">1000207193481</span>
+                </div>
+              }
+
+              <label for="payment-reference">Payment reference and transaction evidence URL</label>
+              <input
+                id="payment-reference"
+                type="url"
+                [(ngModel)]="paymentReference"
+                name="paymentReference"
+                placeholder="https://..."
+                maxlength="200"
+                autocomplete="off"
+                required
+                [disabled]="submitting() || checkingStatus()"
+              />
+              <span class="evidence-help">Paste the secure HTTPS transaction URL. Admins will use this same link to verify your payment.</span>
+              <button
+                type="button"
+                class="primary-button"
+                (click)="submitPaymentRequest()"
+                [disabled]="submitting() || checkingStatus() || !selectedPlan || !provider || !isSecureTransactionUrl(paymentReference)"
+              >
+                <span class="material-icons-outlined" aria-hidden="true">
+                  {{ submitting() ? 'hourglass_top' : 'lock' }}
+                </span>
+                {{ submitting() ? (paymentPending ? 'Updating…' : 'Submitting…') : paymentPending ? 'Update payment details' : 'Submit payment for verification' }}
+              </button>
+              @if (paymentPending) {
+                <p class="pending-note" role="status">
+                  This payment is awaiting verification. You can correct the payment method or reference if needed.
+                </p>
+              }
+            </div>
+          </section>
+
+          <aside class="summary-column" aria-label="Order and payment summary">
+            <section class="summary-card">
+              <p class="eyebrow">YOUR ORDER</p>
+              @if (selectedPlan; as plan) {
+                <div class="summary-row">
+                  <span>{{ plan.name }} plan</span>
+                  <strong>{{ plan.priceETB | number }} ETB</strong>
+                </div>
+                <div class="summary-row muted">
+                  <span>Duration</span>
+                  <span>{{ formatPeriod(plan.billingPeriodDays) }}</span>
+                </div>
+                <div class="summary-total">
+                  <span>Total due</span>
+                  <strong>{{ plan.priceETB | number }} ETB</strong>
+                </div>
+              }
+              <p class="summary-note">Your plan starts only after payment verification.</p>
+            </section>
+
+            @if (paymentPending) {
+              <section class="status-card pending">
+                <span class="status-dot"></span>
+                <div>
+                  <strong>Payment awaiting verification</strong>
+                  <p>Landlord contact details remain locked until ETrental confirms payment.</p>
+                </div>
+                <button type="button" (click)="refreshPaymentStatus()" [disabled]="checkingStatus()">
+                  {{ checkingStatus() ? 'Checking…' : 'Check status' }}
+                </button>
+              </section>
+            } @else if (paymentFailed) {
+              <section class="status-card failed">
+                <strong>Payment not verified</strong>
+                <p>{{ latestPayment()?.failureReason || 'Please contact support for assistance.' }}</p>
+              </section>
+            }
+
+            <p class="fine-print">
+              Direct contact details are released by the server only after your Premium plan is
+              verified and active.
+            </p>
+          </aside>
+        </div>
+      }
+    }
+  </div>
+</main>

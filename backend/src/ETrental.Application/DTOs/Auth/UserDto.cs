@@ -10,7 +10,6 @@ public class UserDto
     public string PhoneNumber { get; set; } = string.Empty;
     public string? ProfilePictureUrl { get; set; }
     public IList<string> Roles { get; set; } = new List<string>();
-    public Guid? AgencyId { get; set; }
-    public string? AgencyName { get; set; }
     public string SubscriptionTier { get; set; } = "Free";
+    public DateTime? CreatedAtUtc { get; set; }
 }

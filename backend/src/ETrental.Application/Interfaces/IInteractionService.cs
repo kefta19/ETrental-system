@@ -20,6 +20,7 @@ public interface IInteractionService
     Task<Result<PropertyInquiryDto>> CreateInquiryAsync(CreateInquiryDto dto, string renterId, CancellationToken ct = default);
     Task<Result<List<PropertyInquiryDto>>> GetInquiriesSentAsync(string renterId, CancellationToken ct = default);
     Task<Result<List<PropertyInquiryDto>>> GetInquiriesReceivedAsync(string hostId, CancellationToken ct = default);
+    Task<Result<PropertyInquiryDto>> SendInquiryMessageAsync(Guid inquiryId, ReplyInquiryDto dto, string senderId, CancellationToken ct = default);
     Task<Result<PropertyInquiryDto>> ReplyInquiryAsync(Guid inquiryId, ReplyInquiryDto dto, string hostId, CancellationToken ct = default);
     Task<Result<bool>> MarkInquiryAsReadAsync(Guid inquiryId, string userId, CancellationToken ct = default);
 

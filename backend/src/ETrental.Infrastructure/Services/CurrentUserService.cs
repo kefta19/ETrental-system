@@ -19,15 +19,6 @@ public class CurrentUserService : ICurrentUserService
 
     public string? Role => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
 
-    public Guid? AgencyId
-    {
-        get
-        {
-            var agencyClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("AgencyId")?.Value;
-            return Guid.TryParse(agencyClaim, out var id) ? id : null;
-        }
-    }
-
     public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
     public bool IsAdmin => Role == "Admin";

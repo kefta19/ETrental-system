@@ -2,7 +2,6 @@ export interface AdminDashboard {
   totalUsers: number;
   totalRenters: number;
   totalLandlords: number;
-  totalAgencies: number;
   totalSupportAgents: number;
   activeUsers: number;
   restrictedUsers: number;
@@ -16,10 +15,8 @@ export interface AdminDashboard {
   totalApplications: number;
   openReports: number;
   openTickets: number;
-  pendingAgencyVerifications: number;
   activePremiumSubscriptions: number;
   totalSubscriptionRevenueETB: number;
-  verifiedAgencies: number;
 }
 
 export interface AdminUser {
@@ -37,20 +34,13 @@ export interface AdminUser {
   createdAtUtc: string;
   lastLoginAtUtc?: string | null;
   subscriptionTier: string;
-  agencyName?: string | null;
-  agencyId?: string | null;
+  hasPaidPremium: boolean;
   propertyCount: number;
 }
 
 export interface RestrictUserDto {
   isRestricted: boolean;
   reason?: string | null;
-}
-
-export interface AgencyVerificationDto {
-  approved: boolean;
-  rejectionReason?: string | null;
-  verificationNotes?: string | null;
 }
 
 export interface PlatformSetting {

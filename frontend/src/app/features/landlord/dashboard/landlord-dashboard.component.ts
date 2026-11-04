@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService } from '../../../core/services/dashboard.service';
@@ -39,7 +39,7 @@ interface QuickAction {
           </div>
         } @else if (error(); as message) {
           <div class="error-card">
-            <span>⚠️</span>
+            <span class="material-icons-outlined" aria-hidden="true">warning</span>
             <div>
               <strong>Something went wrong</strong>
               <p>{{ message }}</p>
@@ -49,37 +49,37 @@ interface QuickAction {
         } @else if (dashboard(); as d) {
           @if (d.pendingReviewProperties > 0) {
             <div class="alert-banner">
-              <span>ℹ️</span>
+              <span class="material-icons-outlined" aria-hidden="true">info</span>
               <p><strong>{{ d.pendingReviewProperties }}</strong> {{ d.pendingReviewProperties === 1 ? 'property' : 'properties' }} awaiting review. These will go live once approved by our team.</p>
-              <a routerLink="/landlord/my-properties">View →</a>
+              <a routerLink="/landlord/my-properties">View <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span></a>
             </div>
           }
 
           <!-- Stats Overview -->
           <div class="stats-grid">
             <div class="stat-card stat-primary">
-              <div class="stat-icon">🏠</div>
+              <div class="stat-icon"><span class="material-icons-outlined" aria-hidden="true">home</span></div>
               <div class="stat-info">
                 <div class="stat-value">{{ d.totalProperties }}</div>
                 <div class="stat-label">Total properties</div>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon stat-icon-green">✅</div>
+              <div class="stat-icon stat-icon-green"><span class="material-icons-outlined" aria-hidden="true">check_circle</span></div>
               <div class="stat-info">
                 <div class="stat-value">{{ d.publishedProperties }}</div>
                 <div class="stat-label">Published</div>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon stat-icon-blue">💬</div>
+              <div class="stat-icon stat-icon-blue"><span class="material-icons-outlined" aria-hidden="true">chat</span></div>
               <div class="stat-info">
                 <div class="stat-value">{{ d.unreadInquiries }}</div>
                 <div class="stat-label">New messages</div>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon stat-icon-orange">📅</div>
+              <div class="stat-icon stat-icon-orange"><span class="material-icons-outlined" aria-hidden="true">calendar_month</span></div>
               <div class="stat-info">
                 <div class="stat-value">{{ d.pendingAppointments }}</div>
                 <div class="stat-label">Pending viewings</div>
@@ -92,7 +92,7 @@ interface QuickAction {
             <div class="dashboard-card">
               <div class="card-header">
                 <h2>Properties overview</h2>
-                <a routerLink="/landlord/my-properties" class="card-link">Manage all →</a>
+                <a routerLink="/landlord/my-properties" class="card-link">Manage all <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span></a>
               </div>
               <div class="card-body">
                 <div class="property-status-grid">
@@ -150,36 +150,36 @@ interface QuickAction {
               <div class="card-body">
                 <div class="quick-actions-list">
                   <a routerLink="/landlord/add-property" class="quick-action-item">
-                    <div class="action-icon">➕</div>
+                    <div class="action-icon"><span class="material-icons-outlined" aria-hidden="true">add</span></div>
                     <div class="action-info">
                       <div class="action-title">Add new property</div>
                       <div class="action-desc">List a new rental property</div>
                     </div>
-                    <span class="action-arrow">→</span>
+                    <span class="action-arrow material-icons-outlined" aria-hidden="true">arrow_forward</span>
                   </a>
-                  <a routerLink="/messages" class="quick-action-item">
-                    <div class="action-icon">💬</div>
+                  <a routerLink="/landlord/messages" class="quick-action-item">
+                    <div class="action-icon"><span class="material-icons-outlined" aria-hidden="true">chat</span></div>
                     <div class="action-info">
                       <div class="action-title">Messages</div>
                       <div class="action-desc">{{ d.unreadInquiries }} unread inquiries</div>
                     </div>
-                    <span class="action-arrow">→</span>
+                    <span class="action-arrow material-icons-outlined" aria-hidden="true">arrow_forward</span>
                   </a>
-                  <a routerLink="/appointments" class="quick-action-item">
-                    <div class="action-icon">📅</div>
+                  <a routerLink="/landlord/appointments" class="quick-action-item">
+                    <div class="action-icon"><span class="material-icons-outlined" aria-hidden="true">calendar_month</span></div>
                     <div class="action-info">
                       <div class="action-title">Viewings</div>
                       <div class="action-desc">Manage viewing appointments</div>
                     </div>
-                    <span class="action-arrow">→</span>
+                    <span class="action-arrow material-icons-outlined" aria-hidden="true">arrow_forward</span>
                   </a>
-                  <a routerLink="/applications" class="quick-action-item">
-                    <div class="action-icon">📝</div>
+                  <a routerLink="/landlord/applications" class="quick-action-item">
+                    <div class="action-icon"><span class="material-icons-outlined" aria-hidden="true">description</span></div>
                     <div class="action-info">
                       <div class="action-title">Applications</div>
                       <div class="action-desc">Review rental applications</div>
                     </div>
-                    <span class="action-arrow">→</span>
+                    <span class="action-arrow material-icons-outlined" aria-hidden="true">arrow_forward</span>
                   </a>
                 </div>
               </div>
@@ -594,6 +594,7 @@ interface QuickAction {
   `]
 })
 export class LandlordDashboardComponent implements OnInit {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private dashboardService = inject(DashboardService);
 
   readonly loading = signal(true);
@@ -603,9 +604,9 @@ export class LandlordDashboardComponent implements OnInit {
   readonly quickActions: QuickAction[] = [
     { label: 'My Properties', link: '/landlord/my-properties', hint: 'Manage, pause or delete your listings' },
     { label: 'Add Property', link: '/landlord/add-property', hint: 'Publish a new home for renters' },
-    { label: 'Messages', link: '/messages', hint: 'Answer renter inquiries' },
-    { label: 'Appointments', link: '/appointments', hint: 'Confirm viewing appointments' },
-    { label: 'Applications', link: '/applications', hint: 'Review rental applications' },
+    { label: 'Messages', link: '/landlord/messages', hint: 'Answer renter inquiries' },
+    { label: 'Appointments', link: '/landlord/appointments', hint: 'Confirm viewing appointments' },
+    { label: 'Applications', link: '/landlord/applications', hint: 'Review rental applications' },
     { label: 'Support', link: '/support', hint: 'Get help from the ETrental team' }
   ];
 
@@ -624,10 +625,12 @@ export class LandlordDashboardComponent implements OnInit {
         } else {
           this.error.set(res.errors && res.errors.length ? res.errors.join(' ') : 'Your dashboard could not be loaded right now.');
         }
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.loading.set(false);
         this.error.set('The server did not respond. Please check your connection and try again.');
+        this.changeDetector.markForCheck();
       }
     });
   }

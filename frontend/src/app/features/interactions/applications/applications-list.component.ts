@@ -1,16 +1,18 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
 import { InteractionService } from '../../../core/services/interaction.service';
 import { PropertyService } from '../../../core/services/property.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { RentalApplication, ApplicationStatus } from '../../../core/models/interaction.model';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-applications-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
   template: `
     <div class="applications-page container">
       <div class="page-header">
@@ -44,9 +46,15 @@ import { RentalApplication, ApplicationStatus } from '../../../core/models/inter
         <div class="loading-state">
           <p>Loading applications...</p>
         </div>
+      } @else if (loadError) {
+        <div class="empty-state" role="alert">
+          <h3>Applications could not be loaded</h3>
+          <p>{{ loadError }}</p>
+          <button type="button" class="btn btn-primary" (click)="loadApplications()">Try again</button>
+        </div>
       } @else if (currentList.length === 0) {
         <div class="empty-state">
-          <div class="empty-icon">📝</div>
+          <div class="empty-icon"><span class="material-icons-outlined" aria-hidden="true">description</span></div>
           <h3>No applications found in this folder</h3>
           <p>
             {{ activeTab === 'sent' ? 'You have not submitted any rental applications yet.' : 'No tenant applications have been submitted for your listings yet.' }}
@@ -55,12 +63,12 @@ import { RentalApplication, ApplicationStatus } from '../../../core/models/inter
         </div>
       } @else {
         <div class="apps-grid">
-          @for (app of currentList; track app.id) {
+          @for (app of pagedList; track app.id) {
             <div class="app-card">
               <div class="app-card-header">
                 <div>
                   <h3 class="app-prop-title">{{ app.property?.title }}</h3>
-                  <p class="app-location">📍 {{ app.property?.subCity }}, {{ app.property?.neighborhood }} — {{ app.property?.rentAmountETB | number }} ETB/mo</p>
+                  <p class="app-location"><span class="material-icons-outlined" aria-hidden="true">location_on</span> {{ app.property?.subCity }}, {{ app.property?.neighborhood }} — {{ app.property?.rentAmountETB | number }} ETB/mo</p>
                 </div>
                 <div class="status-pill status-{{ getStatusClass(app.status) }}">
                   {{ getStatusLabel(app.status) }}
@@ -71,7 +79,7 @@ import { RentalApplication, ApplicationStatus } from '../../../core/models/inter
                 <div class="spec-cell">
                   <span class="lbl">Applicant Name:</span>
                   <strong>{{ app.applicantName }}</strong>
-                  <span class="sub-contact">📞 {{ app.applicantPhone || 'Phone upon approval' }}</span>
+                  <span class="sub-contact"><span class="material-icons-outlined" aria-hidden="true">call</span> {{ app.applicantPhone || 'Phone upon approval' }}</span>
                 </div>
 
                 <div class="spec-cell">
@@ -120,13 +128,20 @@ import { RentalApplication, ApplicationStatus } from '../../../core/models/inter
                     ✕ Decline
                   </button>
                   <button class="btn btn-secondary btn-sm" (click)="openMarkAsRentedModal(app)">
-                    🎉 Finalize & Mark Property as Rented
+                    <span class="material-icons-outlined" aria-hidden="true">celebration</span> Finalize & Mark Property as Rented
                   </button>
                 </div>
               }
             </div>
           }
         </div>
+
+        <app-pagination
+          [totalItems]="currentList.length"
+          [pageSize]="pageSize"
+          [currentPage]="currentPage"
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
       }
 
       <!-- Mark as Rented Modal -->
@@ -403,13 +418,27 @@ export class ApplicationsListComponent implements OnInit {
   private interactionService = inject(InteractionService);
   private propertyService = inject(PropertyService);
   private authService = inject(AuthService);
+  private changeDetector = inject(ChangeDetectorRef);
 
   myApplications: RentalApplication[] = [];
   receivedApplications: RentalApplication[] = [];
   isLoading = true;
+  loadError = '';
   isFinalizing = false;
 
   activeTab: 'sent' | 'received' = 'sent';
+  currentPage = 1;
+  pageSize = 5;
+
+  get pagedList(): RentalApplication[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.currentList.slice(start, start + this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   selectedAppForRented: RentalApplication | null = null;
   rentedTenantName = '';
@@ -418,7 +447,7 @@ export class ApplicationsListComponent implements OnInit {
   rentedStartDate = '';
 
   get isHost(): boolean {
-    return this.authService.isLandlord() || this.authService.isAgency() || this.authService.isAdmin();
+    return this.authService.isLandlord() || this.authService.isAdmin();
   }
 
   get currentList(): RentalApplication[] {
@@ -426,36 +455,44 @@ export class ApplicationsListComponent implements OnInit {
   }
 
   ngOnInit() {
+    if (this.isHost) {
+      this.activeTab = 'received';
+    }
     this.loadApplications();
   }
 
   loadApplications() {
     this.isLoading = true;
-    this.interactionService.getMyApplications().subscribe({
-      next: (res) => {
-        if (res.succeeded && res.data) {
-          this.myApplications = res.data;
+    this.loadError = '';
+    forkJoin({
+      sent: this.interactionService.getMyApplications(),
+      received: this.isHost ? this.interactionService.getReceivedApplications() : of(null),
+    }).subscribe({
+      next: ({ sent, received }) => {
+        this.isLoading = false;
+        if (!sent.succeeded || !sent.data || (this.isHost && (!received?.succeeded || !received.data))) {
+          this.loadError = [...(sent.errors ?? []), ...(received?.errors ?? [])].join(' ')
+            || 'Applications could not be loaded.';
+          this.changeDetector.markForCheck();
+          return;
         }
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
-      }
-    });
 
-    if (this.isHost) {
-      this.interactionService.getReceivedApplications().subscribe({
-        next: (res) => {
-          if (res.succeeded && res.data) {
-            this.receivedApplications = res.data;
-          }
-        }
-      });
-    }
+        this.myApplications = sent.data;
+        this.receivedApplications = received?.data ?? [];
+        this.currentPage = 1;
+        this.changeDetector.markForCheck();
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.loadError = error.error?.errors?.[0] || 'We could not reach the server. Please try again.';
+        this.changeDetector.markForCheck();
+      },
+    });
   }
 
   switchTab(tab: 'sent' | 'received') {
     this.activeTab = tab;
+    this.currentPage = 1;
   }
 
   decideApplication(app: RentalApplication, status: number) {

@@ -13,4 +13,5 @@ public class PropertyInquiry : AuditableEntity
     public DateTime? RepliedAtUtc { get; set; }
     public bool IsReadByLandlord { get; set; } = false;
     public bool IsReadByRenter { get; set; } = true;
+    public ICollection<InquiryMessage> Messages { get; set; } = new List<InquiryMessage>();
 }

@@ -9,8 +9,6 @@ import { AuthService } from '../../../core/services/auth.service';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  template: ``,
-  // link of the template is: frontend/src/app/features/auth/login/login.component.html
   templateUrl: './login.component.html',
   //  // link of the style is: frontend/src/app/features/auth/login/login.component.css
   styleUrls: ['./login.component.css'],
@@ -34,7 +32,10 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    if (this.loginForm.invalid) return;
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -44,25 +45,10 @@ export class LoginComponent {
     this.authService.login(credentials).subscribe({
       next: (res) => {
         this.isLoading = false;
-        const returnUrl = this.route.snapshot.queryParams['returnUrl'];
-        
-        if (returnUrl) {
-          this.router.navigateByUrl(returnUrl);
-        } else {
-          // Redirect based on role returned from the server
-          const roles = res.data?.user?.roles || [];
-          if (roles.includes('Admin')) {
-            this.router.navigate(['/admin/dashboard']);
-          } else if (roles.includes('Agency')) {
-            this.router.navigate(['/agency/dashboard']);
-          } else if (roles.includes('Landlord')) {
-            this.router.navigate(['/landlord/dashboard']);
-          } else if (roles.includes('Renter')) {
-            this.router.navigate(['/renter/dashboard']);
-          } else {
-            this.router.navigate(['/']);
-          }
-        }
+        const targetDashboard = this.authService.dashboardRoute(
+          res.data?.user ?? this.authService.currentUser()
+        );
+        this.router.navigateByUrl(targetDashboard);
       },
       error: (err) => {
         this.isLoading = false;

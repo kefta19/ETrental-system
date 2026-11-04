@@ -30,11 +30,9 @@ public class AuthService : IAuthService
 
     public async Task<Result<AuthResponseDto>> RegisterAsync(RegisterDto dto)
     {
-        // Self registration may only create renter, landlord and agency accounts.
-        // Administrator and support accounts are provisioned by the platform team.
-        if (dto.Role is UserRole.Admin or UserRole.Support)
+        if (dto.Role is not (UserRole.Renter or UserRole.Landlord))
         {
-            return Result<AuthResponseDto>.Failure("Administrator and support accounts cannot be self-registered.");
+            return Result<AuthResponseDto>.Failure("Only renter and landlord accounts can be self-registered.");
         }
 
         var existingUser = await _userManager.FindByEmailAsync(dto.Email);
@@ -69,9 +67,6 @@ public class AuthService : IAuthService
         await _userManager.AddToRoleAsync(user, roleName);
 
         // Role-specific profile initialization
-        Guid? agencyId = null;
-        string? agencyName = null;
-
         if (dto.Role == UserRole.Renter)
         {
             var renterProfile = new RenterProfile
@@ -89,40 +84,6 @@ public class AuthService : IAuthService
             };
             _context.LandlordProfiles.Add(landlordProfile);
         }
-        else if (dto.Role == UserRole.Agency)
-        {
-            if (string.IsNullOrWhiteSpace(dto.AgencyName))
-            {
-                return Result<AuthResponseDto>.Failure("Agency name is required to register an agency account.");
-            }
-
-            var agency = new Agency
-            {
-                Name = dto.AgencyName.Trim(),
-                TaxIdentificationNumber = dto.TaxIdentificationNumber ?? "0000000000",
-                BusinessLicenseNumber = dto.BusinessLicenseNumber ?? "LIC-PENDING",
-                City = dto.City ?? "Addis Ababa",
-                SubCity = dto.SubCity ?? "Bole",
-                OfficialEmail = dto.Email,
-                OfficialPhone = dto.PhoneNumber,
-                Status = AgencyStatus.Pending,
-                SubmittedAtUtc = DateTime.UtcNow
-            };
-            _context.Agencies.Add(agency);
-            await _context.SaveChangesAsync();
-
-            var membership = new AgencyMembership
-            {
-                AgencyId = agency.Id,
-                UserId = user.Id,
-                Role = AgencyStaffRole.AgencyManager
-            };
-            _context.AgencyMemberships.Add(membership);
-
-            agencyId = agency.Id;
-            agencyName = agency.Name;
-        }
-
         // Attach Free tier subscription by default
         var freePlan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.Tier == SubscriptionTier.Free);
         if (freePlan != null)
@@ -140,7 +101,7 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
 
         var roles = await _userManager.GetRolesAsync(user);
-        var (token, expiration) = _jwtTokenGenerator.GenerateToken(user, roles, agencyId);
+        var (token, expiration) = _jwtTokenGenerator.GenerateToken(user, roles);
         var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
         user.RefreshToken = refreshToken;
@@ -161,8 +122,6 @@ public class AuthService : IAuthService
                 FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber ?? string.Empty,
                 Roles = roles,
-                AgencyId = agencyId,
-                AgencyName = agencyName,
                 SubscriptionTier = "Free"
             }
         });
@@ -183,23 +142,11 @@ public class AuthService : IAuthService
 
         var roles = await _userManager.GetRolesAsync(user);
 
-        Guid? agencyId = null;
-        string? agencyName = null;
-        var membership = await _context.AgencyMemberships
-            .Include(m => m.Agency)
-            .FirstOrDefaultAsync(m => m.UserId == user.Id && m.IsActive);
-
-        if (membership != null)
-        {
-            agencyId = membership.AgencyId;
-            agencyName = membership.Agency.Name;
-        }
-
         var activeSub = await _context.Subscriptions
             .Include(s => s.Plan)
             .FirstOrDefaultAsync(s => s.UserId == user.Id && s.Status == SubscriptionStatus.Active);
 
-        var (token, expiration) = _jwtTokenGenerator.GenerateToken(user, roles, agencyId);
+        var (token, expiration) = _jwtTokenGenerator.GenerateToken(user, roles);
         var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
         user.RefreshToken = refreshToken;
@@ -222,8 +169,6 @@ public class AuthService : IAuthService
                 PhoneNumber = user.PhoneNumber ?? string.Empty,
                 ProfilePictureUrl = user.ProfilePictureUrl,
                 Roles = roles,
-                AgencyId = agencyId,
-                AgencyName = agencyName,
                 SubscriptionTier = activeSub?.Plan.Name ?? "Free"
             }
         });
@@ -238,11 +183,7 @@ public class AuthService : IAuthService
         }
 
         var roles = await _userManager.GetRolesAsync(user);
-        var membership = await _context.AgencyMemberships
-            .Include(m => m.Agency)
-            .FirstOrDefaultAsync(m => m.UserId == user.Id && m.IsActive);
-
-        var (newToken, expiration) = _jwtTokenGenerator.GenerateToken(user, roles, membership?.AgencyId);
+        var (newToken, expiration) = _jwtTokenGenerator.GenerateToken(user, roles);
         var newRefreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
         user.RefreshToken = newRefreshToken;
@@ -267,8 +208,6 @@ public class AuthService : IAuthService
                 FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber ?? string.Empty,
                 Roles = roles,
-                AgencyId = membership?.AgencyId,
-                AgencyName = membership?.Agency.Name,
                 SubscriptionTier = activeSub?.Plan.Name ?? "Free"
             }
         });
@@ -283,10 +222,6 @@ public class AuthService : IAuthService
         }
 
         var roles = await _userManager.GetRolesAsync(user);
-        var membership = await _context.AgencyMemberships
-            .Include(m => m.Agency)
-            .FirstOrDefaultAsync(m => m.UserId == user.Id && m.IsActive);
-
         var activeSub = await _context.Subscriptions
             .Include(s => s.Plan)
             .FirstOrDefaultAsync(s => s.UserId == user.Id && s.Status == SubscriptionStatus.Active);
@@ -301,8 +236,6 @@ public class AuthService : IAuthService
             PhoneNumber = user.PhoneNumber ?? string.Empty,
             ProfilePictureUrl = user.ProfilePictureUrl,
             Roles = roles,
-            AgencyId = membership?.AgencyId,
-            AgencyName = membership?.Agency.Name,
             SubscriptionTier = activeSub?.Plan.Name ?? "Free"
         });
     }

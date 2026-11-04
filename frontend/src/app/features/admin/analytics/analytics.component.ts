@@ -1,4 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminDashboard } from '../../../core/models/admin.model';
@@ -24,7 +25,7 @@ import { AdminDashboard } from '../../../core/models/admin.model';
         } @else if (dashboard) {
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-icon users">👥</div>
+              <div class="stat-icon users"><span class="material-icons-outlined" aria-hidden="true">groups</span></div>
               <div class="stat-content">
                 <span class="stat-label">Total Users</span>
                 <span class="stat-value">{{ dashboard.totalUsers | number }}</span>
@@ -32,7 +33,7 @@ import { AdminDashboard } from '../../../core/models/admin.model';
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon properties">🏠</div>
+              <div class="stat-icon properties"><span class="material-icons-outlined" aria-hidden="true">home</span></div>
               <div class="stat-content">
                 <span class="stat-label">Properties</span>
                 <span class="stat-value">{{ dashboard.totalProperties | number }}</span>
@@ -40,19 +41,11 @@ import { AdminDashboard } from '../../../core/models/admin.model';
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon revenue">💰</div>
+              <div class="stat-icon revenue"><span class="material-icons-outlined" aria-hidden="true">payments</span></div>
               <div class="stat-content">
                 <span class="stat-label">Revenue</span>
                 <span class="stat-value">{{ dashboard.totalSubscriptionRevenueETB | number }} ETB</span>
                 <span class="stat-sub">{{ dashboard.activePremiumSubscriptions | number }} subscriptions</span>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon agencies">🏢</div>
-              <div class="stat-content">
-                <span class="stat-label">Agencies</span>
-                <span class="stat-value">{{ dashboard.totalAgencies | number }}</span>
-                <span class="stat-sub">{{ dashboard.verifiedAgencies | number }} verified</span>
               </div>
             </div>
           </div>
@@ -68,10 +61,6 @@ import { AdminDashboard } from '../../../core/models/admin.model';
                 <div class="dist-item">
                   <span class="dist-label">Landlords</span>
                   <span class="dist-value">{{ dashboard.totalLandlords | number }}</span>
-                </div>
-                <div class="dist-item">
-                  <span class="dist-label">Agencies</span>
-                  <span class="dist-value">{{ dashboard.totalAgencies | number }}</span>
                 </div>
                 <div class="dist-item">
                   <span class="dist-label">Support</span>
@@ -208,9 +197,6 @@ import { AdminDashboard } from '../../../core/models/admin.model';
     .stat-icon.revenue {
       background: linear-gradient(135deg, #f59e0b, #d97706);
     }
-    .stat-icon.agencies {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-    }
     .stat-content {
       flex: 1;
     }
@@ -273,9 +259,16 @@ import { AdminDashboard } from '../../../core/models/admin.model';
 })
 export class AnalyticsComponent implements OnInit {
   private adminService = inject(AdminService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   dashboard: AdminDashboard | null = null;
   isLoading = true;
+
+  constructor() {
+    this.adminService.pageRefreshRequested$
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.loadDashboard());
+  }
 
   ngOnInit() {
     this.loadDashboard();
@@ -286,12 +279,15 @@ export class AnalyticsComponent implements OnInit {
     this.adminService.getDashboard().subscribe({
       next: (res) => {
         this.isLoading = false;
+        this.changeDetector.markForCheck();
         if (res.succeeded && res.data) {
           this.dashboard = res.data;
         }
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.isLoading = false;
+        this.changeDetector.markForCheck();
       }
     });
   }

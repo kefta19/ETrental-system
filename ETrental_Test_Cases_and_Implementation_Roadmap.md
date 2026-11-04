@@ -1,5 +1,7 @@
 # ETrental: Test Cases & Phased Implementation Roadmap
 
+> **Historical proposal:** This roadmap predates the Agency-role removal and is not the current implementation plan.
+
 **Project Name:** ETrental — Online Rental Property Marketplace  
 **Target Market:** Ethiopia (Prices in Ethiopian Birr — ETB)  
 **Document Reference:** `ETrental_Test_Cases_and_Implementation_Roadmap.md`  
@@ -19,7 +21,6 @@ This test matrix validates all security invariants, role boundaries, business ru
 |---|---|---|---|---|---|---|
 | **TC-AUTH-001** | Renter accesses Landlord endpoint | Renter | Authenticated with valid Renter JWT | `POST /api/properties` with valid property payload | Returns `403 Forbidden`. No property is created. | Critical |
 | **TC-AUTH-002** | Landlord edits peer landlord's listing (IDOR) | Landlord A | Authenticated as Landlord A; Property #99 owned by Landlord B | `PUT /api/properties/99` with updated title | Returns `403 Forbidden` or `404 Not Found`. Modification blocked. | Critical |
-| **TC-AUTH-003** | Agency cross-tenant isolation | Agency Agent A | Authenticated in Agency A (ID: 101); Listing #50 owned by Agency B (ID: 202) | `GET /api/agency/properties/50` or `PUT /api/agency/properties/50` | Returns `404 Not Found` (query filtered by tenant boundary). No data exposed. | Critical |
 | **TC-AUTH-004** | Support agent attempts listing approval | Support | Authenticated with `Support` role | `POST /api/admin/moderation/properties/12/approve` | Returns `403 Forbidden`. Approval strictly reserved for `Admin`. | High |
 | **TC-AUTH-005** | Support agent accesses user password | Support | Authenticated with `Support` role | `GET /api/support/users/42` | Returns user contact and profile only; password hashes and reset tokens are excluded. | Critical |
 | **TC-AUTH-006** | Unauthenticated user queries protected dashboard | Anonymous | No Bearer token provided | `GET /api/renter/dashboard` or `GET /api/landlord/properties` | Returns `401 Unauthorized`. | Critical |
@@ -114,14 +115,12 @@ gantt
     Admin Moderation Queue                 :p2_4, after p2_3, 4d
     section Phase 3: Interactions
     Inquiries, Appointments & Applications :p3_1, after p2_4, 6d
-    section Phase 4: Agency Multi-Tenancy
-    Agency Profiles, Staff RBAC & Isolation:p4_1, after p3_1, 5d
-    section Phase 5: Admin & Support
-    Support Tickets & Audit Trail          :p5_1, after p4_1, 5d
-    section Phase 6: Subscriptions
-    Free/Premium Entitlements & Billing    :p6_1, after p5_1, 6d
-    section Phase 7: Polish & Testing
-    E2E Testing, Performance & Final Polish:p7_1, after p6_1, 5d
+    section Phase 4: Admin & Support
+    Support Tickets & Audit Trail          :p4_1, after p3_1, 5d
+    section Phase 5: Subscriptions
+    Free/Premium Entitlements & Billing    :p5_1, after p4_1, 6d
+    section Phase 6: Polish & Testing
+    E2E Testing, Performance & Final Polish:p6_1, after p5_1, 5d
 ```
 
 ### Detailed Phase Breakdown
@@ -151,27 +150,20 @@ gantt
 - Implement the Rental Application workflow enabling tenant screening and status updates.
 - Create the "Mark as Rented" completion modal updating property availability and recording tenancy terms.
 
-#### Phase 4: Corporate Agency Multi-Tenancy
-- Implement `Agency`, `AgencyMembership`, and `AgencyStatus` entities.
-- Enforce strict tenant isolation using EF Core Global Query Filters (`AgencyId == currentUserService.AgencyId`).
-- Build agency staff invitation system with roles: `AGENCY_MANAGER`, `AGENT`, and `VIEWER`.
-- Develop Agency Portfolio Management allowing managers to assign properties to specific agents.
-- Create agency operational reports (vacancy rate, agent response velocity).
-
-#### Phase 5: Administration, Safety & Support Operations
+#### Phase 4: Administration, Safety & Support Operations
 - Build Admin Governance Dashboard with platform KPIs (Total Users, Listings, Moderation Queue).
 - Create Trust & Safety reporting system for flagging fraudulent or duplicate listings.
 - Develop Customer Support Desk featuring ticket management with strict separation of public replies vs private internal staff notes.
 - Implement immutable `AuditLogs` recording all administrative interventions.
 
-#### Phase 6: Subscriptions & Ethiopian Payment Readiness
+#### Phase 5: Subscriptions & Ethiopian Payment Readiness
 - Create `SubscriptionPlan` and `Subscription` entities defining Free vs Premium entitlements.
 - Implement server-side entitlement enforcement engine (e.g., favorite limits, inquiry limits, phone number reveal).
 - Prepare checkout integration architecture ready for Ethiopian payment rails (Telebirr, Chapa, CBE Birr) using idempotent webhooks.
 - Build Renter Subscription Management UI for plan upgrades, status tracking, and receipt history.
 
-#### Phase 7: Hardening, Verification & Capstone Presentation
-- Execute automated integration and security test suite covering IDOR, tenant leakage, and role guards.
+#### Phase 6: Hardening, Verification & Capstone Presentation
+- Execute automated integration and security test suite covering IDOR, ownership boundaries, and role guards.
 - Implement Ethiopian localization enhancements (Amharic / English toggle readiness).
 - Optimize Lighthouse performance scores (CWV, image lazy loading, responsive breakpoints).
 - Package complete final-year project documentation, architecture diagrams, and database setup instructions.
@@ -194,9 +186,9 @@ Before initiating code generation and package installations, the following busin
 
 ---
 
-## 5. Absolute Stop Condition
+## 5. Original Proposal Stop Condition (Historical)
 
-In strict accordance with the mandatory working rules:
+This section described the state at the time the original proposal was written, not the current repository:
 - **No source code has been altered.**
 - **No dependencies have been installed.**
 - **No migrations or database commands have been executed.**

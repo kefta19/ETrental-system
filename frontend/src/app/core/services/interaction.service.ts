@@ -95,6 +95,10 @@ export class InteractionService {
     return this.http.post<ApiResponse<PropertyInquiry>>(`${this.INQUIRIES_API}/${id}/reply`, dto);
   }
 
+  sendInquiryMessage(id: string, dto: ReplyInquiry): Observable<ApiResponse<PropertyInquiry>> {
+    return this.http.post<ApiResponse<PropertyInquiry>>(`${this.INQUIRIES_API}/${id}/messages`, dto);
+  }
+
   markInquiryAsRead(id: string): Observable<ApiResponse<boolean>> {
     return this.http.post<ApiResponse<boolean>>(`${this.INQUIRIES_API}/${id}/read`, {});
   }

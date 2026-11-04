@@ -8,11 +8,10 @@ public interface IApplicationDbContext
     DbSet<ApplicationUser> Users { get; }
     DbSet<RenterProfile> RenterProfiles { get; }
     DbSet<LandlordProfile> LandlordProfiles { get; }
-    DbSet<Agency> Agencies { get; }
-    DbSet<AgencyMembership> AgencyMemberships { get; }
     DbSet<Property> Properties { get; }
     DbSet<PropertyImage> PropertyImages { get; }
     DbSet<PropertyInquiry> PropertyInquiries { get; }
+    DbSet<InquiryMessage> InquiryMessages { get; }
     DbSet<ViewingAppointment> ViewingAppointments { get; }
     DbSet<RentalApplication> RentalApplications { get; }
     DbSet<Favorite> Favorites { get; }
@@ -27,7 +26,6 @@ public interface IApplicationDbContext
     DbSet<PlatformSetting> PlatformSettings { get; }
     DbSet<PaymentTransaction> PaymentTransactions { get; }
     DbSet<ListingReview> ListingReviews { get; }
-    DbSet<AgencyPropertyAssignment> AgencyPropertyAssignments { get; }
     DbSet<RentalAgreement> RentalAgreements { get; }
     DbSet<PasswordResetToken> PasswordResetTokens { get; }
 

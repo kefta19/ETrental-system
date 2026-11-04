@@ -779,3 +779,720 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "SupportTickets" DROP CONSTRAINT "FK_SupportTickets_AspNetUsers_AssignedAgentId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "UserReports" ADD "AssignedToId" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "UserReports" ADD "Category" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "UserReports" ADD "ResolvedAtUtc" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "AspNetUsers" ADD "IsRestricted" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "AspNetUsers" ADD "RestrictedAtUtc" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "AspNetUsers" ADD "RestrictedBy" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "AspNetUsers" ADD "RestrictionLiftedAtUtc" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "AspNetUsers" ADD "RestrictionReason" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "Agencies" ADD "RejectionReason" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "Agencies" ADD "SubmittedAtUtc" timestamp with time zone NOT NULL DEFAULT TIMESTAMPTZ '-infinity';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "Agencies" ADD "VerificationDocumentUrl" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "Agencies" ADD "VerifiedBy" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE TABLE "AgencyPropertyAssignments" (
+        "Id" uuid NOT NULL,
+        "AgencyId" uuid NOT NULL,
+        "UserId" text NOT NULL,
+        "PropertyId" uuid NOT NULL,
+        "AssignedAtUtc" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_AgencyPropertyAssignments" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_AgencyPropertyAssignments_Agencies_AgencyId" FOREIGN KEY ("AgencyId") REFERENCES "Agencies" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_AgencyPropertyAssignments_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_AgencyPropertyAssignments_Properties_PropertyId" FOREIGN KEY ("PropertyId") REFERENCES "Properties" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE TABLE "ListingReviews" (
+        "Id" uuid NOT NULL,
+        "PropertyId" uuid NOT NULL,
+        "ReviewerId" text NOT NULL,
+        "Decision" integer NOT NULL,
+        "Reason" text,
+        "Category" text,
+        "CreatedAtUtc" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_ListingReviews" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ListingReviews_AspNetUsers_ReviewerId" FOREIGN KEY ("ReviewerId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_ListingReviews_Properties_PropertyId" FOREIGN KEY ("PropertyId") REFERENCES "Properties" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE TABLE "Notifications" (
+        "Id" uuid NOT NULL,
+        "UserId" text NOT NULL,
+        "Type" integer NOT NULL,
+        "Title" text NOT NULL,
+        "Message" text NOT NULL,
+        "LinkUrl" text,
+        "IsRead" boolean NOT NULL,
+        "ReadAtUtc" timestamp with time zone,
+        "CreatedAtUtc" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_Notifications" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_Notifications_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE TABLE "PasswordResetTokens" (
+        "Id" uuid NOT NULL,
+        "UserId" text NOT NULL,
+        "Token" text NOT NULL,
+        "ExpiresAtUtc" timestamp with time zone NOT NULL,
+        "IsUsed" boolean NOT NULL,
+        "UsedAtUtc" timestamp with time zone,
+        "CreatedAtUtc" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_PasswordResetTokens" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_PasswordResetTokens_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE TABLE "PaymentTransactions" (
+        "Id" uuid NOT NULL,
+        "UserId" text NOT NULL,
+        "PlanId" uuid NOT NULL,
+        "SubscriptionId" uuid,
+        "AmountETB" numeric(18,2) NOT NULL,
+        "Provider" text NOT NULL,
+        "ExternalReference" text,
+        "IdempotencyKey" text,
+        "Status" integer NOT NULL,
+        "FailureReason" text,
+        "VerifiedAtUtc" timestamp with time zone,
+        "VerifiedBy" text,
+        "CreatedAtUtc" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        "LastModifiedAtUtc" timestamp with time zone,
+        "LastModifiedBy" text,
+        "IsDeleted" boolean NOT NULL,
+        "DeletedAtUtc" timestamp with time zone,
+        CONSTRAINT "PK_PaymentTransactions" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_PaymentTransactions_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_PaymentTransactions_SubscriptionPlans_PlanId" FOREIGN KEY ("PlanId") REFERENCES "SubscriptionPlans" ("Id") ON DELETE RESTRICT,
+        CONSTRAINT "FK_PaymentTransactions_Subscriptions_SubscriptionId" FOREIGN KEY ("SubscriptionId") REFERENCES "Subscriptions" ("Id") ON DELETE SET NULL
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE TABLE "PlatformSettings" (
+        "Id" uuid NOT NULL,
+        "Key" text NOT NULL,
+        "Value" text NOT NULL,
+        "Description" text NOT NULL,
+        "Category" text NOT NULL,
+        "UpdatedBy" text,
+        "UpdatedAtUtc" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_PlatformSettings" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE TABLE "RentalAgreements" (
+        "Id" uuid NOT NULL,
+        "PropertyId" uuid NOT NULL,
+        "RenterId" text NOT NULL,
+        "LandlordId" text NOT NULL,
+        "ApplicationId" uuid,
+        "MonthlyRentETB" numeric(18,2) NOT NULL,
+        "DepositAmountETB" numeric(18,2) NOT NULL,
+        "LeaseMonths" integer NOT NULL,
+        "StartDateUtc" timestamp with time zone NOT NULL,
+        "EndDateUtc" timestamp with time zone NOT NULL,
+        "ActualMoveInDateUtc" timestamp with time zone,
+        "Status" integer NOT NULL,
+        "Notes" text,
+        "TerminatedAtUtc" timestamp with time zone,
+        "CreatedAtUtc" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        "LastModifiedAtUtc" timestamp with time zone,
+        "LastModifiedBy" text,
+        "IsDeleted" boolean NOT NULL,
+        "DeletedAtUtc" timestamp with time zone,
+        CONSTRAINT "PK_RentalAgreements" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_RentalAgreements_AspNetUsers_LandlordId" FOREIGN KEY ("LandlordId") REFERENCES "AspNetUsers" ("Id") ON DELETE RESTRICT,
+        CONSTRAINT "FK_RentalAgreements_AspNetUsers_RenterId" FOREIGN KEY ("RenterId") REFERENCES "AspNetUsers" ("Id") ON DELETE RESTRICT,
+        CONSTRAINT "FK_RentalAgreements_Properties_PropertyId" FOREIGN KEY ("PropertyId") REFERENCES "Properties" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_RentalAgreements_RentalApplications_ApplicationId" FOREIGN KEY ("ApplicationId") REFERENCES "RentalApplications" ("Id") ON DELETE SET NULL
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_SupportTickets_Status_Priority" ON "SupportTickets" ("Status", "Priority");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE UNIQUE INDEX "IX_SupportTickets_TicketReference" ON "SupportTickets" ("TicketReference");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE UNIQUE INDEX "IX_AgencyPropertyAssignments_AgencyId_UserId_PropertyId" ON "AgencyPropertyAssignments" ("AgencyId", "UserId", "PropertyId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_AgencyPropertyAssignments_PropertyId" ON "AgencyPropertyAssignments" ("PropertyId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_AgencyPropertyAssignments_UserId" ON "AgencyPropertyAssignments" ("UserId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_ListingReviews_PropertyId_CreatedAtUtc" ON "ListingReviews" ("PropertyId", "CreatedAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_ListingReviews_ReviewerId" ON "ListingReviews" ("ReviewerId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_Notifications_UserId_IsRead" ON "Notifications" ("UserId", "IsRead");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE UNIQUE INDEX "IX_PasswordResetTokens_Token" ON "PasswordResetTokens" ("Token");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_PasswordResetTokens_UserId_IsUsed" ON "PasswordResetTokens" ("UserId", "IsUsed");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_PaymentTransactions_ExternalReference" ON "PaymentTransactions" ("ExternalReference");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_PaymentTransactions_PlanId" ON "PaymentTransactions" ("PlanId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_PaymentTransactions_SubscriptionId" ON "PaymentTransactions" ("SubscriptionId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_PaymentTransactions_UserId_Status" ON "PaymentTransactions" ("UserId", "Status");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE UNIQUE INDEX "IX_PlatformSettings_Key" ON "PlatformSettings" ("Key");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_RentalAgreements_ApplicationId" ON "RentalAgreements" ("ApplicationId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_RentalAgreements_LandlordId" ON "RentalAgreements" ("LandlordId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_RentalAgreements_PropertyId_Status" ON "RentalAgreements" ("PropertyId", "Status");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    CREATE INDEX "IX_RentalAgreements_RenterId" ON "RentalAgreements" ("RenterId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    ALTER TABLE "SupportTickets" ADD CONSTRAINT "FK_SupportTickets_AspNetUsers_AssignedAgentId" FOREIGN KEY ("AssignedAgentId") REFERENCES "AspNetUsers" ("Id") ON DELETE SET NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261022111428_AddUserReportAssignmentAndResolution') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261022111428_AddUserReportAssignmentAndResolution', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026123210_AddPropertyListingFee') THEN
+    ALTER TABLE "Properties" ADD "ListingFeeAmountETB" numeric(18,2) NOT NULL DEFAULT 0.0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026123210_AddPropertyListingFee') THEN
+    ALTER TABLE "Properties" ADD "ListingFeeProvider" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026123210_AddPropertyListingFee') THEN
+    ALTER TABLE "Properties" ADD "ListingFeeReference" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026123210_AddPropertyListingFee') THEN
+    ALTER TABLE "Properties" ADD "ListingFeeStatus" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026123210_AddPropertyListingFee') THEN
+    ALTER TABLE "Properties" ADD "ListingFeeVerifiedAtUtc" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026123210_AddPropertyListingFee') THEN
+    ALTER TABLE "Properties" ADD "ListingFeeVerifiedBy" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026123210_AddPropertyListingFee') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261026123210_AddPropertyListingFee', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026125629_AddPropertyVideoUrl') THEN
+    ALTER TABLE "Properties" ADD "VideoUrl" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026125629_AddPropertyVideoUrl') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261026125629_AddPropertyVideoUrl', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026201921_AddListingFeeTransactionUrl') THEN
+    ALTER TABLE "Properties" ADD "ListingFeeTransactionUrl" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261026201921_AddListingFeeTransactionUrl') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261026201921_AddListingFeeTransactionUrl', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101124959_AddPaymentEvidence') THEN
+    ALTER TABLE "PaymentTransactions" ADD "EvidenceFileName" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101124959_AddPaymentEvidence') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261101124959_AddPaymentEvidence', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    CREATE TEMP TABLE "_AgencyUserIds" ON COMMIT DROP AS
+    SELECT user_role."UserId"
+    FROM "AspNetUserRoles" AS user_role
+    INNER JOIN "AspNetRoles" AS role ON role."Id" = user_role."RoleId"
+    WHERE role."Name" = 'Agency'
+    UNION
+    SELECT membership."UserId"
+    FROM "AgencyMemberships" AS membership
+    UNION
+    SELECT assignment."UserId"
+    FROM "AgencyPropertyAssignments" AS assignment;
+
+    CREATE TEMP TABLE "_AgencyPropertyIds" ON COMMIT DROP AS
+    SELECT property."Id"
+    FROM "Properties" AS property
+    WHERE property."AgencyId" IS NOT NULL
+       OR property."LandlordId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+       OR property."AssignedAgentId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+    UNION
+    SELECT assignment."PropertyId"
+    FROM "AgencyPropertyAssignments" AS assignment;
+
+    UPDATE "SupportTickets"
+    SET "Category" = 9
+    WHERE "Category" = 2;
+
+    DELETE FROM "RentalAgreements"
+    WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+       OR "LandlordId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+       OR "RenterId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "RentalApplications"
+    WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+       OR "ApplicantId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "PropertyInquiries"
+    WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+       OR "RenterId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "ViewingAppointments"
+    WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+       OR "RenterId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "Favorites"
+    WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+       OR "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "ListingReviews"
+    WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+       OR "ReviewerId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "UserReports"
+    WHERE "ReportedPropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+       OR "ReporterId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    UPDATE "UserReports"
+    SET "ReportedUserId" = NULL,
+        "AssignedToId" = NULL
+    WHERE "ReportedUserId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+       OR "AssignedToId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "Properties"
+    WHERE "Id" IN (SELECT "Id" FROM "_AgencyPropertyIds");
+
+    UPDATE "Properties"
+    SET "RentedToTenantId" = NULL,
+        "RentedToTenantName" = NULL
+    WHERE "RentedToTenantId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    UPDATE "Properties"
+    SET "ModeratedBy" = NULL,
+        "ListingFeeVerifiedBy" = NULL
+    WHERE "ModeratedBy" IN (SELECT "UserId" FROM "_AgencyUserIds")
+       OR "ListingFeeVerifiedBy" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    UPDATE "PaymentTransactions"
+    SET "VerifiedBy" = NULL
+    WHERE "VerifiedBy" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    UPDATE "PlatformSettings"
+    SET "UpdatedBy" = NULL
+    WHERE "UpdatedBy" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    UPDATE "AspNetUsers"
+    SET "RestrictedBy" = NULL
+    WHERE "RestrictedBy" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    UPDATE "SupportTickets"
+    SET "AssignedAgentId" = NULL
+    WHERE "AssignedAgentId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "SupportTicketMessages"
+    WHERE "SenderId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "SupportTicketMessages"
+    WHERE "TicketId" IN (
+        SELECT "Id" FROM "SupportTickets"
+        WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+    );
+
+    DELETE FROM "SupportTickets"
+    WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "PaymentTransactions"
+    WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "Subscriptions"
+    WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "AuditLogs"
+    WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+       OR "EntityName" IN ('Agency', 'AgencyMembership', 'AgencyPropertyAssignment');
+
+    DELETE FROM "Notifications"
+    WHERE "Type" = 5
+       OR "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "SavedSearches"
+    WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "PasswordResetTokens"
+    WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "RenterProfiles"
+    WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "LandlordProfiles"
+    WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+    DELETE FROM "AspNetUserRoles"
+    WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+       OR "RoleId" IN (SELECT "Id" FROM "AspNetRoles" WHERE "Name" = 'Agency');
+
+    DELETE FROM "AspNetRoles"
+    WHERE "Name" = 'Agency';
+
+    DELETE FROM "AspNetUsers"
+    WHERE "Id" IN (SELECT "UserId" FROM "_AgencyUserIds");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    ALTER TABLE "Properties" DROP CONSTRAINT "FK_Properties_Agencies_AgencyId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    ALTER TABLE "Properties" DROP CONSTRAINT "FK_Properties_AspNetUsers_AssignedAgentId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    DROP TABLE "AgencyMemberships";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    DROP TABLE "AgencyPropertyAssignments";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    DROP TABLE "Agencies";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    DROP INDEX "IX_Properties_AgencyId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    DROP INDEX "IX_Properties_AssignedAgentId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    ALTER TABLE "Properties" DROP COLUMN "AgencyId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    ALTER TABLE "Properties" DROP COLUMN "AssignedAgentId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101175934_RemoveAgencyFeatures') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261101175934_RemoveAgencyFeatures', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

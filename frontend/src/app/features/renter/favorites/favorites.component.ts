@@ -4,16 +4,17 @@ import { RouterLink } from '@angular/router';
 import { InteractionService } from '../../../core/services/interaction.service';
 import { PropertySummary } from '../../../core/models/property.model';
 import { PropertyCardComponent } from '../../../shared/components/property-card/property-card.component';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-favorites',
   standalone: true,
-  imports: [CommonModule, RouterLink, PropertyCardComponent],
+  imports: [CommonModule, RouterLink, PropertyCardComponent, PaginationComponent],
   template: `
     <div class="favorites-page container">
       <div class="page-header">
         <div>
-          <span class="badge badge-rose">Rentola-Inspired Saved Homes</span>
+          <span class="badge badge-green">Saved Homes</span>
           <h1 class="page-title">My Saved Favorites</h1>
           <p class="page-subtitle">Quickly compare and keep track of Ethiopian properties you've shortlisted.</p>
         </div>
@@ -26,14 +27,14 @@ import { PropertyCardComponent } from '../../../shared/components/property-card/
         </div>
       } @else if (favorites.length === 0) {
         <div class="empty-state">
-          <div class="empty-icon">♥</div>
+          <div class="empty-icon"><span class="material-icons-outlined" aria-hidden="true">favorite</span></div>
           <h3>You haven't saved any listings yet</h3>
           <p>Click the heart icon on any property card to save it for later inspection.</p>
           <a routerLink="/properties" class="btn btn-primary">Browse Available Properties</a>
         </div>
       } @else {
         <div class="properties-grid">
-          @for (property of favorites; track property.id) {
+          @for (property of pagedFavorites; track property.id) {
             <div class="fav-card-wrapper">
               <app-property-card [property]="property"></app-property-card>
               <button class="btn-remove-fav" (click)="removeFavorite(property.id)">
@@ -42,6 +43,13 @@ import { PropertyCardComponent } from '../../../shared/components/property-card/
             </div>
           }
         </div>
+
+        <app-pagination
+          [totalItems]="favorites.length"
+          [pageSize]="pageSize"
+          [currentPage]="currentPage"
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
       }
     </div>
   `,
@@ -57,9 +65,9 @@ import { PropertyCardComponent } from '../../../shared/components/property-card/
       flex-wrap: wrap;
       gap: 1rem;
     }
-    .badge-rose {
-      background: #ffe4e6;
-      color: #e11d48;
+    .badge-green {
+      background: #e8f5ec;
+      color: #176b4d;
       font-size: 0.8rem;
       padding: 0.25rem 0.6rem;
       border-radius: 9999px;
@@ -84,7 +92,7 @@ import { PropertyCardComponent } from '../../../shared/components/property-card/
     }
     .empty-icon {
       font-size: 3.5rem;
-      color: #f43f5e;
+      color: #10b981;
       margin-bottom: 1rem;
     }
     .empty-state h3 {
@@ -109,8 +117,8 @@ import { PropertyCardComponent } from '../../../shared/components/property-card/
     .btn-remove-fav {
       margin-top: 0.5rem;
       background: white;
-      border: 1px solid #e2e8f0;
-      color: #ef4444;
+      border: 1px solid #d1fae5;
+      color: #059669;
       padding: 0.5rem;
       border-radius: var(--radius-sm);
       font-size: 0.85rem;
@@ -119,8 +127,9 @@ import { PropertyCardComponent } from '../../../shared/components/property-card/
       transition: all 0.2s;
     }
     .btn-remove-fav:hover {
-      background: #fee2e2;
-      border-color: #fca5a5;
+      background: #ecfdf5;
+      border-color: #10b981;
+      color: #047857;
     }
   `]
 })
@@ -129,6 +138,19 @@ export class FavoritesComponent implements OnInit {
 
   favorites: PropertySummary[] = [];
   isLoading = true;
+
+  currentPage = 1;
+  pageSize = 6;
+
+  get pagedFavorites(): PropertySummary[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.favorites.slice(start, start + this.pageSize);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   ngOnInit() {
     this.loadFavorites();

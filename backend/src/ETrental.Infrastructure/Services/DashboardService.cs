@@ -10,12 +10,9 @@ namespace ETrental.Infrastructure.Services;
 public class DashboardService : IDashboardService
 {
     private readonly IApplicationDbContext _context;
-    private readonly IAgencyAccessService _agencyAccess;
-
-    public DashboardService(IApplicationDbContext context, IAgencyAccessService agencyAccess)
+    public DashboardService(IApplicationDbContext context)
     {
         _context = context;
-        _agencyAccess = agencyAccess;
     }
 
     public async Task<Result<RenterDashboardDto>> GetRenterDashboardAsync(string userId)
@@ -50,16 +47,7 @@ public class DashboardService : IDashboardService
 
     public async Task<Result<LandlordDashboardDto>> GetLandlordDashboardAsync(string userId)
     {
-        var agencyContext = await _agencyAccess.GetContextAsync(userId);
-
         var query = _context.Properties.Where(p => p.LandlordId == userId);
-
-        // Agency managers also see the whole agency portfolio.
-        if (agencyContext != null)
-        {
-            var agencyId = agencyContext.AgencyId;
-            query = _context.Properties.Where(p => p.LandlordId == userId || (p.AgencyId != null && p.AgencyId == agencyId));
-        }
 
         var statuses = await query.Select(p => p.Status).ToListAsync();
         var rents = await query.Select(p => p.RentAmountETB).ToListAsync();
@@ -91,39 +79,5 @@ public class DashboardService : IDashboardService
         };
 
         return Result<LandlordDashboardDto>.Success(dashboard);
-    }
-
-    public async Task<Result<AgencyDashboardDto>> GetAgencyDashboardAsync(string userId)
-    {
-        var context = await _agencyAccess.GetContextAsync(userId);
-        if (context == null)
-        {
-            return Result<AgencyDashboardDto>.Failure("You are not a member of any agency.");
-        }
-
-        var agencyId = context.AgencyId;
-        var now = DateTime.UtcNow;
-
-        var agency = await _context.Agencies.AsNoTracking().FirstOrDefaultAsync(a => a.Id == agencyId);
-        var statuses = await _context.Properties.Where(p => p.AgencyId == agencyId).Select(p => p.Status).ToListAsync();
-
-        var dashboard = new AgencyDashboardDto
-        {
-            AgencyName = agency?.Name ?? string.Empty,
-            AgencyStatus = agency?.Status.ToString() ?? "Pending",
-            TotalProperties = statuses.Count,
-            PublishedProperties = statuses.Count(s => s == PropertyStatus.Published),
-            PendingReviewProperties = statuses.Count(s => s == PropertyStatus.PendingReview),
-            RentedProperties = statuses.Count(s => s == PropertyStatus.Rented),
-            UnreadInquiries = await _context.PropertyInquiries.CountAsync(i => i.Property.AgencyId == agencyId && !i.IsReadByLandlord),
-            PendingApplications = await _context.RentalApplications.CountAsync(a => a.Property.AgencyId == agencyId
-                && (a.Status == ApplicationStatus.Submitted || a.Status == ApplicationStatus.UnderReview)),
-            UpcomingAppointments = await _context.ViewingAppointments.CountAsync(v => v.Property.AgencyId == agencyId
-                && v.Status == AppointmentStatus.Confirmed && v.RequestedDateTimeUtc >= now),
-            ActiveStaff = await _context.AgencyMemberships.CountAsync(m => m.AgencyId == agencyId && m.IsActive),
-            UnreadNotificationCount = await _context.Notifications.CountAsync(n => n.UserId == userId && !n.IsRead)
-        };
-
-        return Result<AgencyDashboardDto>.Success(dashboard);
     }
 }

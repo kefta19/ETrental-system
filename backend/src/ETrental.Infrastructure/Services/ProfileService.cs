@@ -32,10 +32,6 @@ public class ProfileService : IProfileService
     private async Task<UserDto> BuildUserDtoAsync(ApplicationUser user)
     {
         var roles = await _userManager.GetRolesAsync(user);
-        var membership = await _context.AgencyMemberships
-            .Include(m => m.Agency)
-            .FirstOrDefaultAsync(m => m.UserId == user.Id && m.IsActive);
-
         var activeSub = await _context.Subscriptions
             .Include(s => s.Plan)
             .FirstOrDefaultAsync(s => s.UserId == user.Id && s.Status == SubscriptionStatus.Active);
@@ -50,9 +46,8 @@ public class ProfileService : IProfileService
             PhoneNumber = user.PhoneNumber ?? string.Empty,
             ProfilePictureUrl = user.ProfilePictureUrl,
             Roles = roles.ToList(),
-            AgencyId = membership?.AgencyId,
-            AgencyName = membership?.Agency.Name,
-            SubscriptionTier = activeSub?.Plan.Name ?? "Free"
+            SubscriptionTier = activeSub?.Plan.Name ?? "Free",
+            CreatedAtUtc = user.CreatedAtUtc
         };
     }
 

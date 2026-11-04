@@ -1,3 +1,5 @@
+@import '@material-design-icons/font/outlined.css';
+
 /* Modern Professional Global Stylesheet for ETrental */
 :root {
   --primary: #10b981;
@@ -58,6 +60,19 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+.material-icons-outlined {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 1.2em;
+  line-height: 1;
+  vertical-align: middle;
+  white-space: nowrap;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
 }
 
 html {
@@ -460,6 +475,104 @@ a {
   .page-shell { padding: 1.5rem 0 3rem; }
 }
 
+/* Keep landlord workspace screens compact while retaining shared page styling. */
+.landlord-layout-content .page-shell {
+  padding: .9rem 0 1.4rem !important;
+}
+
+.landlord-layout-content .page-header {
+  gap: .65rem;
+  margin-bottom: 1rem !important;
+}
+
+.landlord-layout-content .panel {
+  margin-bottom: .8rem !important;
+}
+
+.landlord-layout-content .panel-header {
+  gap: .5rem;
+  padding: .7rem .9rem !important;
+}
+
+.landlord-layout-content .panel-body {
+  padding: .85rem !important;
+}
+
+.landlord-layout-content .panel-body .form-group {
+  margin-bottom: .7rem !important;
+}
+
+.landlord-layout-content .grid-2 {
+  gap: .85rem !important;
+}
+
+.landlord-layout-content .container {
+  padding-right: clamp(.75rem, 2vw, 1.25rem) !important;
+  padding-left: clamp(.75rem, 2vw, 1.25rem) !important;
+}
+
+.landlord-layout-content .landlord-dashboard .dashboard-header {
+  padding: .9rem 0 .7rem !important;
+  margin-bottom: .8rem !important;
+}
+
+.landlord-layout-content .landlord-dashboard .header-content {
+  padding: 0 1rem !important;
+}
+
+.landlord-layout-content .landlord-dashboard .container {
+  max-width: none !important;
+  padding: 0 1rem 1.4rem !important;
+}
+
+.landlord-layout-content .landlord-dashboard .stats-grid {
+  gap: .75rem;
+  margin-bottom: 1rem !important;
+}
+
+.landlord-layout-content .landlord-dashboard .stat-card {
+  gap: .75rem;
+  padding: .9rem !important;
+}
+
+.landlord-layout-content .landlord-dashboard .dashboard-grid {
+  gap: 1rem;
+}
+
+.landlord-layout-content .landlord-dashboard .card-header,
+.landlord-layout-content .landlord-dashboard .card-body {
+  padding: .8rem .9rem !important;
+}
+
+.landlord-layout-content .my-properties-page {
+  padding: .9rem .9rem 1.4rem !important;
+}
+
+.landlord-layout-content .my-properties-page .page-header {
+  margin-bottom: 1rem !important;
+  gap: .8rem;
+}
+
+.landlord-layout-content .my-properties-page .status-filter-bar {
+  gap: .35rem;
+  margin-bottom: 1rem !important;
+  padding: .35rem;
+}
+
+.landlord-layout-content .my-properties-page .filter-chip {
+  padding: .4rem .75rem;
+}
+
+.landlord-layout-content .my-properties-page .properties-list {
+  gap: .75rem;
+}
+
+.landlord-layout-content app-inquiries-inbox .inbox-page,
+.landlord-layout-content app-appointments-list .appointments-page,
+.landlord-layout-content app-applications-list .applications-page {
+  padding: .9rem clamp(.75rem, 2vw, 1.25rem) 1.4rem !important;
+}
+
 /* ================================================================
    SHARED UTILITY CLASSES
    Used by all feature pages — single source of truth.
@@ -834,6 +947,122 @@ a {
   font-weight: 600;
 }
 
+/* Keep shared layouts usable on narrow viewports without forcing horizontal scrolling. */
+img,
+video {
+  max-width: 100%;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+
+.stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+
+.admin-page,
+.admin-content,
+.panel-body,
+.card-body {
+  min-width: 0;
+}
+
+.search-input {
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .admin-header {
+    padding: 1.25rem 1rem;
+  }
+
+  .admin-content {
+    padding: 1.25rem 1rem;
+  }
+
+  .topbar {
+    min-height: var(--topbar-height);
+    height: auto;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .topbar-left,
+  .topbar-right {
+    min-width: 0;
+    gap: 0.5rem;
+  }
+
+  .panel-header,
+  .card-header {
+    flex-wrap: wrap;
+  }
+
+  .toolbar {
+    align-items: stretch;
+  }
+
+  .toolbar .form-group {
+    min-width: min(160px, 100%);
+  }
+
+  .data-table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+
+  .page-shell {
+    padding: 1.25rem 0 2rem;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+    gap: 0.65rem;
+  }
+
+  .stat-card {
+    padding: 0.9rem;
+  }
+
+  .panel-header,
+  .card-header {
+    padding: 0.85rem 1rem;
+  }
+
+  .panel-body,
+  .card-body {
+    padding: 1rem;
+  }
+
+  .admin-header {
+    padding: 1rem 0.75rem;
+  }
+
+  .admin-content {
+    padding: 1rem 0.75rem;
+  }
+
+  .empty-state,
+  .loading-state {
+    padding: 2rem 1rem;
+  }
+}
+
 /* ── User chip (topbar) ── */
 .user-chip {
   display: flex;
@@ -986,4 +1215,3 @@ a {
   .admin-header { padding: 1rem; }
   .modal-card { padding: 1.5rem; }
 }
-

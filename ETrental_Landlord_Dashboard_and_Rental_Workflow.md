@@ -140,16 +140,16 @@ stateDiagram-v2
 To maintain marketplace integrity, the backend enforces the following transition rules:
 | Origin State | Permitted Target State | Authorized Actor | Validation Rules & Preconditions |
 |---|---|---|---|
-| *(New)* | `DRAFT` | Landlord / Agency | Minimal fields: Title & Property Type. |
-| `DRAFT` | `PENDING_REVIEW` | Landlord / Agency | All required fields, location, pricing, and $\ge 3$ photos present. |
+| *(New)* | `DRAFT` | Landlord | Minimal fields: Title & Property Type. |
+| `DRAFT` | `PENDING_REVIEW` | Landlord | All required fields, location, pricing, and $\ge 3$ photos present. |
 | `PENDING_REVIEW` | `APPROVED` | Platform Admin | Admin moderation checklist satisfied. |
 | `PENDING_REVIEW` | `REJECTED` | Platform Admin | Valid rejection category and explanation recorded. |
-| `REJECTED` | `PENDING_REVIEW` | Landlord / Agency | Landlord modifies rejected fields and resubmits.
+| `REJECTED` | `PENDING_REVIEW` | Landlord | Landlord modifies rejected fields and resubmits.
 | `APPROVED` | `PUBLISHED` | System / Landlord | Listing becomes visible in public search queries. |
-| `PUBLISHED` | `UNAVAILABLE` | Landlord / Agency | Listing hidden from public search; existing inquiries preserved. |
-| `UNAVAILABLE` | `PUBLISHED` | Landlord / Agency | Listing restored to public search. |
-| `PUBLISHED` | `RENTED` | Landlord / Agency | Property rented; auto-updates associated pending applications. |
-| `RENTED` | `PUBLISHED` | Landlord / Agency | Requires landlord confirmation of new availability date and price. |
+| `PUBLISHED` | `UNAVAILABLE` | Landlord | Listing hidden from public search; existing inquiries preserved. |
+| `UNAVAILABLE` | `PUBLISHED` | Landlord | Listing restored to public search. |
+| `PUBLISHED` | `RENTED` | Landlord | Property rented; auto-updates associated pending applications. |
+| `RENTED` | `PUBLISHED` | Landlord | Requires landlord confirmation of new availability date and price. |
 | `*Any` | `ARCHIVED` | Landlord / Admin | Soft-deletes listing from active dashboard views. |
 ---
 ## 4. Tenant Inquiry & Viewing Operations

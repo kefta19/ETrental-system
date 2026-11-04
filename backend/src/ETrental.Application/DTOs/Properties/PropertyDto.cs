@@ -13,6 +13,7 @@ public class PropertySummaryDto
     public string SubCity { get; set; } = string.Empty;
     public string Neighborhood { get; set; } = string.Empty;
     public string? Landmark { get; set; }
+    public string? VideoUrl { get; set; }
     
     public decimal RentAmountETB { get; set; }
     public decimal DepositAmountETB { get; set; }
@@ -33,8 +34,15 @@ public class PropertySummaryDto
     public List<string> ImageUrls { get; set; } = new();
 
     public string LandlordName { get; set; } = string.Empty;
+    public string? LandlordPhone { get; set; }
+    public string? LandlordEmail { get; set; }
     public bool IsVerifiedHost { get; set; }
     public DateTime CreatedAtUtc { get; set; }
+    public decimal ListingFeeAmountETB { get; set; }
+    public string? ListingFeeProvider { get; set; }
+    public string? ListingFeeReference { get; set; }
+    public string? ListingFeeTransactionUrl { get; set; }
+    public ListingFeeStatus ListingFeeStatus { get; set; }
 }
 
 public class PropertyDto : PropertySummaryDto
@@ -52,13 +60,10 @@ public class PropertyDto : PropertySummaryDto
     public bool ElectricityBillIncluded { get; set; }
 
     public string LandlordId { get; set; } = string.Empty;
-    public string LandlordPhone { get; set; } = string.Empty;
-    public string LandlordEmail { get; set; } = string.Empty;
-    public Guid? AgencyId { get; set; }
-    public string? AgencyName { get; set; }
 
     public string? RejectionReason { get; set; }
     public string? RejectionCategory { get; set; }
+    public DateTime? ListingFeeVerifiedAtUtc { get; set; }
 
     public DateTime? TenancyStartDateUtc { get; set; }
     public decimal? AgreedRentAmountETB { get; set; }

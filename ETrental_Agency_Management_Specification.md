@@ -1,5 +1,7 @@
 # ETrental: Agency Management Specification
 
+> **Archived proposal:** The Agency role and its workflows have been removed from ETrental. This document is retained only as historical design material and does not describe supported functionality.
+
 **Project Name:** ETrental — Online Rental Property Marketplace  
 **Target Market:** Ethiopia (Prices in Ethiopian Birr — ETB)  
 **Document Reference:** `ETrental_Agency_Management_Specification.md`  

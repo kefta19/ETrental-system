@@ -6,7 +6,7 @@
       <p>Manage your listings, track moderation status, and mark units as rented</p>
     </div>
     <a routerLink="/landlord/add-property" class="btn btn-primary">
-      <span>+</span> Add New Property
+      <span class="material-icons-outlined" aria-hidden="true">add</span> Add New Property
     </a>
   </div>
 
@@ -74,16 +74,22 @@
       <div class="spinner"></div>
       <p>Loading your properties...</p>
     </div>
+  } @else if (loadError) {
+    <div class="empty-state" role="alert">
+      <h3>Properties could not be loaded</h3>
+      <p>{{ loadError }}</p>
+      <button type="button" class="btn btn-primary" (click)="loadProperties()">Try again</button>
+    </div>
   } @else if (properties.length === 0) {
     <div class="empty-state">
-      <div class="empty-icon">🏠</div>
+      <div class="empty-icon"><span class="material-icons-outlined" aria-hidden="true">home</span></div>
       <h3>No properties found</h3>
       <p>You don't have any properties in this category yet.</p>
       <a routerLink="/landlord/add-property" class="btn btn-primary">Create Your First Listing</a>
     </div>
   } @else {
     <div class="properties-list">
-      @for (prop of properties; track prop.id) {
+      @for (prop of pagedProperties; track prop.id) {
         <div class="property-list-card">
           <div class="property-image-section">
             <img 
@@ -100,15 +106,16 @@
             <div class="property-main-info">
               <h3 class="property-title">{{ prop.title }}</h3>
               <p class="property-location">
-                📍 {{ prop.neighborhood }}, {{ prop.subCity }}, {{ prop.city }}
+                <span class="material-icons-outlined" aria-hidden="true">location_on</span>
+                {{ prop.neighborhood }}, {{ prop.subCity }}, {{ prop.city }}
               </p>
               <div class="property-specs">
-                <span class="spec-item">🛏️ {{ prop.bedrooms }} Bed</span>
-                <span class="spec-item">🛁 {{ prop.bathrooms }} Bath</span>
+                <span class="spec-item"><span class="material-icons-outlined" aria-hidden="true">bed</span> {{ prop.bedrooms }} Bed</span>
+                <span class="spec-item"><span class="material-icons-outlined" aria-hidden="true">bathtub</span> {{ prop.bathrooms }} Bath</span>
                 @if (prop.areaSquareMeters) {
-                  <span class="spec-item">📐 {{ prop.areaSquareMeters }} m²</span>
+                  <span class="spec-item"><span class="material-icons-outlined" aria-hidden="true">square_foot</span> {{ prop.areaSquareMeters }} m²</span>
                 }
-                <span class="spec-item">🛋️ {{ ['Unfurnished', 'Semi-Furnished', 'Fully Furnished'][prop.furnishing] }}</span>
+                <span class="spec-item"><span class="material-icons-outlined" aria-hidden="true">chair</span> {{ ['Unfurnished', 'Semi-Furnished', 'Fully Furnished'][prop.furnishing] }}</span>
               </div>
             </div>
 
@@ -116,52 +123,127 @@
               <div class="price-amount">{{ prop.rentAmountETB | number }} ETB</div>
               <div class="price-period">/ month</div>
               <div class="price-details">+ {{ prop.advanceMonthsRequired }} mo. advance</div>
+
+              <!-- Entrance fee payment display -->
+              <div class="listing-fee-badge" [ngClass]="{
+                'fee-verified': prop.listingFeeStatus === 2,
+                'fee-pending': prop.listingFeeStatus === 1,
+                'fee-unpaid': prop.listingFeeStatus === 0 || prop.listingFeeStatus === 3
+              }">
+                <span class="material-icons-outlined" style="font-size: 15px;">receipt_long</span>
+                <span>Fee: <strong>{{ (prop.listingFeeAmountETB || 1000) | number }} ETB</strong></span>
+                <span class="fee-tag">{{ prop.listingFeeStatus === 2 ? 'Verified' : prop.listingFeeStatus === 1 ? 'Pending' : 'Unpaid' }}</span>
+              </div>
+
+              @if (prop.status === 1) {
+                <div class="price-details">Payment submitted · awaiting admin verification and review</div>
+              }
             </div>
 
             <div class="property-actions-section">
               <a [routerLink]="['/properties', prop.id]" class="btn-action" title="View Property">
-                👁️ View
+                <span class="material-icons-outlined" aria-hidden="true">visibility</span> View
               </a>
               
+              <a routerLink="/landlord/payments" class="btn-action" title="View Entrance Fee & Payments">
+                <span class="material-icons-outlined" aria-hidden="true">payments</span> Fee
+              </a>
+
               @if (prop.status === 0) {
-                <button class="btn-action btn-action-primary" (click)="submitForReview(prop.id)" title="Submit for Review">
-                  ✅ Submit for Review
+                <button class="btn-action btn-action-primary" (click)="submitForReview(prop.id)" title="Submit payment and request review">
+                  <span class="material-icons-outlined" aria-hidden="true">payments</span> Pay & submit
                 </button>
               }
               
               @if (prop.status === 4) {
                 <button class="btn-action" (click)="toggleAvailability(prop.id)" title="Mark Unavailable">
-                  ⏸️ Unpublish
+                  <span class="material-icons-outlined" aria-hidden="true">pause_circle</span> Unpublish
                 </button>
                 <button class="btn-action btn-action-success" (click)="openRentedModal(prop)" title="Mark as Rented">
-                  🔑 Mark as Rented
+                  <span class="material-icons-outlined" aria-hidden="true">key</span> Mark as Rented
                 </button>
               }
               
               @if (prop.status === 5) {
                 <button class="btn-action btn-action-primary" (click)="toggleAvailability(prop.id)" title="Publish Again">
-                  ▶️ Publish
+                  <span class="material-icons-outlined" aria-hidden="true">publish</span> Publish
                 </button>
               }
               
               @if (prop.status === 3) {
                 <button class="btn-action btn-action-warning" (click)="submitForReview(prop.id)" title="Resubmit">
-                  🔄 Resubmit
+                  <span class="material-icons-outlined" aria-hidden="true">refresh</span> Resubmit
                 </button>
               }
               
               <button class="btn-action btn-action-danger" (click)="deleteProperty(prop.id)" title="Delete">
-                🗑️ Delete
+                <span class="material-icons-outlined" aria-hidden="true">delete</span> Delete
               </button>
             </div>
           </div>
         </div>
       }
     </div>
+
+    <!-- Reusable Pagination System -->
+    <app-pagination
+      [totalItems]="properties.length"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage"
+      (pageChange)="onPageChange($event)">
+    </app-pagination>
   }
 </div>
 
 <!-- Mark as Rented Modal -->
+@if (selectedPropForPayment) {
+  <div class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Submit listing for review</h3>
+        <button class="close-x" (click)="selectedPropForPayment = null" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>{{ selectedPropForPayment.title }}</strong></p>
+        <p>Listing fee: {{ listingFeeETB | number }} ETB. Admin will verify the payment and listing before publishing.</p>
+        @if (selectedPropForPayment.listingFeeStatus === 1 || selectedPropForPayment.listingFeeStatus === 2) {
+          <p>We’ll reuse the payment reference already submitted for this listing. Add the provider’s transaction link below.</p>
+        } @else {
+          <div class="form-group">
+            <label class="form-label" for="draftPaymentProvider">Payment method</label>
+            <select id="draftPaymentProvider" [(ngModel)]="listingFeeProvider" class="form-control">
+              <option value="">Choose a payment method</option>
+              <option value="Telebirr">Telebirr — Kefale Gedefaw, 0955117065</option>
+              <option value="CBE">CBE — Kefale Gedefaw, 1000207193481</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="draftPaymentReference">Transaction reference</label>
+            <input id="draftPaymentReference" type="text" maxlength="200"
+              [(ngModel)]="listingFeeReference" class="form-control" />
+          </div>
+        }
+        <div class="form-group">
+          <label class="form-label" for="draftPaymentTransactionUrl">Payment transaction link</label>
+          <input id="draftPaymentTransactionUrl" type="url" maxlength="2048" required
+            [(ngModel)]="listingFeeTransactionUrl" class="form-control"
+            placeholder="Paste the HTTPS link supplied by your payment provider" />
+          <small>Required. Admins will open this exact link to review your transaction.</small>
+        </div>
+        @if (paymentError) {
+          <p class="payment-error" role="alert">{{ paymentError }}</p>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="selectedPropForPayment = null" [disabled]="isSubmitting">Cancel</button>
+        <button class="btn btn-primary" (click)="confirmSubmitForReview()" [disabled]="isSubmitting || !listingFeeTransactionUrl.trim()">
+          {{ isSubmitting ? 'Submitting…' : 'Submit for admin review' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
 @if (selectedPropForRented) {
   <div class="modal-backdrop">
     <div class="modal-card">

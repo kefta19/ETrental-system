@@ -671,3 +671,208 @@ VALUES ('20261022111428_AddUserReportAssignmentAndResolution', '10.0.13');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE "Properties" ADD "ListingFeeAmountETB" numeric(18,2) NOT NULL DEFAULT 0.0;
+
+ALTER TABLE "Properties" ADD "ListingFeeProvider" text;
+
+ALTER TABLE "Properties" ADD "ListingFeeReference" text;
+
+ALTER TABLE "Properties" ADD "ListingFeeStatus" integer NOT NULL DEFAULT 0;
+
+ALTER TABLE "Properties" ADD "ListingFeeVerifiedAtUtc" timestamp with time zone;
+
+ALTER TABLE "Properties" ADD "ListingFeeVerifiedBy" text;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20261026123210_AddPropertyListingFee', '10.0.13');
+
+COMMIT;
+
+START TRANSACTION;
+ALTER TABLE "Properties" ADD "VideoUrl" text;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20261026125629_AddPropertyVideoUrl', '10.0.13');
+
+COMMIT;
+
+START TRANSACTION;
+ALTER TABLE "Properties" ADD "ListingFeeTransactionUrl" text;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20261026201921_AddListingFeeTransactionUrl', '10.0.13');
+
+COMMIT;
+
+START TRANSACTION;
+ALTER TABLE "PaymentTransactions" ADD "EvidenceFileName" text;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20261101124959_AddPaymentEvidence', '10.0.13');
+
+COMMIT;
+
+START TRANSACTION;
+CREATE TEMP TABLE "_AgencyUserIds" ON COMMIT DROP AS
+SELECT user_role."UserId"
+FROM "AspNetUserRoles" AS user_role
+INNER JOIN "AspNetRoles" AS role ON role."Id" = user_role."RoleId"
+WHERE role."Name" = 'Agency'
+UNION
+SELECT membership."UserId"
+FROM "AgencyMemberships" AS membership
+UNION
+SELECT assignment."UserId"
+FROM "AgencyPropertyAssignments" AS assignment;
+
+CREATE TEMP TABLE "_AgencyPropertyIds" ON COMMIT DROP AS
+SELECT property."Id"
+FROM "Properties" AS property
+WHERE property."AgencyId" IS NOT NULL
+   OR property."LandlordId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+   OR property."AssignedAgentId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+UNION
+SELECT assignment."PropertyId"
+FROM "AgencyPropertyAssignments" AS assignment;
+
+UPDATE "SupportTickets"
+SET "Category" = 9
+WHERE "Category" = 2;
+
+DELETE FROM "RentalAgreements"
+WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+   OR "LandlordId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+   OR "RenterId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "RentalApplications"
+WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+   OR "ApplicantId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "PropertyInquiries"
+WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+   OR "RenterId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "ViewingAppointments"
+WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+   OR "RenterId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "Favorites"
+WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+   OR "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "ListingReviews"
+WHERE "PropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+   OR "ReviewerId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "UserReports"
+WHERE "ReportedPropertyId" IN (SELECT "Id" FROM "_AgencyPropertyIds")
+   OR "ReporterId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+UPDATE "UserReports"
+SET "ReportedUserId" = NULL,
+    "AssignedToId" = NULL
+WHERE "ReportedUserId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+   OR "AssignedToId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "Properties"
+WHERE "Id" IN (SELECT "Id" FROM "_AgencyPropertyIds");
+
+UPDATE "Properties"
+SET "RentedToTenantId" = NULL,
+    "RentedToTenantName" = NULL
+WHERE "RentedToTenantId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+UPDATE "Properties"
+SET "ModeratedBy" = NULL,
+    "ListingFeeVerifiedBy" = NULL
+WHERE "ModeratedBy" IN (SELECT "UserId" FROM "_AgencyUserIds")
+   OR "ListingFeeVerifiedBy" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+UPDATE "PaymentTransactions"
+SET "VerifiedBy" = NULL
+WHERE "VerifiedBy" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+UPDATE "PlatformSettings"
+SET "UpdatedBy" = NULL
+WHERE "UpdatedBy" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+UPDATE "AspNetUsers"
+SET "RestrictedBy" = NULL
+WHERE "RestrictedBy" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+UPDATE "SupportTickets"
+SET "AssignedAgentId" = NULL
+WHERE "AssignedAgentId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "SupportTicketMessages"
+WHERE "SenderId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "SupportTicketMessages"
+WHERE "TicketId" IN (
+    SELECT "Id" FROM "SupportTickets"
+    WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+);
+
+DELETE FROM "SupportTickets"
+WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "PaymentTransactions"
+WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "Subscriptions"
+WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "AuditLogs"
+WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+   OR "EntityName" IN ('Agency', 'AgencyMembership', 'AgencyPropertyAssignment');
+
+DELETE FROM "Notifications"
+WHERE "Type" = 5
+   OR "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "SavedSearches"
+WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "PasswordResetTokens"
+WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "RenterProfiles"
+WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "LandlordProfiles"
+WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+DELETE FROM "AspNetUserRoles"
+WHERE "UserId" IN (SELECT "UserId" FROM "_AgencyUserIds")
+   OR "RoleId" IN (SELECT "Id" FROM "AspNetRoles" WHERE "Name" = 'Agency');
+
+DELETE FROM "AspNetRoles"
+WHERE "Name" = 'Agency';
+
+DELETE FROM "AspNetUsers"
+WHERE "Id" IN (SELECT "UserId" FROM "_AgencyUserIds");
+
+ALTER TABLE "Properties" DROP CONSTRAINT "FK_Properties_Agencies_AgencyId";
+
+ALTER TABLE "Properties" DROP CONSTRAINT "FK_Properties_AspNetUsers_AssignedAgentId";
+
+DROP TABLE "AgencyMemberships";
+
+DROP TABLE "AgencyPropertyAssignments";
+
+DROP TABLE "Agencies";
+
+DROP INDEX "IX_Properties_AgencyId";
+
+DROP INDEX "IX_Properties_AssignedAgentId";
+
+ALTER TABLE "Properties" DROP COLUMN "AgencyId";
+
+ALTER TABLE "Properties" DROP COLUMN "AssignedAgentId";
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20261101175934_RemoveAgencyFeatures', '10.0.13');
+
+COMMIT;
+

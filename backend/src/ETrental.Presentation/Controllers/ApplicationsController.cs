@@ -40,7 +40,7 @@ public class ApplicationsController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Roles = "Landlord,Agency,Admin")]
+    [Authorize(Roles = "Landlord,Admin")]
     [HttpGet("received")]
     public async Task<IActionResult> GetReceivedApplications([FromQuery] Guid? propertyId, CancellationToken ct)
     {
@@ -51,7 +51,7 @@ public class ApplicationsController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Roles = "Landlord,Agency,Admin")]
+    [Authorize(Roles = "Landlord,Admin")]
     [HttpPut("{id:guid}/status")]
     public async Task<IActionResult> UpdateApplicationStatus(Guid id, [FromBody] UpdateApplicationStatusDto dto, CancellationToken ct)
     {

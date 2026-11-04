@@ -45,6 +45,16 @@ export interface PropertyInquiry {
   isReadByLandlord: boolean;
   isReadByRenter: boolean;
   createdAtUtc: string;
+  messages?: InquiryMessage[];
+}
+
+export interface InquiryMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  isFromLandlord: boolean;
+  createdAtUtc: string;
 }
 
 export interface CreateInquiry {

@@ -66,6 +66,14 @@ public class ModerationService : IModerationService
                 PrimaryImageUrl = p.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).FirstOrDefault(),
                 ImageUrls = p.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).ToList(),
                 LandlordName = p.Landlord.FullName,
+                LandlordPhone = p.Landlord.PhoneNumber,
+                LandlordEmail = p.Landlord.Email,
+                VideoUrl = p.VideoUrl,
+                ListingFeeAmountETB = p.ListingFeeAmountETB,
+                ListingFeeProvider = p.ListingFeeProvider,
+                ListingFeeReference = p.ListingFeeReference,
+                ListingFeeTransactionUrl = p.ListingFeeTransactionUrl,
+                ListingFeeStatus = p.ListingFeeStatus,
                 CreatedAtUtc = p.CreatedAtUtc
             })
             .ToListAsync();
@@ -84,7 +92,6 @@ public class ModerationService : IModerationService
         var property = await _context.Properties
             .Include(p => p.Images)
             .Include(p => p.Landlord)
-            .Include(p => p.Agency)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (property == null)
@@ -112,6 +119,43 @@ public class ModerationService : IModerationService
         }
         else if (decision.Approved)
         {
+            if (property.ListingFeeStatus == ListingFeeStatus.Pending)
+            {
+                var validProvider = property.ListingFeeProvider == "Telebirr"
+                    || property.ListingFeeProvider == "CBE";
+                if (!decision.PaymentVerified)
+                {
+                    return Result<PropertyDto>.Failure(
+                        "Confirm that you independently verified the transaction in the provider account before approving this listing.");
+                }
+
+                if (property.ListingFeeAmountETB != Property.RequiredListingFeeETB
+                    || !validProvider
+                    || string.IsNullOrWhiteSpace(property.ListingFeeReference))
+                {
+                    return Result<PropertyDto>.Failure(
+                        "The submitted listing fee does not match the required amount, supported provider, and transaction reference.");
+                }
+
+                var submittedTransactionUrl = property.ListingFeeTransactionUrl ?? property.ListingFeeReference;
+                if (!IsValidTransactionUrl(submittedTransactionUrl))
+                {
+                    return Result<PropertyDto>.Failure(
+                        "A valid HTTPS transaction link from the landlord is required before payment can be verified.");
+                }
+                property.ListingFeeTransactionUrl ??= submittedTransactionUrl;
+
+                property.ListingFeeStatus = ListingFeeStatus.Verified;
+                property.ListingFeeVerifiedAtUtc = DateTime.UtcNow;
+                property.ListingFeeVerifiedBy = adminId;
+            }
+            else if (property.ListingFeeStatus != ListingFeeStatus.Verified
+                && property.ListingFeeStatus != ListingFeeStatus.NotRequired)
+            {
+                return Result<PropertyDto>.Failure(
+                    "The listing fee must be verified before this listing can be approved.");
+            }
+
             property.Status = PropertyStatus.Published;
             property.RejectionReason = null;
             property.RejectionCategory = null;
@@ -197,8 +241,13 @@ public class ModerationService : IModerationService
             LandlordName = property.Landlord.FullName,
             LandlordPhone = property.Landlord.PhoneNumber ?? string.Empty,
             LandlordEmail = property.Landlord.Email ?? string.Empty,
-            AgencyId = property.AgencyId,
-            AgencyName = property.Agency?.Name,
+            VideoUrl = property.VideoUrl,
+            ListingFeeAmountETB = property.ListingFeeAmountETB,
+            ListingFeeProvider = property.ListingFeeProvider,
+            ListingFeeReference = property.ListingFeeReference,
+            ListingFeeTransactionUrl = property.ListingFeeTransactionUrl,
+            ListingFeeStatus = property.ListingFeeStatus,
+            ListingFeeVerifiedAtUtc = property.ListingFeeVerifiedAtUtc,
             RejectionReason = property.RejectionReason,
             RejectionCategory = property.RejectionCategory,
             CreatedAtUtc = property.CreatedAtUtc
@@ -249,5 +298,13 @@ public class ModerationService : IModerationService
             "/landlord/my-properties");
 
         return Result<bool>.Success(true);
+    }
+
+    private static bool IsValidTransactionUrl(string? value)
+    {
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps
+            && !string.IsNullOrEmpty(uri.Host)
+            && string.IsNullOrEmpty(uri.UserInfo);
     }
 }

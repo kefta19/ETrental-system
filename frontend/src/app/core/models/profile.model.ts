@@ -7,9 +7,8 @@ export interface UserProfile {
   phoneNumber?: string | null;
   profilePictureUrl?: string | null;
   roles: string[];
-  agencyId?: string | null;
-  agencyName?: string | null;
   subscriptionTier: string;
+  createdAtUtc?: string | null;
 }
 
 export interface UpdateProfileDto {

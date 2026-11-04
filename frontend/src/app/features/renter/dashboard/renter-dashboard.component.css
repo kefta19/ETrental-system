@@ -1,0 +1,565 @@
+:host {
+  display: block;
+  width: 100%;
+  color: #0f172a;
+}
+
+.fluent-page {
+  padding: 1.6rem 2rem 3rem;
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+/* ── Top Page Header ── */
+.fluent-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.4rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.page-title-block h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #0f172a;
+  margin: 0 0 0.2rem;
+}
+.page-title-block p {
+  color: #64748b;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.btn-fluent-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 6px;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid #059669;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background 150ms ease;
+}
+.btn-fluent-primary:hover {
+  background: #059669;
+}
+
+.btn-fluent-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #047857;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid #d1fae5;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.btn-fluent-secondary:hover {
+  background: #ecfdf5;
+  border-color: #10b981;
+}
+.btn-fluent-secondary.sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+}
+
+/* ── Grid Layout ── */
+.fluent-card-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Base Fluent Card ── */
+.fluent-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.35rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.card-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+.card-header-row h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.2rem;
+  color: #0f172a;
+}
+.card-header-row p {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin: 0;
+}
+.card-header-action {
+  color: #047857;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.card-header-action:hover {
+  text-decoration: underline;
+}
+
+/* ── Search Card ── */
+.search-card {
+  margin-bottom: 1.5rem;
+}
+.card-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+.fluent-brand-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 8px);
+  gap: 2.5px;
+}
+.brand-square {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+}
+.brand-square.s1 { background: #10b981; }
+.brand-square.s2 { background: #3b82f6; }
+.brand-square.s3 { background: #059669; }
+.brand-square.s4 { background: #f59e0b; }
+
+.card-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #10b981;
+}
+.card-hero-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  color: #0f172a;
+}
+.card-hero-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0 0 1.1rem;
+}
+
+/* Fluent Search Bar inside Card */
+.fluent-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  margin-bottom: 0.9rem;
+  transition: border-color 150ms;
+}
+.fluent-search-bar:focus-within {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+.fluent-search-bar .search-icon {
+  color: #94a3b8;
+  font-size: 1.25rem;
+}
+.fluent-search-bar input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 0.86rem;
+  color: #0f172a;
+}
+.btn-search-go {
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  background: #10b981;
+  color: #ffffff;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms;
+}
+.btn-search-go:hover {
+  background: #059669;
+}
+
+.category-pill-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+}
+.pill-title {
+  color: #64748b;
+  font-weight: 500;
+}
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  font: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms;
+}
+.category-chip:hover {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+.chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+/* ── Grouped Rows (Windows 11 List Style) ── */
+.fluent-row-group {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #f1f5f9;
+}
+.fluent-row-group.no-border-top {
+  border-top: none;
+}
+
+.fluent-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 0.65rem;
+  border-bottom: 1px solid #f1f5f9;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background 150ms;
+}
+.fluent-nav-row:hover {
+  background: #f8fafc;
+}
+.nav-row-icon {
+  font-size: 1.35rem;
+}
+.nav-row-icon.green { color: #10b981; }
+.nav-row-icon.blue { color: #3b82f6; }
+.nav-row-icon.amber { color: #f59e0b; }
+.nav-row-icon.teal { color: #0d9488; }
+
+.nav-row-copy {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.3;
+}
+.nav-row-copy strong {
+  font-size: 0.88rem;
+  color: #0f172a;
+}
+.nav-row-copy span {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+.chevron {
+  color: #94a3b8;
+  font-size: 1.15rem;
+}
+
+/* ── Search Alerts Row Items ── */
+.fluent-row-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.8rem 0.2rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.row-icon {
+  color: #10b981;
+  font-size: 1.25rem;
+}
+.row-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 0.15rem;
+}
+.row-details strong {
+  font-size: 0.86rem;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-details span {
+  font-size: 0.74rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.fluent-status-pill {
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.fluent-status-pill.active {
+  background: #dcfce7;
+  color: #166534;
+}
+.btn-icon {
+  border: none;
+  background: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0.2rem;
+  border-radius: 4px;
+}
+.btn-icon:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* ── Area Tiles (Matches "Personalize your device" in Screenshot) ── */
+.gallery-card {
+  margin-top: 1.5rem;
+}
+.area-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+.area-tile {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.area-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+.tile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tile-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 60%);
+  display: flex;
+  align-items: flex-end;
+  padding: 0.5rem 0.65rem;
+}
+.tile-overlay span {
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ── Recommendations Card ── */
+.recommendations-card {
+  margin-top: 1.5rem;
+}
+.property-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+/* ── States ── */
+.fluent-loading-row, .fluent-empty-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+.spinner-sm {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e2e8f0;
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.fluent-alert-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+}
+.fluent-alert-card.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+.fluent-alert-card .alert-icon {
+  font-size: 1.5rem;
+  color: #ef4444;
+}
+.alert-content {
+  flex: 1;
+}
+.alert-content strong {
+  font-size: 0.88rem;
+  display: block;
+}
+.alert-content p {
+  font-size: 0.8rem;
+  margin: 0.2rem 0 0;
+}
+
+@media (max-width: 960px) {
+  .fluent-card-grid {
+    grid-template-columns: 1fr;
+  }
+  .fluent-page {
+    padding: 1rem 1rem 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .fluent-page {
+    padding: 0.85rem 0.75rem 1.5rem;
+  }
+
+  .fluent-page-header {
+    align-items: stretch;
+  }
+
+  .page-title-block h1 {
+    font-size: 1.5rem;
+  }
+
+  .header-right-actions,
+  .btn-fluent-primary {
+    width: 100%;
+  }
+
+  .btn-fluent-primary {
+    justify-content: center;
+  }
+
+  .fluent-card {
+    padding: 1rem;
+  }
+
+  .fluent-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .fluent-search-bar {
+    flex-wrap: wrap;
+    padding: 0.55rem;
+  }
+
+  .fluent-search-bar input {
+    flex: 1 1 calc(100% - 2rem);
+  }
+
+  .btn-search-go {
+    min-height: 42px;
+    margin-left: auto;
+  }
+
+  .area-tile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fluent-alert-card,
+  .fluent-empty-row {
+    flex-wrap: wrap;
+  }
+
+  .fluent-empty-row .btn-fluent-secondary {
+    margin-left: 2.25rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .fluent-page {
+    padding-right: 0.6rem;
+    padding-left: 0.6rem;
+  }
+
+  .fluent-card {
+    padding: 0.85rem;
+  }
+
+  .card-header-row {
+    flex-wrap: wrap;
+  }
+
+  .card-header-action {
+    white-space: normal;
+  }
+
+  .area-tile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fluent-row-item {
+    gap: 0.55rem;
+  }
+
+  .row-actions {
+    gap: 0.25rem;
+  }
+}
