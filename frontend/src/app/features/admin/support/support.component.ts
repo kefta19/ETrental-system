@@ -4,8 +4,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminUser } from '../../../core/models/admin.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { SupportService } from '../../../core/services/support.service';
-import { SupportTicket, SupportTicketMessage, TicketPriority, TicketStatus } from '../../../core/models/support.model';
+import { enumValueFromApi } from '../../../core/models/api-enum.util';
+import {
+  SupportTicket,
+  SupportTicketMessage,
+  TicketCategory,
+  TicketCategoryValue,
+  TicketPriority,
+  TicketPriorityValue,
+  TicketStatus,
+  TicketStatusValue
+} from '../../../core/models/support.model';
 
 @Component({
   selector: 'app-admin-support',
@@ -39,7 +50,7 @@ import { SupportTicket, SupportTicketMessage, TicketPriority, TicketStatus } fro
               <article class="ticket">
                 <div class="ticket-top">
                   <span class="reference">{{ ticket.ticketReference }}</span>
-                  <span class="priority" [attr.data-priority]="ticket.priority">{{ priorityName(ticket.priority) }}</span>
+                  <span class="priority" [attr.data-priority]="enumValue(TicketPriority, ticket.priority)">{{ priorityName(ticket.priority) }}</span>
                 </div>
                 <h2>{{ ticket.subject }}</h2>
                 <p class="user">{{ ticket.userName }} · {{ ticket.userEmail }}</p>
@@ -49,16 +60,18 @@ import { SupportTicket, SupportTicketMessage, TicketPriority, TicketStatus } fro
                   <span>{{ statusName(ticket.status) }}</span>
                   <span>{{ ticket.createdAtUtc | date:'mediumDate' }}</span>
                 </div>
-                <label class="assign">
-                  Assigned agent
-                  <select [ngModel]="ticket.assignedAgentId || ''" (ngModelChange)="assign(ticket, $event)">
-                    <option value="" disabled>{{ ticket.assignedAgentId ? 'Select an agent' : 'Unassigned — choose an agent' }}</option>
-                    @for (member of staff; track member.id) { <option [value]="member.id">{{ member.fullName }}</option> }
-                  </select>
-                </label>
+                @if (authService.hasRole('Admin')) {
+                  <label class="assign">
+                    Assigned agent
+                    <select [ngModel]="ticket.assignedAgentId || ''" (ngModelChange)="assign(ticket, $event)">
+                      <option value="" disabled>{{ ticket.assignedAgentId ? 'Select an agent' : 'Unassigned — choose an agent' }}</option>
+                      @for (member of staff; track member.id) { <option [value]="member.id">{{ member.fullName }}</option> }
+                    </select>
+                  </label>
+                }
                 <div class="ticket-actions">
                   <button (click)="openTicket(ticket)">Open case</button>
-                  @if (ticket.status !== TicketStatus.Resolved) {
+                  @if (enumValue(TicketStatus, ticket.status) !== TicketStatus.Resolved) {
                     <button class="resolve" (click)="update(ticket, { status: TicketStatus.Resolved })">Resolve</button>
                   }
                 </div>
@@ -95,7 +108,7 @@ import { SupportTicket, SupportTicketMessage, TicketPriority, TicketStatus } fro
               </div>
               <div class="case-fields">
                 <label>Status
-                  <select [ngModel]="selectedTicket.status" (ngModelChange)="update(selectedTicket!, { status: $event })">
+                  <select [ngModel]="enumValue(TicketStatus, selectedTicket.status)" (ngModelChange)="update(selectedTicket!, { status: $event })">
                     <option [ngValue]="TicketStatus.Open">Open</option>
                     <option [ngValue]="TicketStatus.InProgress">In progress</option>
                     <option [ngValue]="TicketStatus.WaitingForUser">Waiting for user</option>
@@ -104,7 +117,7 @@ import { SupportTicket, SupportTicketMessage, TicketPriority, TicketStatus } fro
                   </select>
                 </label>
                 <label>Priority
-                  <select [ngModel]="selectedTicket.priority" (ngModelChange)="update(selectedTicket!, { priority: $event })">
+                  <select [ngModel]="enumValue(TicketPriority, selectedTicket.priority)" (ngModelChange)="update(selectedTicket!, { priority: $event })">
                     <option [ngValue]="TicketPriority.Low">Low</option>
                     <option [ngValue]="TicketPriority.Medium">Medium</option>
                     <option [ngValue]="TicketPriority.High">High</option>
@@ -177,6 +190,7 @@ export class SupportComponent implements OnInit {
   private supportService = inject(SupportService);
   private adminService = inject(AdminService);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  readonly authService = inject(AuthService);
   readonly TicketStatus = TicketStatus;
   readonly TicketPriority = TicketPriority;
   tickets: SupportTicket[] = [];
@@ -198,13 +212,13 @@ export class SupportComponent implements OnInit {
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
         this.load();
-        this.loadStaff();
+        if (this.authService.hasRole('Admin')) this.loadStaff();
       });
   }
 
   ngOnInit(): void {
     this.load();
-    this.loadStaff();
+    if (this.authService.hasRole('Admin')) this.loadStaff();
   }
 
   private loadStaff(): void {
@@ -241,16 +255,31 @@ export class SupportComponent implements OnInit {
     });
   }
 
-  statusName(status: TicketStatus): string {
-    return ['Open', 'In progress', 'Waiting for user', 'Escalated', 'Resolved'][status] ?? 'Unknown';
+  enumValue(definition: Readonly<Record<string, string | number>>, value: unknown): number | undefined {
+    return enumValueFromApi(definition, value);
   }
 
-  priorityName(priority: TicketPriority): string {
-    return ['Low', 'Medium', 'High', 'Urgent'][priority] ?? 'Unknown';
+  statusName(status: TicketStatusValue): string {
+    const value = this.enumValue(TicketStatus, status);
+    return value === undefined
+      ? String(status)
+      : ['Open', 'In progress', 'Waiting for user', 'Escalated', 'Resolved'][value] ?? String(status);
   }
 
-  categoryName(category: number): string {
-    return ['Account', 'Listing', 'Legacy category', 'Subscription billing', 'Technical', 'Safety & fraud', 'Payment', 'Inquiry & appointment', 'Privacy', 'Other'][category] ?? 'Other';
+  priorityName(priority: TicketPriorityValue): string {
+    const value = this.enumValue(TicketPriority, priority);
+    return value === undefined
+      ? String(priority)
+      : ['Low', 'Medium', 'High', 'Urgent'][value] ?? String(priority);
+  }
+
+  categoryName(category: TicketCategoryValue): string {
+    const value = this.enumValue(TicketCategory, category);
+    return value === 2
+      ? 'Legacy category'
+      : value === undefined
+        ? String(category)
+        : ['Account', 'Listing', 'Legacy category', 'Subscription billing', 'Technical', 'Safety & fraud', 'Payment', 'Inquiry & appointment', 'Privacy', 'Other'][value] ?? String(category);
   }
 
   changePage(delta: number): void {

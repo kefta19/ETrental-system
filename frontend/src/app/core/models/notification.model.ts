@@ -10,9 +10,11 @@ export enum NotificationType {
   System = 9
 }
 
+export type NotificationTypeValue = NotificationType | keyof typeof NotificationType;
+
 export interface AppNotification {
   id: string;
-  type: NotificationType;
+  type: NotificationTypeValue;
   title: string;
   message: string;
   linkUrl?: string | null;

@@ -50,6 +50,7 @@ export class AuthService {
     const roles = (user?.roles ?? []).map(r => r.toLowerCase());
     if (roles.includes('admin')) return '/admin/dashboard';
     if (roles.includes('landlord')) return '/landlord/dashboard';
+    if (roles.includes('support')) return '/support/dashboard';
     if (roles.includes('renter')) return '/renter/dashboard';
     return '/renter/dashboard';
   }

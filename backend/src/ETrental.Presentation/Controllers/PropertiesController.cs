@@ -28,19 +28,22 @@ public class PropertiesController : ControllerBase
     private readonly ISubscriptionService _subscriptionService;
     private readonly INotificationService _notificationService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IFileStorageService _fileStorageService;
 
     public PropertiesController(
         IApplicationDbContext context,
         ICurrentUserService currentUserService,
         ISubscriptionService subscriptionService,
         INotificationService notificationService,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        IFileStorageService fileStorageService)
     {
         _context = context;
         _currentUserService = currentUserService;
         _subscriptionService = subscriptionService;
         _notificationService = notificationService;
         _userManager = userManager;
+        _fileStorageService = fileStorageService;
     }
 
     private static bool IsValidTikTokUrl(string? value)
@@ -81,7 +84,6 @@ public class PropertiesController : ControllerBase
     [HttpGet("search")]
     [AllowAnonymous]
     public async Task<IActionResult> Search(
-        [FromQuery] string? keyword,
         [FromQuery] string? location,
         [FromQuery] string? city,
         [FromQuery] string? subCity,
@@ -111,12 +113,6 @@ public class PropertiesController : ControllerBase
 
         var query = _context.Properties
             .Where(p => p.Status == PropertyStatus.Published || p.Status == PropertyStatus.Approved);
-
-        if (!string.IsNullOrWhiteSpace(keyword))
-        {
-            var kw = keyword.Trim().ToLower();
-            query = query.Where(p => p.Title.ToLower().Contains(kw) || p.Description.ToLower().Contains(kw));
-        }
 
         // One box for city, sub-city, neighborhood or landmark (the home page search sends this).
         if (!string.IsNullOrWhiteSpace(location))
@@ -661,20 +657,35 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpPost("upload-image")]
-    public async Task<IActionResult> UploadImage(IFormFile file)
+    [Authorize(Roles = "Landlord")]
+    public async Task<IActionResult> UploadImage(IFormFile? file)
     {
-        var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-        Directory.CreateDirectory(uploadsPath);
-
-        var fileName = $"{Guid.NewGuid()}_{file.FileName}";
-        var filePath = Path.Combine(uploadsPath, fileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
+        if (file == null || file.Length == 0)
         {
-            await file.CopyToAsync(stream);
+            return BadRequest(Result<object>.Failure("Choose an image to upload."));
         }
 
-        var url = $"/uploads/{fileName}";
+        if (file.Length > 5 * 1024 * 1024)
+        {
+            return BadRequest(Result<object>.Failure("Images must be 5 MB or smaller."));
+        }
+
+        if (!_fileStorageService.IsValidImage(file.ContentType, file.FileName))
+        {
+            return BadRequest(Result<object>.Failure("Only JPEG, PNG, and WebP images are permitted."));
+        }
+
+        string url;
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            url = await _fileStorageService.SaveFileAsync(stream, file.FileName, file.ContentType);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(Result<object>.Failure(ex.Message));
+        }
+
         return Ok(new { succeeded = true, data = new { url } });
     }
 

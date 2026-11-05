@@ -74,6 +74,8 @@ export enum AppointmentStatus {
   Completed = 4
 }
 
+export type AppointmentStatusValue = AppointmentStatus | keyof typeof AppointmentStatus;
+
 export interface ViewingAppointment {
   id: string;
   propertyId: string;
@@ -85,7 +87,7 @@ export interface ViewingAppointment {
   hostPhone?: string;
   requestedDateTimeUtc: string;
   confirmedDateTimeUtc?: string;
-  status: AppointmentStatus;
+  status: AppointmentStatusValue;
   renterNotes?: string;
   hostNotes?: string;
   cancellationReason?: string;
@@ -113,6 +115,8 @@ export enum ApplicationStatus {
   Withdrawn = 4
 }
 
+export type ApplicationStatusValue = ApplicationStatus | keyof typeof ApplicationStatus;
+
 export interface RentalApplication {
   id: string;
   propertyId: string;
@@ -126,7 +130,7 @@ export interface RentalApplication {
   proposedOccupantsCount: number;
   employmentOrIncomeSummary: string;
   additionalNotes?: string;
-  status: ApplicationStatus;
+  status: ApplicationStatusValue;
   hostDecisionNotes?: string;
   decidedAtUtc?: string;
   createdAtUtc: string;

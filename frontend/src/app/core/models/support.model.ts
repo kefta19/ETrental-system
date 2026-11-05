@@ -25,15 +25,19 @@ export enum TicketPriority {
   Urgent = 3
 }
 
+export type TicketStatusValue = TicketStatus | keyof typeof TicketStatus;
+export type TicketCategoryValue = TicketCategory | keyof typeof TicketCategory;
+export type TicketPriorityValue = TicketPriority | keyof typeof TicketPriority;
+
 export interface SupportTicket {
   id: string;
   ticketReference: string;
   userId: string;
   userName: string;
   userEmail: string;
-  category: TicketCategory;
-  priority: TicketPriority;
-  status: TicketStatus;
+  category: TicketCategoryValue;
+  priority: TicketPriorityValue;
+  status: TicketStatusValue;
   subject: string;
   assignedAgentId?: string | null;
   assignedAgentName?: string | null;

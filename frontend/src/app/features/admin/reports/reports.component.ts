@@ -4,7 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminUser } from '../../../core/models/admin.model';
-import { ReportCategory, ReportStatus, UserReport } from '../../../core/models/report.model';
+import { enumValueFromApi } from '../../../core/models/api-enum.util';
+import { ReportCategory, ReportCategoryValue, ReportStatus, ReportStatusValue, UserReport } from '../../../core/models/report.model';
 import { ReportService } from '../../../core/services/report.service';
 
 @Component({
@@ -52,7 +53,7 @@ import { ReportService } from '../../../core/services/report.service';
                     <h2>{{ report.reason }}</h2>
                     <p class="subline">Submitted by {{ report.reporterName || 'Unknown user' }} · {{ report.createdAtUtc | date:'medium' }}</p>
                   </div>
-                  <span class="status" [attr.data-status]="report.status">{{ statusLabel(report.status) }}</span>
+                  <span class="status" [attr.data-status]="enumValue(ReportStatus, report.status)">{{ statusLabel(report.status) }}</span>
                 </div>
                 <p class="description">{{ report.description }}</p>
                 <div class="targets">
@@ -215,12 +216,20 @@ export class ReportsComponent implements OnInit {
     });
   }
 
-  categoryLabel(category: ReportCategory): string {
-    return this.categories.find(item => item.value === category)?.label ?? 'Other';
+  enumValue(definition: Readonly<Record<string, string | number>>, value: unknown): number | undefined {
+    return enumValueFromApi(definition, value);
   }
 
-  statusLabel(status: ReportStatus): string {
-    return ['Open', 'Under review', 'Action required', 'Resolved', 'Dismissed'][status] ?? 'Unknown';
+  categoryLabel(category: ReportCategoryValue): string {
+    const value = this.enumValue(ReportCategory, category);
+    return this.categories.find(item => item.value === value)?.label ?? String(category);
+  }
+
+  statusLabel(status: ReportStatusValue): string {
+    const value = this.enumValue(ReportStatus, status);
+    return value === undefined
+      ? String(status)
+      : ['Open', 'Under review', 'Action required', 'Resolved', 'Dismissed'][value] ?? String(status);
   }
 
   changePage(delta: number): void {

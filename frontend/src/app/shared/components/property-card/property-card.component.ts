@@ -436,7 +436,9 @@ export class PropertyCardComponent {
     event.preventDefault();
     event.stopPropagation();
     if (!this.authService.currentUser()) {
-      this.router.navigate(['/auth/login'], { queryParams: { returnUrl: '/properties' } });
+      this.router.navigate(['/login'], {
+        queryParams: { returnUrl: `/properties/${this.property.id}` },
+      });
       return;
     }
     this.interactionService.toggleFavorite(this.property.id).subscribe();

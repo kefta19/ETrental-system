@@ -25,7 +25,6 @@ export class PropertyService {
   search(filter: PropertyFilter): Observable<ApiResponse<PaginatedResult<PropertySummary>>> {
     let params = new HttpParams();
 
-    if (filter.keyword) params = params.set('keyword', filter.keyword);
     if (filter.city) params = params.set('city', filter.city);
     if (filter.subCity) params = params.set('subCity', filter.subCity);
     if (filter.neighborhood) params = params.set('neighborhood', filter.neighborhood);

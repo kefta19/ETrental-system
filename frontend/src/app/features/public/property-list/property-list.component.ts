@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Params, Router } from '@angular/router';
@@ -79,8 +79,6 @@ function parseType(raw: unknown): PropertyType | undefined {
 function filterFromParams(params: Params): PropertyFilter {
   const f: PropertyFilter = { sortBy: 'newest', page: 1, pageSize: 12 };
 
-  if (params['keyword']) f.keyword = String(params['keyword']);
-
   const location = params['location'] ?? params['city'] ?? params['subCity'];
   if (location) f.location = String(location);
 
@@ -116,7 +114,6 @@ function filterFromParams(params: Params): PropertyFilter {
 
 function paramsFromFilter(f: PropertyFilter): Params {
   const p: Params = {};
-  if (f.keyword && f.keyword.trim()) p['keyword'] = f.keyword.trim();
   if (f.location && f.location.trim()) p['location'] = f.location.trim();
   if (f.propertyType !== undefined && f.propertyType !== null) p['type'] = f.propertyType;
   if (f.minPriceETB && f.minPriceETB > 0) p['minPrice'] = f.minPriceETB;
@@ -171,20 +168,6 @@ function sameParams(a: Params, b: Params): boolean {
                   <option [value]="place"></option>
                 }
               </datalist>
-            </div>
-
-            <div class="filter-col">
-              <label class="filter-label" for="f-keyword">Keyword</label>
-              <input
-                id="f-keyword"
-                type="search"
-                class="form-control"
-                autocomplete="off"
-                placeholder="Title or description"
-                [(ngModel)]="filter.keyword"
-                (keyup.enter)="applyFilters()"
-                (change)="applyFilters()"
-              />
             </div>
 
             <div class="filter-col">
@@ -293,7 +276,7 @@ function sameParams(a: Params, b: Params): boolean {
       <div class="container page-body">
         <div class="results-bar">
           <div class="results-count">
-            @if (!isLoading) {
+            @if (!isLoading && !loadError) {
               <strong>{{ totalCount | number }}</strong>
               {{ totalCount === 1 ? 'home' : 'homes' }} available{{
                 filter.location ? ' in ' + filter.location : ''
@@ -319,11 +302,19 @@ function sameParams(a: Params, b: Params): boolean {
           </div>
         </div>
 
+        @if (loadError) {
+          <div class="empty-state" role="alert">
+            <h2>We couldn't load homes</h2>
+            <p>{{ loadError }}</p>
+            <button class="btn btn-primary" type="button" (click)="loadProperties()">Try again</button>
+          </div>
+        }
+
         @if (notice) {
           <p class="modal-sub" role="status">{{ notice }}</p>
         }
 
-        @if (!isLoading) {
+        @if (!isLoading && !loadError) {
           <div class="notify-bar">
             <div>
               <strong>Be the first to contact landlords</strong>
@@ -405,6 +396,7 @@ function sameParams(a: Params, b: Params): boolean {
               </div>
             }
           </div>
+        } @else if (loadError) {
         } @else if (properties.length === 0) {
           <div class="empty-state">
             <h2>No homes match this search</h2>
@@ -855,6 +847,7 @@ export class PropertyListComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   readonly places = PLACES;
   readonly typeOptions = TYPE_OPTIONS;
@@ -865,6 +858,7 @@ export class PropertyListComponent implements OnInit {
   currentPage = 1;
   totalPages = 1;
   isLoading = false;
+  loadError = '';
 
   selectedTypeString = 'all';
   skeletons = Array(6);
@@ -892,6 +886,7 @@ export class PropertyListComponent implements OnInit {
 
   loadProperties() {
     this.isLoading = true;
+    this.loadError = '';
     this.propertyService.search(this.filter).subscribe({
       next: (res) => {
         this.isLoading = false;
@@ -900,10 +895,15 @@ export class PropertyListComponent implements OnInit {
           this.totalCount = res.data.totalCount;
           this.currentPage = res.data.page;
           this.totalPages = res.data.totalPages;
+        } else {
+          this.loadError = res.errors?.join(' ') || 'The search service returned an empty response.';
         }
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.isLoading = false;
+        this.loadError = 'Please check your connection and try again.';
+        this.changeDetector.markForCheck();
       },
     });
   }

@@ -3,7 +3,15 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PropertyService } from '../../../core/services/property.service';
-import { PropertySummary, PropertyStatus } from '../../../core/models/property.model';
+import {
+  FurnishingStatus,
+  ListingFeeStatus,
+  PropertySummary,
+  PropertyStatus,
+  PropertyStatusValue,
+  FurnishingStatusValue
+} from '../../../core/models/property.model';
+import { enumValueFromApi } from '../../../core/models/api-enum.util';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
@@ -16,6 +24,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 export class MyPropertiesComponent implements OnInit {
   private propertyService = inject(PropertyService);
   private changeDetector = inject(ChangeDetectorRef);
+  readonly PropertyStatus = PropertyStatus;
+  readonly ListingFeeStatus = ListingFeeStatus;
 
   properties: PropertySummary[] = [];
   selectedStatus?: number = undefined;
@@ -85,14 +95,15 @@ export class MyPropertiesComponent implements OnInit {
     this.listingFeeReference = '';
     this.listingFeeTransactionUrl = '';
     this.paymentError = '';
-    if (
-      this.selectedPropForPayment?.listingFeeStatus === 1
-      || this.selectedPropForPayment?.listingFeeStatus === 2
-    ) {
-      this.listingFeeProvider = this.selectedPropForPayment.listingFeeProvider ?? '';
-      this.listingFeeReference = this.selectedPropForPayment.listingFeeReference ?? '';
-      const submittedReference = this.selectedPropForPayment.listingFeeReference ?? '';
-      this.listingFeeTransactionUrl = this.selectedPropForPayment.listingFeeTransactionUrl
+    const selectedProperty = this.selectedPropForPayment;
+    if (!selectedProperty) return;
+
+    const feeStatus = this.getFeeStatusCode(selectedProperty);
+    if (feeStatus === ListingFeeStatus.Pending || feeStatus === ListingFeeStatus.Verified) {
+      this.listingFeeProvider = selectedProperty.listingFeeProvider ?? '';
+      this.listingFeeReference = selectedProperty.listingFeeReference ?? '';
+      const submittedReference = selectedProperty.listingFeeReference ?? '';
+      this.listingFeeTransactionUrl = selectedProperty.listingFeeTransactionUrl
         ?? (this.isValidTransactionUrl(submittedReference) ? submittedReference : '');
     }
   }
@@ -183,7 +194,36 @@ export class MyPropertiesComponent implements OnInit {
     });
   }
 
-  getStatusLabel(status: PropertyStatus): string {
-    return PropertyStatus[status] || 'Unknown';
+  getStatusLabel(status: PropertyStatusValue): string {
+    const value = enumValueFromApi(PropertyStatus, status);
+    return value === undefined ? String(status) : PropertyStatus[value] || String(status);
+  }
+
+  getPropertyStatusCode(status: PropertyStatusValue): number | undefined {
+    return enumValueFromApi(PropertyStatus, status);
+  }
+
+  getFurnishingLabel(furnishing: FurnishingStatusValue): string {
+    const value = enumValueFromApi(FurnishingStatus, furnishing);
+    return value === undefined
+      ? String(furnishing)
+      : ['Unfurnished', 'Semi-Furnished', 'Fully Furnished'][value] ?? String(furnishing);
+  }
+
+  getFeeStatusCode(property: PropertySummary): number | undefined {
+    return property.listingFeeStatus == null
+      ? ListingFeeStatus.NotRequired
+      : enumValueFromApi(ListingFeeStatus, property.listingFeeStatus);
+  }
+
+  getFeeStatusLabel(property: PropertySummary): string {
+    const value = this.getFeeStatusCode(property);
+    switch (value) {
+      case ListingFeeStatus.NotRequired: return 'Unpaid';
+      case ListingFeeStatus.Pending: return 'Pending';
+      case ListingFeeStatus.Verified: return 'Verified';
+      case ListingFeeStatus.Rejected: return 'Rejected';
+      default: return `Unknown (${String(property.listingFeeStatus)})`;
+    }
   }
 }

@@ -7,7 +7,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { PropertyService } from '../../../core/services/property.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { InteractionService } from '../../../core/services/interaction.service';
-import { Property, PropertySummary, PropertyType, FurnishingStatus } from '../../../core/models/property.model';
+import { Property, PropertySummary, PropertyType, PropertyTypeValue, FurnishingStatus, FurnishingStatusValue } from '../../../core/models/property.model';
+import { enumValueFromApi } from '../../../core/models/api-enum.util';
 import { Entitlement } from '../../../core/models/subscription.model';
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { PropertyCardComponent } from '../../../shared/components/property-card/property-card.component';
@@ -1921,7 +1922,7 @@ export class PropertyDetailComponent implements OnInit {
   toggleFavorite() {
     if (!this.property) return;
     if (!this.authService.currentUser()) {
-      this.router.navigate(['/auth/login'], {
+      this.router.navigate(['/login'], {
         queryParams: { returnUrl: `/properties/${this.property.id}` },
       });
       return;
@@ -2119,7 +2120,7 @@ export class PropertyDetailComponent implements OnInit {
 
   private checkAuth(): boolean {
     if (!this.authService.currentUser()) {
-      this.router.navigate(['/auth/login'], {
+      this.router.navigate(['/login'], {
         queryParams: { returnUrl: `/properties/${this.property?.id}` },
       });
       return false;
@@ -2135,11 +2136,13 @@ export class PropertyDetailComponent implements OnInit {
     }, 6000);
   }
 
-  getTypeName(type: PropertyType): string {
-    return PropertyType[type] || 'Property';
+  getTypeName(type: PropertyTypeValue): string {
+    const value = enumValueFromApi(PropertyType, type);
+    return value === undefined ? String(type) : PropertyType[value] || String(type);
   }
 
-  getFurnishingName(furnishing: FurnishingStatus): string {
-    return FurnishingStatus[furnishing] || 'Unfurnished';
+  getFurnishingName(furnishing: FurnishingStatusValue): string {
+    const value = enumValueFromApi(FurnishingStatus, furnishing);
+    return value === undefined ? String(furnishing) : FurnishingStatus[value] || String(furnishing);
   }
 }

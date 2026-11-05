@@ -6,7 +6,8 @@ import { forkJoin, of } from 'rxjs';
 import { InteractionService } from '../../../core/services/interaction.service';
 import { PropertyService } from '../../../core/services/property.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { RentalApplication, ApplicationStatus } from '../../../core/models/interaction.model';
+import { enumValueFromApi } from '../../../core/models/api-enum.util';
+import { RentalApplication, ApplicationStatus, ApplicationStatusValue } from '../../../core/models/interaction.model';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
@@ -119,7 +120,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
               }
 
               <!-- Landlord Action Buttons -->
-              @if (activeTab === 'received' && app.status === 0) {
+              @if (activeTab === 'received' && enumValue(app.status) === ApplicationStatus.Submitted) {
                 <div class="app-actions">
                   <button class="btn btn-primary btn-sm" (click)="decideApplication(app, 2)">
                     ✓ Accept Application
@@ -418,6 +419,7 @@ export class ApplicationsListComponent implements OnInit {
   private interactionService = inject(InteractionService);
   private propertyService = inject(PropertyService);
   private authService = inject(AuthService);
+  readonly ApplicationStatus = ApplicationStatus;
   private changeDetector = inject(ChangeDetectorRef);
 
   myApplications: RentalApplication[] = [];
@@ -542,25 +544,29 @@ export class ApplicationsListComponent implements OnInit {
     });
   }
 
-  getStatusClass(status: ApplicationStatus): string {
-    switch (status) {
+  enumValue(status: ApplicationStatusValue): number | undefined {
+    return enumValueFromApi(ApplicationStatus, status);
+  }
+
+  getStatusClass(status: ApplicationStatusValue): string {
+    switch (this.enumValue(status)) {
       case ApplicationStatus.Submitted: return 'submitted';
       case ApplicationStatus.UnderReview: return 'underreview';
       case ApplicationStatus.Accepted: return 'accepted';
       case ApplicationStatus.Rejected: return 'rejected';
       case ApplicationStatus.Withdrawn: return 'withdrawn';
-      default: return 'submitted';
+      default: return 'unknown';
     }
   }
 
-  getStatusLabel(status: ApplicationStatus): string {
-    switch (status) {
+  getStatusLabel(status: ApplicationStatusValue): string {
+    switch (this.enumValue(status)) {
       case ApplicationStatus.Submitted: return 'Submitted';
       case ApplicationStatus.UnderReview: return 'Under Review';
       case ApplicationStatus.Accepted: return 'Accepted';
       case ApplicationStatus.Rejected: return 'Declined';
       case ApplicationStatus.Withdrawn: return 'Withdrawn';
-      default: return 'Submitted';
+      default: return String(status);
     }
   }
 }

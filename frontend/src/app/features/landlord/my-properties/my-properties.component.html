@@ -97,7 +97,7 @@
               [alt]="prop.title"
               class="property-thumbnail"
             />
-            <span class="status-badge" [class]="'status-' + prop.status">
+            <span class="status-badge" [class]="'status-' + (getPropertyStatusCode(prop.status) ?? 'unknown')">
               {{ getStatusLabel(prop.status) }}
             </span>
           </div>
@@ -115,7 +115,7 @@
                 @if (prop.areaSquareMeters) {
                   <span class="spec-item"><span class="material-icons-outlined" aria-hidden="true">square_foot</span> {{ prop.areaSquareMeters }} m²</span>
                 }
-                <span class="spec-item"><span class="material-icons-outlined" aria-hidden="true">chair</span> {{ ['Unfurnished', 'Semi-Furnished', 'Fully Furnished'][prop.furnishing] }}</span>
+                <span class="spec-item"><span class="material-icons-outlined" aria-hidden="true">chair</span> {{ getFurnishingLabel(prop.furnishing) }}</span>
               </div>
             </div>
 
@@ -126,16 +126,16 @@
 
               <!-- Entrance fee payment display -->
               <div class="listing-fee-badge" [ngClass]="{
-                'fee-verified': prop.listingFeeStatus === 2,
-                'fee-pending': prop.listingFeeStatus === 1,
-                'fee-unpaid': prop.listingFeeStatus === 0 || prop.listingFeeStatus === 3
+                'fee-verified': getFeeStatusCode(prop) === ListingFeeStatus.Verified,
+                'fee-pending': getFeeStatusCode(prop) === ListingFeeStatus.Pending,
+                'fee-unpaid': getFeeStatusCode(prop) === ListingFeeStatus.NotRequired || getFeeStatusCode(prop) === ListingFeeStatus.Rejected
               }">
                 <span class="material-icons-outlined" style="font-size: 15px;">receipt_long</span>
                 <span>Fee: <strong>{{ (prop.listingFeeAmountETB || 1000) | number }} ETB</strong></span>
-                <span class="fee-tag">{{ prop.listingFeeStatus === 2 ? 'Verified' : prop.listingFeeStatus === 1 ? 'Pending' : 'Unpaid' }}</span>
+                <span class="fee-tag">{{ getFeeStatusLabel(prop) }}</span>
               </div>
 
-              @if (prop.status === 1) {
+              @if (getPropertyStatusCode(prop.status) === PropertyStatus.PendingReview) {
                 <div class="price-details">Payment submitted · awaiting admin verification and review</div>
               }
             </div>
@@ -149,13 +149,13 @@
                 <span class="material-icons-outlined" aria-hidden="true">payments</span> Fee
               </a>
 
-              @if (prop.status === 0) {
+              @if (getPropertyStatusCode(prop.status) === PropertyStatus.Draft) {
                 <button class="btn-action btn-action-primary" (click)="submitForReview(prop.id)" title="Submit payment and request review">
                   <span class="material-icons-outlined" aria-hidden="true">payments</span> Pay & submit
                 </button>
               }
               
-              @if (prop.status === 4) {
+              @if (getPropertyStatusCode(prop.status) === PropertyStatus.Published) {
                 <button class="btn-action" (click)="toggleAvailability(prop.id)" title="Mark Unavailable">
                   <span class="material-icons-outlined" aria-hidden="true">pause_circle</span> Unpublish
                 </button>
@@ -164,13 +164,13 @@
                 </button>
               }
               
-              @if (prop.status === 5) {
+              @if (getPropertyStatusCode(prop.status) === PropertyStatus.Unavailable) {
                 <button class="btn-action btn-action-primary" (click)="toggleAvailability(prop.id)" title="Publish Again">
                   <span class="material-icons-outlined" aria-hidden="true">publish</span> Publish
                 </button>
               }
               
-              @if (prop.status === 3) {
+              @if (getPropertyStatusCode(prop.status) === PropertyStatus.Rejected) {
                 <button class="btn-action btn-action-warning" (click)="submitForReview(prop.id)" title="Resubmit">
                   <span class="material-icons-outlined" aria-hidden="true">refresh</span> Resubmit
                 </button>

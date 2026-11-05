@@ -402,13 +402,8 @@ public static class ApplicationDbContextSeed
 
     }
 
-    private static async Task SeedPlatformSettingsAsync(ApplicationDbContext context)
+    public static async Task SeedPlatformSettingsAsync(ApplicationDbContext context)
     {
-        if (await context.PlatformSettings.AnyAsync())
-        {
-            return;
-        }
-
         var settings = new List<PlatformSetting>
         {
             new() { Key = "Listing.MinimumPhotos", Value = "1", Description = "Minimum number of photos a listing must have before it can be submitted for review.", Category = "Listings" },
@@ -426,8 +421,18 @@ public static class ApplicationDbContextSeed
             new() { Key = "Platform.Currency", Value = "ETB", Description = "Currency used for every price on the platform.", Category = "Platform" }
         };
 
-        context.PlatformSettings.AddRange(settings);
-        await context.SaveChangesAsync();
+        var existingKeys = await context.PlatformSettings
+            .Select(setting => setting.Key)
+            .ToHashSetAsync();
+        var missingSettings = settings
+            .Where(setting => !existingKeys.Contains(setting.Key))
+            .ToList();
+
+        if (missingSettings.Count > 0)
+        {
+            context.PlatformSettings.AddRange(missingSettings);
+            await context.SaveChangesAsync();
+        }
     }
     private static async Task SeedSampleInteractionsAsync(
         ApplicationDbContext context,
@@ -590,4 +595,3 @@ public static class ApplicationDbContextSeed
         }
     }
 }
-

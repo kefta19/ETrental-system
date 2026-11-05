@@ -7,8 +7,18 @@ import { AuthService } from './core/services/auth.service';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, CommonModule],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  template: `
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  `,
+  styles: [
+    `
+      .page-content {
+        flex: 1;
+      }
+    `,
+  ],
 })
 export class App {
   authService = inject(AuthService);

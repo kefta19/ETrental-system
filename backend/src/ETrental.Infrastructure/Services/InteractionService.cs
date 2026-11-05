@@ -438,12 +438,15 @@ public class InteractionService : IInteractionService
             return Result<ViewingAppointmentDto>.Failure("Choose a viewing date and time in the future.");
         }
 
-        // Scheduling conflict: the host cannot have two viewings at the same time.
+        // Scheduling conflict: the host cannot have two viewings within one hour.
+        var conflictWindowStart = dto.RequestedDateTimeUtc.AddMinutes(-60);
+        var conflictWindowEnd = dto.RequestedDateTimeUtc.AddMinutes(60);
         var conflicting = await _context.ViewingAppointments.AnyAsync(a =>
-            a.PropertyId == dto.PropertyId &&
+            a.Property.LandlordId == property.LandlordId &&
             a.Status != AppointmentStatus.Cancelled &&
             a.Status != AppointmentStatus.Completed &&
-            Math.Abs((a.RequestedDateTimeUtc - dto.RequestedDateTimeUtc).TotalMinutes) < 60, ct);
+            a.RequestedDateTimeUtc > conflictWindowStart &&
+            a.RequestedDateTimeUtc < conflictWindowEnd, ct);
 
         if (conflicting)
         {

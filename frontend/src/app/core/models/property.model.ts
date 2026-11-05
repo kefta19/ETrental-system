@@ -19,17 +19,28 @@ export enum PropertyStatus {
   Archived = 7,
 }
 
+export enum ListingFeeStatus {
+  NotRequired = 0,
+  Pending = 1,
+  Verified = 2,
+  Rejected = 3,
+}
+
 export enum FurnishingStatus {
   Unfurnished = 0,
   SemiFurnished = 1,
   FullyFurnished = 2,
 }
 
+export type PropertyTypeValue = PropertyType | keyof typeof PropertyType;
+export type PropertyStatusValue = PropertyStatus | keyof typeof PropertyStatus;
+export type FurnishingStatusValue = FurnishingStatus | keyof typeof FurnishingStatus;
+
 export interface PropertySummary {
   id: string;
   title: string;
-  propertyType: PropertyType;
-  status: PropertyStatus;
+  propertyType: PropertyTypeValue;
+  status: PropertyStatusValue;
   region: string;
   city: string;
   subCity: string;
@@ -42,7 +53,7 @@ export interface PropertySummary {
   bedrooms: number;
   bathrooms: number;
   areaSquareMeters?: number | null;
-  furnishing: FurnishingStatus;
+  furnishing: FurnishingStatusValue;
   hasWaterTank: boolean;
   hasGenerator: boolean;
   hasSecurityGuard: boolean;
@@ -84,7 +95,6 @@ export interface Property extends PropertySummary {
 }
 
 export interface PropertyFilter {
-  keyword?: string;
   region?: string;
   city?: string;
   subCity?: string;

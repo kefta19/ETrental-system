@@ -23,6 +23,8 @@ import { AuditLogsComponent } from './features/admin/audit-logs/audit-logs.compo
 import { SubscriptionPlansComponent } from './features/admin/plans/subscription-plans.component';
 import { PublishedListingsComponent } from './features/admin/published-listings/published-listings.component';
 import { SupportComponent } from './features/admin/support/support.component';
+import { SupportDashboardComponent } from './features/support/support-dashboard.component';
+import { SupportLayoutComponent } from './features/support/support-layout.component';
 import { FavoritesComponent } from './features/renter/favorites/favorites.component';
 import { SavedSearchesComponent } from './features/renter/saved-searches/saved-searches.component';
 import { RenterDashboardComponent } from './features/renter/dashboard/renter-dashboard.component';
@@ -62,9 +64,20 @@ export const routes: Routes = [
 
   // Renter protected routes with dedicated Fluent layout
   {
+    path: 'support',
+    component: SupportLayoutComponent,
+    canActivate: [authGuard, roleGuard(['Support'])],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: SupportDashboardComponent },
+      { path: 'tickets', component: SupportComponent },
+    ],
+  },
+
+  {
     path: 'renter',
     component: RenterLayoutComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard(['Renter'])],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: RenterDashboardComponent },

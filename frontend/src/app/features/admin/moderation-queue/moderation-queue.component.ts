@@ -4,7 +4,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
 import { PropertyService } from '../../../core/services/property.service';
-import { Property, PropertySummary } from '../../../core/models/property.model';
+import { enumValueFromApi } from '../../../core/models/api-enum.util';
+import {
+  FurnishingStatus,
+  FurnishingStatusValue,
+  Property,
+  PropertyStatus,
+  PropertyStatusValue,
+  PropertySummary,
+  PropertyType,
+  PropertyTypeValue
+} from '../../../core/models/property.model';
 
 @Component({
   selector: 'app-moderation-queue',
@@ -998,12 +1008,18 @@ export class ModerationQueueComponent implements OnInit {
     }
   }
 
-  propertyTypeLabel(type: number): string {
-    return ['Apartment', 'Condominium', 'Villa', 'G+1', 'Studio', 'Service quarter', 'Commercial'][type] || 'Property';
+  propertyTypeLabel(type: PropertyTypeValue): string {
+    const value = enumValueFromApi(PropertyType, type);
+    return value === undefined
+      ? String(type)
+      : ['Apartment', 'Condominium', 'Villa', 'G+1', 'Studio', 'Service quarter', 'Commercial'][value] ?? String(type);
   }
 
-  furnishingLabel(furnishing: number): string {
-    return ['Unfurnished', 'Semi-furnished', 'Fully furnished'][furnishing] || 'Not specified';
+  furnishingLabel(furnishing: FurnishingStatusValue): string {
+    const value = enumValueFromApi(FurnishingStatus, furnishing);
+    return value === undefined
+      ? String(furnishing)
+      : ['Unfurnished', 'Semi-furnished', 'Fully furnished'][value] ?? String(furnishing);
   }
 
   amenityLabels(property: Property): string {
@@ -1029,8 +1045,8 @@ export class ModerationQueueComponent implements OnInit {
     return status === 'pending' || status === '1';
   }
 
-  statusLabel(status: number): string {
-    switch (status) {
+  statusLabel(status: PropertyStatusValue): string {
+    switch (enumValueFromApi(PropertyStatus, status)) {
       case 0: return 'Draft';
       case 1: return 'Pending review';
       case 2: return 'Approved';
@@ -1039,12 +1055,12 @@ export class ModerationQueueComponent implements OnInit {
       case 5: return 'Unavailable';
       case 6: return 'Rented';
       case 7: return 'Archived';
-      default: return 'Unknown';
+      default: return String(status);
     }
   }
 
-  statusClass(status: number): string {
-    switch (status) {
+  statusClass(status: PropertyStatusValue): string {
+    switch (enumValueFromApi(PropertyStatus, status)) {
       case 0: return 'status-draft';
       case 1: return 'status-pending';
       case 3: return 'status-rejected';

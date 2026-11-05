@@ -18,6 +18,9 @@ export enum ReportCategory {
   Other = 8
 }
 
+export type ReportStatusValue = ReportStatus | keyof typeof ReportStatus;
+export type ReportCategoryValue = ReportCategory | keyof typeof ReportCategory;
+
 export interface UserReport {
   id: string;
   reporterId: string;
@@ -26,10 +29,10 @@ export interface UserReport {
   reportedPropertyTitle?: string | null;
   reportedUserId?: string | null;
   reportedUserName?: string | null;
-  category: ReportCategory;
+  category: ReportCategoryValue;
   reason: string;
   description: string;
-  status: ReportStatus;
+  status: ReportStatusValue;
   resolutionNotes?: string | null;
   actionTaken?: string | null;
   assignedToId?: string | null;

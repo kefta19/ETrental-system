@@ -2,7 +2,8 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../../core/services/notification.service';
-import { AppNotification, NotificationType } from '../../../core/models/notification.model';
+import { enumValueFromApi } from '../../../core/models/api-enum.util';
+import { AppNotification, NotificationType, NotificationTypeValue } from '../../../core/models/notification.model';
 
 @Component({
   selector: 'app-notifications',
@@ -148,7 +149,7 @@ export class NotificationsComponent implements OnInit {
   readonly unreadOnly = signal<boolean>(false);
   readonly markingAll = signal<boolean>(false);
 
-  private readonly typeLabels: Partial<Record<NotificationType, string>> = {
+  private readonly typeLabels: Partial<Record<number, string>> = {
     [NotificationType.Account]: 'Account',
     [NotificationType.Listing]: 'Listing',
     [NotificationType.Inquiry]: 'Inquiry',
@@ -240,8 +241,9 @@ export class NotificationsComponent implements OnInit {
     return linkUrl;
   }
 
-  typeLabel(type: NotificationType): string {
-    return this.typeLabels[type] ?? 'General';
+  typeLabel(type: NotificationTypeValue): string {
+    const value = enumValueFromApi(NotificationType, type);
+    return value === undefined ? String(type) : this.typeLabels[value] ?? String(type);
   }
 
   relativeDate(value: string): string {

@@ -13,7 +13,6 @@ import { PropertyCardComponent } from '../../shared/components/property-card/pro
 
 interface ParsedSearch {
   city?: string;
-  keyword?: string;
   type?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -183,18 +182,8 @@ function parseSearchQuery(input: string): ParsedSearch {
     .replace(/[,\u2013\u2014]+/g, ' ')
     .trim();
 
-  const hasParsedFilters = Boolean(
-    result.type ||
-    result.minPrice ||
-    result.maxPrice ||
-    result.minBedrooms ||
-    result.minBathrooms ||
-    result.minArea ||
-    result.features.length,
-  );
   if (remainder) {
-    if (result.city || hasParsedFilters) result.keyword = remainder;
-    else result.city = remainder;
+    result.city = result.city ?? remainder;
   }
 
   return result;
@@ -203,7 +192,6 @@ function parseSearchQuery(input: string): ParsedSearch {
 function toQueryParams(parsed: ParsedSearch): Record<string, string | number> {
   const params: Record<string, string | number> = {};
   if (parsed.city) params['location'] = parsed.city;
-  if (parsed.keyword) params['keyword'] = parsed.keyword;
   if (parsed.type) params['type'] = parsed.type;
   if (parsed.minPrice) params['minPrice'] = parsed.minPrice;
   if (parsed.maxPrice) params['maxPrice'] = parsed.maxPrice;

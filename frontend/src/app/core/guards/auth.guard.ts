@@ -25,7 +25,8 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
       return false;
     }
 
-    const hasRole = user.roles.some(role => allowedRoles.includes(role));
+    const allowed = new Set(allowedRoles.map(role => role.toLowerCase()));
+    const hasRole = user.roles.some(role => allowed.has(role.toLowerCase()));
     if (hasRole) {
       return true;
     }

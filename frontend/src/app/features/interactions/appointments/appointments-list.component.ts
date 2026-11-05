@@ -4,7 +4,8 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { InteractionService } from '../../../core/services/interaction.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ViewingAppointment, AppointmentStatus } from '../../../core/models/interaction.model';
+import { enumValueFromApi } from '../../../core/models/api-enum.util';
+import { ViewingAppointment, AppointmentStatus, AppointmentStatusValue } from '../../../core/models/interaction.model';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
@@ -88,7 +89,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
               }
 
               <!-- Host / Landlord Action Controls -->
-              @if (isHost && apt.status === 0) {
+              @if (isHost && enumValue(apt.status) === AppointmentStatus.Requested) {
                 <div class="apt-actions">
                   <button class="btn btn-primary btn-sm" (click)="confirmAppointment(apt)">
                     ✓ Confirm Tour
@@ -342,6 +343,7 @@ export class AppointmentsListComponent implements OnInit {
   private interactionService = inject(InteractionService);
   private authService = inject(AuthService);
   private changeDetector = inject(ChangeDetectorRef);
+  readonly AppointmentStatus = AppointmentStatus;
 
   appointments: ViewingAppointment[] = [];
   isLoading = true;
@@ -430,25 +432,29 @@ export class AppointmentsListComponent implements OnInit {
     });
   }
 
-  getStatusClass(status: AppointmentStatus): string {
-    switch (status) {
+  enumValue(status: AppointmentStatusValue): number | undefined {
+    return enumValueFromApi(AppointmentStatus, status);
+  }
+
+  getStatusClass(status: AppointmentStatusValue): string {
+    switch (this.enumValue(status)) {
       case AppointmentStatus.Requested: return 'requested';
       case AppointmentStatus.Confirmed: return 'confirmed';
       case AppointmentStatus.Rescheduled: return 'rescheduled';
       case AppointmentStatus.Cancelled: return 'cancelled';
       case AppointmentStatus.Completed: return 'completed';
-      default: return 'requested';
+      default: return 'unknown';
     }
   }
 
-  getStatusLabel(status: AppointmentStatus): string {
-    switch (status) {
+  getStatusLabel(status: AppointmentStatusValue): string {
+    switch (this.enumValue(status)) {
       case AppointmentStatus.Requested: return 'Requested';
       case AppointmentStatus.Confirmed: return 'Confirmed';
       case AppointmentStatus.Rescheduled: return 'Rescheduled';
       case AppointmentStatus.Cancelled: return 'Cancelled';
       case AppointmentStatus.Completed: return 'Completed';
-      default: return 'Requested';
+      default: return String(status);
     }
   }
 }

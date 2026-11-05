@@ -68,7 +68,8 @@ public class FileStorageService : IFileStorageService
 
         if (extension == ".png" || contentType.Equals("image/png", StringComparison.OrdinalIgnoreCase))
         {
-            return header.Length >= 8 && header.SequenceEqual(PngSignature);
+            return header.Length >= PngSignature.Length
+                && header.AsSpan(0, PngSignature.Length).SequenceEqual(PngSignature);
         }
 
         if (extension == ".webp" || contentType.Equals("image/webp", StringComparison.OrdinalIgnoreCase))

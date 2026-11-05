@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PropertyService } from '../../../core/services/property.service';
-import { PropertySummary } from '../../../core/models/property.model';
+import { enumValueFromApi } from '../../../core/models/api-enum.util';
+import { ListingFeeStatus, PropertySummary } from '../../../core/models/property.model';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
@@ -180,10 +181,14 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
                           <span class="material-icons-outlined pill-icon">hourglass_top</span>
                           Pending Review
                         </span>
-                      } @else {
+                      } @else if (getFeeStatusCode(prop) === 0 || getFeeStatusCode(prop) === 3) {
                         <span class="status-pill red">
                           <span class="material-icons-outlined pill-icon">pending</span>
                           Unpaid
+                        </span>
+                      } @else {
+                        <span class="status-pill">
+                          Payment status unavailable: {{ prop.listingFeeStatus }}
                         </span>
                       }
                     </td>
@@ -993,11 +998,9 @@ export class LandlordPaymentsComponent implements OnInit {
     });
   }
 
-  getFeeStatusCode(prop: PropertySummary): number {
-    if (prop.listingFeeStatus === 'Verified' || prop.listingFeeStatus === 2) return 2;
-    if (prop.listingFeeStatus === 'PendingVerification' || prop.listingFeeStatus === 1) return 1;
-    if (prop.listingFeeStatus === 'Rejected' || prop.listingFeeStatus === 3) return 3;
-    return 0; // NotRequired or Unpaid
+  getFeeStatusCode(prop: PropertySummary): number | undefined {
+    if (prop.listingFeeStatus == null) return ListingFeeStatus.NotRequired;
+    return enumValueFromApi(ListingFeeStatus, prop.listingFeeStatus);
   }
 
   get verifiedCount(): number {
