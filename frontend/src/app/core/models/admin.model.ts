@@ -17,6 +17,29 @@ export interface AdminDashboard {
   openTickets: number;
   activePremiumSubscriptions: number;
   totalSubscriptionRevenueETB: number;
+  completedRenterPayments: number;
+  renterSubscriptionRevenueETB: number;
+  verifiedLandlordPayments: number;
+  landlordListingFeeRevenueETB: number;
+  totalRevenueETB: number;
+}
+
+export interface ListingFeePayment {
+  propertyId: string;
+  landlordId: string;
+  landlordEmail: string;
+  landlordFullName: string;
+  propertyTitle: string;
+  city: string;
+  subCity: string;
+  neighborhood: string;
+  amountETB: number;
+  provider?: string | null;
+  reference?: string | null;
+  transactionUrl?: string | null;
+  status: string;
+  verifiedAtUtc?: string | null;
+  createdAtUtc: string;
 }
 
 export interface AdminUser {

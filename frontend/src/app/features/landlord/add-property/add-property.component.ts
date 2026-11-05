@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { ProfileService } from '../../../core/services/profile.service';
@@ -8,6 +9,27 @@ import { AuthService } from '../../../core/services/auth.service';
 import { PropertyService } from '../../../core/services/property.service';
 import { resolveImageUrl } from '../../../core/config/api.config';
 import { CreatePropertyDto, FurnishingStatus, PropertyType } from '../../../core/models/property.model';
+
+function getRequestErrorMessage(error: HttpErrorResponse, fallback: string): string {
+  const body: unknown = error.error;
+  if (typeof body === 'object' && body !== null) {
+    if ('errors' in body && Array.isArray(body.errors)) {
+      const message = body.errors.find((item: unknown) => typeof item === 'string' && item.trim());
+      if (typeof message === 'string') return message;
+    }
+    if ('detail' in body && typeof body.detail === 'string' && body.detail.trim()) {
+      return body.detail;
+    }
+    if ('title' in body && typeof body.title === 'string' && body.title.trim()) {
+      return body.title;
+    }
+  }
+
+  if (error.status === 0) {
+    return 'Could not reach the server. Check your connection and try again.';
+  }
+  return fallback;
+}
 
 @Component({
   selector: 'app-add-property',
@@ -235,7 +257,7 @@ export class AddPropertyComponent implements OnInit {
       },
       error: (error) => {
         this.isSubmitting = false;
-        this.errorMessage = error.error?.errors?.[0] || 'We could not save your contact details.';
+        this.errorMessage = getRequestErrorMessage(error, 'We could not save your contact details.');
       },
     });
   }
@@ -268,7 +290,10 @@ export class AddPropertyComponent implements OnInit {
       },
       error: (error) => {
         this.isSubmitting = false;
-        this.errorMessage = error.error?.errors?.[0] || 'We could not submit the property for review.';
+        this.errorMessage = getRequestErrorMessage(
+          error,
+          'We could not submit the property for review.',
+        );
       },
     });
   }

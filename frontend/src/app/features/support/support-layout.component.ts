@@ -32,17 +32,22 @@ import { AuthService } from '../../core/services/auth.service';
           </span>
         </div>
 
-        <p class="section-label">MENU</p>
         <nav class="navigation">
-          <a routerLink="/support/dashboard" routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }">
-            <span class="material-icons-outlined" aria-hidden="true">space_dashboard</span>
-            <span>Dashboard</span>
-          </a>
-          <a routerLink="/support/tickets" routerLinkActive="active">
-            <span class="material-icons-outlined" aria-hidden="true">confirmation_number</span>
-            <span>Support cases</span>
-          </a>
+          <div class="navigation-group">
+            <p class="section-label">OVERVIEW</p>
+            <a routerLink="/support/dashboard" routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }">
+              <span class="material-icons-outlined" aria-hidden="true">space_dashboard</span>
+              <span>Dashboard</span>
+            </a>
+          </div>
+          <div class="navigation-group">
+            <p class="section-label">CUSTOMER CARE</p>
+            <a routerLink="/support/tickets" routerLinkActive="active">
+              <span class="material-icons-outlined" aria-hidden="true">confirmation_number</span>
+              <span>Support cases</span>
+            </a>
+          </div>
         </nav>
 
         <div class="sidebar-footer">
@@ -97,7 +102,8 @@ import { AuthService } from '../../core/services/auth.service';
     .account-copy strong { overflow:hidden; font-size:.8rem; text-overflow:ellipsis; white-space:nowrap; }
     .account-copy span { color:#778176; font-size:.7rem; }
     .section-label { margin:0 .7rem .6rem; color:#778176; font-size:.63rem; font-weight:800; letter-spacing:.15em; }
-    .navigation { display:grid; gap:.35rem; }
+    .navigation { display:grid; gap:.8rem; }
+    .navigation-group { display:grid; gap:.35rem; }
     .navigation a,.sidebar-footer a,.sidebar-footer button { display:flex; gap:.75rem; align-items:center; min-height:44px; padding:.65rem .75rem; border:1px solid transparent; border-radius:10px; background:transparent; color:#526056; font:inherit; font-size:.83rem; font-weight:600; text-align:left; text-decoration:none; cursor:pointer; transition:background 160ms ease,color 160ms ease,border-color 160ms ease; }
     .navigation a .material-icons-outlined,.sidebar-footer .material-icons-outlined { color:#748176; font-size:1.15rem; }
     .navigation a:hover,.sidebar-footer a:hover,.sidebar-footer button:hover { background:#f0fdf4; color:#047857; }
@@ -120,7 +126,7 @@ import { AuthService } from '../../core/services/auth.service';
     .topbar-actions>a .material-icons-outlined { font-size:1.05rem; }
     .page-content { min-height:calc(100dvh - 86px); }
     @media(max-width:760px) { .sidebar { width:230px; flex-basis:230px; } .topbar { padding: .8rem 1.2rem; } .topbar-agent { display:none; } }
-    @media(max-width:560px) { .support-layout { display:block; } .sidebar { position:static; width:100%; height:auto; padding:.75rem 1rem; } .brand { padding:.15rem .35rem .7rem; } .brand img { width:34px; height:34px; } .workspace-label,.account,.section-label,.sidebar-footer { display:none; } .navigation { display:flex; gap:.4rem; } .navigation a { min-height:40px; flex:1; justify-content:center; gap:.45rem; padding:.5rem; font-size:.75rem; } .navigation a.active { box-shadow:inset 0 -3px #6ee7a4; } .topbar { position:static; min-height:72px; padding:.75rem 1rem; } .topbar-copy>span:last-child { display:none; } .topbar-actions>a { min-height:38px; margin-left:0; padding:0 .7rem; } .topbar-actions>a .material-icons-outlined { display:none; } }
+    @media(max-width:560px) { .support-layout { display:block; } .sidebar { position:static; width:100%; height:auto; padding:.75rem 1rem; } .brand { padding:.15rem .35rem .7rem; } .brand img { width:34px; height:34px; } .workspace-label,.account,.section-label,.sidebar-footer { display:none; } .navigation { display:flex; gap:.4rem; } .navigation-group { display:contents; } .navigation a { min-height:40px; flex:1; justify-content:center; gap:.45rem; padding:.5rem; font-size:.75rem; } .navigation a.active { box-shadow:inset 0 -3px #6ee7a4; } .topbar { position:static; min-height:72px; padding:.75rem 1rem; } .topbar-copy>span:last-child { display:none; } .topbar-actions>a { min-height:38px; margin-left:0; padding:0 .7rem; } .topbar-actions>a .material-icons-outlined { display:none; } }
     @media(max-width:380px) { .topbar-eyebrow { font-size:.54rem; } .topbar-copy strong { font-size:.9rem; } .topbar-actions>a { font-size:.68rem; } .navigation a { font-size:.7rem; } }
   `],
 })

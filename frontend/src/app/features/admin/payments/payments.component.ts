@@ -2,30 +2,32 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, HostListener, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AdminService } from '../../../core/services/admin.service';
-import { AdminUser } from '../../../core/models/admin.model';
+import { AdminUser, ListingFeePayment } from '../../../core/models/admin.model';
 import { PaymentStatus, PaymentTransaction } from '../../../core/models/subscription.model';
 
 @Component({
   selector: 'app-admin-payments',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <main class="page">
       <header class="page-header">
         <div>
           <h1>Payment transactions</h1>
-          <p>Review payment details and available evidence before approving or rejecting Premium payments.</p>
+          <p>Review renter subscription payments and landlord listing-fee payments.</p>
         </div>
         <div class="filters">
           <input [(ngModel)]="search" (ngModelChange)="filterRows()" placeholder="Search email, provider, or reference" aria-label="Search transactions" />
           <select [(ngModel)]="statusFilter" (change)="filterRows()" aria-label="Filter payment status">
             <option value="all">All statuses</option>
+            <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
-            <option value="Completed">Completed</option>
             <option value="Failed">Failed</option>
             <option value="Refunded">Refunded</option>
             <option value="Cancelled">Cancelled</option>
+            <option value="Rejected">Rejected</option>
           </select>
         </div>
       </header>
@@ -62,6 +64,66 @@ import { PaymentStatus, PaymentTransaction } from '../../../core/models/subscrip
             <button [disabled]="page <= 1" (click)="changePage(-1)">Previous</button>
             <span>Page {{ page }} · {{ transactions.length }} transactions loaded</span>
             <button [disabled]="transactions.length < pageSize" (click)="changePage(1)">Next</button>
+          </div>
+        }
+      </section>
+      <section class="content listing-fee-section" aria-labelledby="listing-fee-title">
+        <header class="section-header">
+          <div>
+            <h2 id="listing-fee-title">Landlord listing-fee payments</h2>
+            <p>Payment details for properties submitted by landlords. Only verified fees count as paid revenue.</p>
+          </div>
+        </header>
+        @if (listingFeeError) { <div class="alert" role="alert">{{ listingFeeError }}</div> }
+        @if (listingFeeLoading) {
+          <div class="state">Loading landlord listing-fee payments…</div>
+        } @else if (!filteredListingFeePayments.length) {
+          <div class="state empty">No landlord listing-fee payments match this page and filter.</div>
+        } @else {
+          <div class="table-wrap">
+            <table class="listing-fee-table">
+              <thead>
+                <tr>
+                  <th>Landlord</th><th>Property</th><th>Provider</th><th>Amount</th>
+                  <th>Status</th><th>Submitted</th><th>Reviewed</th><th>Evidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (payment of filteredListingFeePayments; track payment.propertyId) {
+                  <tr>
+                    <td>
+                      <strong>{{ payment.landlordFullName || 'Landlord' }}</strong>
+                      <span class="muted">{{ payment.landlordEmail }}</span>
+                    </td>
+                    <td>
+                      <strong>
+                        <a class="property-link" [routerLink]="['/properties', payment.propertyId]">
+                          {{ payment.propertyTitle }}
+                        </a>
+                      </strong>
+                      <span class="muted">{{ payment.neighborhood }}, {{ payment.subCity }}, {{ payment.city }}</span>
+                    </td>
+                    <td>{{ payment.provider || '—' }}</td>
+                    <td>{{ payment.amountETB | number:'1.2-2' }} ETB</td>
+                    <td><span class="status" [attr.data-status]="payment.status.toLowerCase()">{{ payment.status }}</span></td>
+                    <td>{{ payment.createdAtUtc | date:'short' }}</td>
+                    <td>{{ payment.verifiedAtUtc ? (payment.verifiedAtUtc | date:'short') : '—' }}</td>
+                    <td>
+                      @if (getListingFeeEvidenceUrl(payment); as evidenceUrl) {
+                        <a class="view-details" [href]="evidenceUrl" target="_blank" rel="noopener noreferrer">Open evidence</a>
+                      } @else {
+                        <span class="muted">Unavailable</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <button [disabled]="listingFeePage <= 1" (click)="changeListingFeePage(-1)">Previous</button>
+            <span>Page {{ listingFeePage }} · {{ listingFeeTotalCount }} listing-fee payments</span>
+            <button [disabled]="listingFeePayments.length < pageSize" (click)="changeListingFeePage(1)">Next</button>
           </div>
         }
       </section>
@@ -187,6 +249,10 @@ import { PaymentStatus, PaymentTransaction } from '../../../core/models/subscrip
     input, select { padding:.65rem .75rem; border:1px solid #d9e0e9; border-radius:9px; background:white; color:#253047; }
     input { width:min(330px, 60vw); }
     .content { padding:1.5rem 2rem; }
+    .listing-fee-section { padding-top:0; }
+    .section-header { margin:0 0 1rem; }
+    .section-header h2 { margin:0; font-size:1.05rem; }
+    .section-header p { margin:.3rem 0 0; color:#697586; font-size:.82rem; }
     .table-wrap { overflow:auto; background:white; border:1px solid #e5e9f0; border-radius:13px; }
     table { width:100%; border-collapse:collapse; min-width:1120px; }
     th, td { padding:.85rem .9rem; text-align:left; border-bottom:1px solid #edf0f4; font-size:.82rem; }
@@ -195,7 +261,9 @@ import { PaymentStatus, PaymentTransaction } from '../../../core/models/subscrip
     .status { display:inline-block; padding:.28rem .55rem; border-radius:99px; background:#edf1f6; color:#526073; font-size:.72rem; font-weight:800; }
     .status[data-status="pending"] { background:#fff4d9; color:#875900; }
     .status[data-status="completed"] { background:#e3f6ea; color:#226c40; }
+    .status[data-status="verified"] { background:#e3f6ea; color:#226c40; }
     .status[data-status="failed"] { background:#fff0ef; color:#a03c36; }
+    .status[data-status="rejected"] { background:#fff0ef; color:#a03c36; }
     button { border:1px solid #d9e0e9; background:white; color:#344054; padding:.45rem .6rem; border-radius:7px; font-size:.75rem; font-weight:700; cursor:pointer; }
     button:disabled { opacity:.45; cursor:not-allowed; }
     button.approve { background:#217c64; border-color:#217c64; color:white; }
@@ -203,6 +271,12 @@ import { PaymentStatus, PaymentTransaction } from '../../../core/models/subscrip
     button.view-details { border-color:#b9daca; background:#eff8f2; color:#176b4d; white-space:nowrap; }
     button.view-details:hover { border-color:#80bd9d; background:#e4f3e9; }
     .muted { color:#758094; font-size:.75rem; }
+    td strong, td .muted { display:block; }
+    a.property-link { color:#176b4d; text-decoration:none; }
+    a.property-link:hover { text-decoration:underline; }
+    a.property-link:focus-visible { border-radius:3px; outline:2px solid #176b4d; outline-offset:2px; }
+    td.breakable { overflow-wrap:anywhere; }
+    a.view-details { display:inline-block; text-decoration:none; }
     .state { padding:3rem; text-align:center; color:#667184; }
     .empty { background:white; border:1px dashed #d9e0e9; border-radius:12px; }
     .alert { margin-bottom:1rem; padding:.8rem 1rem; border:1px solid #f2c8c8; border-radius:9px; background:#fff2f2; color:#913c3c; }
@@ -243,8 +317,14 @@ export class PaymentsComponent implements OnInit {
   private readonly changeDetector = inject(ChangeDetectorRef);
   transactions: PaymentTransaction[] = [];
   filteredTransactions: PaymentTransaction[] = [];
+  listingFeePayments: ListingFeePayment[] = [];
+  filteredListingFeePayments: ListingFeePayment[] = [];
+  listingFeeTotalCount = 0;
+  listingFeePage = 1;
   loading = true;
+  listingFeeLoading = true;
   error = '';
+  listingFeeError = '';
   search = '';
   statusFilter = 'all';
   page = 1;
@@ -287,6 +367,28 @@ export class PaymentsComponent implements OnInit {
         this.changeDetector.markForCheck();
       }
     });
+
+    this.listingFeeLoading = true;
+    this.listingFeeError = '';
+    this.adminService.getListingFeePayments(this.listingFeePage, this.pageSize).subscribe({
+      next: result => {
+        this.listingFeeLoading = false;
+        if (!result.succeeded || !result.data) {
+          this.listingFeeError = result.errors?.[0] || 'Unable to load landlord listing-fee payments.';
+          this.changeDetector.markForCheck();
+          return;
+        }
+        this.listingFeePayments = result.data.items;
+        this.listingFeeTotalCount = result.data.totalCount;
+        this.filterRows();
+        this.changeDetector.markForCheck();
+      },
+      error: err => {
+        this.listingFeeLoading = false;
+        this.listingFeeError = err.error?.errors?.[0] || 'Unable to load landlord listing-fee payments.';
+        this.changeDetector.markForCheck();
+      }
+    });
   }
 
   filterRows(): void {
@@ -303,9 +405,33 @@ export class PaymentsComponent implements OnInit {
       ].some(value => value?.toLowerCase().includes(query));
       return matchesSearch && (
         this.statusFilter === 'all' ||
-        this.statusKey(transaction.status) === this.statusFilter.toLowerCase()
+        this.statusMatches(this.statusKey(transaction.status), this.statusFilter)
       );
     });
+    this.filteredListingFeePayments = this.listingFeePayments.filter(payment => {
+      const matchesSearch = !query || [
+        payment.landlordEmail,
+        payment.landlordFullName,
+        payment.landlordId,
+        payment.provider,
+        payment.reference,
+        payment.propertyTitle,
+        payment.city,
+        payment.subCity,
+        payment.neighborhood
+      ].some(value => value?.toLowerCase().includes(query));
+      return matchesSearch && (
+        this.statusFilter === 'all' ||
+        this.statusMatches(payment.status.toLowerCase(), this.statusFilter)
+      );
+    });
+  }
+
+  private statusMatches(status: string, filter: string): boolean {
+    if (filter.toLowerCase() === 'paid') {
+      return status === 'completed' || status === 'verified';
+    }
+    return status === filter.toLowerCase();
   }
 
   statusKey(status: PaymentStatus | number): string {
@@ -434,5 +560,24 @@ export class PaymentsComponent implements OnInit {
   changePage(delta: number): void {
     this.page += delta;
     this.load();
+  }
+
+  changeListingFeePage(delta: number): void {
+    this.listingFeePage += delta;
+    this.load();
+  }
+
+  getListingFeeEvidenceUrl(payment: ListingFeePayment): string | null {
+    const reference = payment.transactionUrl?.trim();
+    if (!reference) return null;
+
+    try {
+      const url = new URL(reference);
+      return url.protocol === 'https:' && !!url.hostname && !url.username && !url.password
+        ? reference
+        : null;
+    } catch {
+      return null;
+    }
   }
 }

@@ -26,6 +26,7 @@ public interface IAdminService
     Task<Result<List<SubscriptionPlanAdminDto>>> GetSubscriptionPlansAsync();
     Task<Result<SubscriptionPlanAdminDto>> UpdateSubscriptionPlanAsync(Guid planId, UpdateSubscriptionPlanDto dto, string adminId);
     Task<Result<List<PaymentTransactionDto>>> GetPaymentTransactionsAsync(int page, int pageSize);
+    Task<Result<PaginatedResult<ListingFeePaymentDto>>> GetListingFeePaymentsAsync(int page, int pageSize);
     Task<Result<PaymentTransactionDto>> VerifyPaymentTransactionAsync(Guid transactionId, bool approved, string? note, string adminId);
     Task<Result<List<AuditLogDto>>> GetAuditLogsAsync(int page, int pageSize);
 }

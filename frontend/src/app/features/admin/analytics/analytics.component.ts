@@ -43,12 +43,36 @@ import { AdminDashboard } from '../../../core/models/admin.model';
             <div class="stat-card">
               <div class="stat-icon revenue"><span class="material-icons-outlined" aria-hidden="true">payments</span></div>
               <div class="stat-content">
-                <span class="stat-label">Revenue</span>
-                <span class="stat-value">{{ dashboard.totalSubscriptionRevenueETB | number }} ETB</span>
-                <span class="stat-sub">{{ dashboard.activePremiumSubscriptions | number }} subscriptions</span>
+                <span class="stat-label">Total paid revenue</span>
+                <span class="stat-value">{{ dashboard.totalRevenueETB | number:'1.2-2' }} ETB</span>
+                <span class="stat-sub">Verified renter and landlord payments</span>
               </div>
             </div>
           </div>
+
+          <section class="revenue-analysis" aria-labelledby="revenue-analysis-title">
+            <header>
+              <h2 id="revenue-analysis-title">Revenue Analysis</h2>
+              <p>Only completed renter payments and verified landlord listing fees are counted as paid revenue.</p>
+            </header>
+            <div class="revenue-grid">
+              <article class="revenue-card">
+                <span class="revenue-label">Renter subscriptions</span>
+                <strong>{{ dashboard.renterSubscriptionRevenueETB | number:'1.2-2' }} ETB</strong>
+                <span>{{ dashboard.completedRenterPayments | number }} completed payments</span>
+              </article>
+              <article class="revenue-card">
+                <span class="revenue-label">Landlord listing fees</span>
+                <strong>{{ dashboard.landlordListingFeeRevenueETB | number:'1.2-2' }} ETB</strong>
+                <span>{{ dashboard.verifiedLandlordPayments | number }} verified payments</span>
+              </article>
+              <article class="revenue-card total">
+                <span class="revenue-label">Total paid</span>
+                <strong>{{ dashboard.totalRevenueETB | number:'1.2-2' }} ETB</strong>
+                <span>Renter subscriptions + landlord listing fees</span>
+              </article>
+            </div>
+          </section>
 
           <div class="charts-section">
             <div class="chart-card">
@@ -215,6 +239,55 @@ import { AdminDashboard } from '../../../core/models/admin.model';
     .stat-sub {
       font-size: 0.75rem;
       color: #64748b;
+    }
+    .revenue-analysis {
+      margin-bottom: 2rem;
+    }
+    .revenue-analysis header {
+      margin-bottom: 1rem;
+    }
+    .revenue-analysis h2 {
+      margin: 0;
+      color: #1e293b;
+      font-size: 1.15rem;
+    }
+    .revenue-analysis header p {
+      margin: .3rem 0 0;
+      color: #64748b;
+      font-size: .82rem;
+    }
+    .revenue-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .revenue-card {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      gap: .45rem;
+      padding: 1.25rem 1.4rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: white;
+    }
+    .revenue-card.total {
+      border-color: #b7ddca;
+      background: #f0faf4;
+    }
+    .revenue-label {
+      color: #64748b;
+      font-size: .82rem;
+      font-weight: 650;
+    }
+    .revenue-card strong {
+      color: #1e293b;
+      font-size: 1.45rem;
+      overflow-wrap: anywhere;
+    }
+    .revenue-card > span:last-child {
+      color: #64748b;
+      font-size: .75rem;
     }
     .charts-section {
       display: grid;

@@ -59,6 +59,17 @@ public class AdminService : IAdminService
         var users = await _context.Users.AsNoTracking().ToListAsync();
 
         var properties = await _context.Properties.AsNoTracking().Select(p => p.Status).ToListAsync();
+        var renterRevenue = await _context.PaymentTransactions
+            .Where(p => p.Status == PaymentStatus.Completed)
+            .SumAsync(p => (decimal?)p.AmountETB) ?? 0m;
+        var completedRenterPayments = await _context.PaymentTransactions
+            .CountAsync(p => p.Status == PaymentStatus.Completed);
+        var landlordRevenue = await _context.Properties
+            .Where(p => p.ListingFeeStatus == ListingFeeStatus.Verified)
+            .SumAsync(p => (decimal?)p.ListingFeeAmountETB) ?? 0m;
+        var verifiedLandlordPayments = await _context.Properties
+            .CountAsync(p => p.ListingFeeStatus == ListingFeeStatus.Verified);
+
         var dashboard = new AdminDashboardDto
         {
             TotalUsers = users.Count,
@@ -80,9 +91,12 @@ public class AdminService : IAdminService
             ActivePremiumSubscriptions = await _context.Subscriptions
                 .Include(s => s.Plan)
                 .CountAsync(s => s.Status == SubscriptionStatus.Active && s.Plan.Tier == SubscriptionTier.Premium),
-            TotalSubscriptionRevenueETB = await _context.PaymentTransactions
-                .Where(p => p.Status == PaymentStatus.Completed)
-                .SumAsync(p => (decimal?)p.AmountETB) ?? 0m
+            TotalSubscriptionRevenueETB = renterRevenue,
+            CompletedRenterPayments = completedRenterPayments,
+            RenterSubscriptionRevenueETB = renterRevenue,
+            VerifiedLandlordPayments = verifiedLandlordPayments,
+            LandlordListingFeeRevenueETB = landlordRevenue,
+            TotalRevenueETB = renterRevenue + landlordRevenue
         };
 
         return Result<AdminDashboardDto>.Success(dashboard);
@@ -421,6 +435,50 @@ public class AdminService : IAdminService
         }
 
         return Result<List<PaymentTransactionDto>>.Success(transactions);
+    }
+
+    public async Task<Result<PaginatedResult<ListingFeePaymentDto>>> GetListingFeePaymentsAsync(int page, int pageSize)
+    {
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
+
+        var query = _context.Properties
+            .AsNoTracking()
+            .Where(p => p.ListingFeeStatus != ListingFeeStatus.NotRequired);
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(p => p.CreatedAtUtc)
+            .ThenByDescending(p => p.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new ListingFeePaymentDto
+            {
+                PropertyId = p.Id,
+                LandlordId = p.LandlordId,
+                LandlordEmail = p.Landlord.Email ?? string.Empty,
+                LandlordFullName = p.Landlord.FirstName + " " + p.Landlord.LastName,
+                PropertyTitle = p.Title,
+                City = p.City,
+                SubCity = p.SubCity,
+                Neighborhood = p.Neighborhood,
+                AmountETB = p.ListingFeeAmountETB,
+                Provider = p.ListingFeeProvider,
+                Reference = p.ListingFeeReference,
+                TransactionUrl = p.ListingFeeTransactionUrl,
+                Status = p.ListingFeeStatus.ToString(),
+                VerifiedAtUtc = p.ListingFeeVerifiedAtUtc,
+                CreatedAtUtc = p.CreatedAtUtc
+            })
+            .ToListAsync();
+
+        return Result<PaginatedResult<ListingFeePaymentDto>>.Success(new PaginatedResult<ListingFeePaymentDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        });
     }
 
     public async Task<Result<PaymentTransactionDto>> VerifyPaymentTransactionAsync(Guid transactionId, bool approved, string? note, string adminId)

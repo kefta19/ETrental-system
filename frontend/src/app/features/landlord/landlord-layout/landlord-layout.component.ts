@@ -29,42 +29,52 @@ import { NotificationMenuComponent } from '../../../shared/components/notificati
           </div>
         </a>
 
-        <p class="sidebar-section-label">WORKSPACE</p>
-
         <nav class="sidebar-nav">
-          <a routerLink="/landlord/dashboard" routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">dashboard</span>
-            <span>Dashboard</span>
-          </a>
-          <a routerLink="/landlord/my-properties" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">real_estate_agent</span>
-            <span>My properties</span>
-          </a>
-          <a routerLink="/landlord/payments" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">payments</span>
-            <span>Listing payments</span>
-          </a>
-          <a routerLink="/landlord/add-property" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">add_home</span>
-            <span>Add property</span>
-          </a>
-          <a routerLink="/landlord/messages" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">mail</span>
-            <span>Messages</span>
-          </a>
-          <a routerLink="/landlord/appointments" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">calendar_month</span>
-            <span>Viewings</span>
-          </a>
-          <a routerLink="/landlord/applications" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">description</span>
-            <span>Applications</span>
-          </a>
-          <a routerLink="/landlord/profile" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">person</span>
-            <span>Profile settings</span>
-          </a>
+          <div class="sidebar-nav-group">
+            <p class="sidebar-section-label">OVERVIEW</p>
+            <a routerLink="/landlord/dashboard" routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">dashboard</span>
+              <span>Dashboard</span>
+            </a>
+          </div>
+          <div class="sidebar-nav-group">
+            <p class="sidebar-section-label">PROPERTIES</p>
+            <a routerLink="/landlord/my-properties" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">real_estate_agent</span>
+              <span>My properties</span>
+            </a>
+            <a routerLink="/landlord/add-property" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">add_home</span>
+              <span>Add property</span>
+            </a>
+            <a routerLink="/landlord/payments" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">payments</span>
+              <span>Listing payments</span>
+            </a>
+          </div>
+          <div class="sidebar-nav-group">
+            <p class="sidebar-section-label">TENANT ACTIVITY</p>
+            <a routerLink="/landlord/messages" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">mail</span>
+              <span>Messages</span>
+            </a>
+            <a routerLink="/landlord/appointments" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">calendar_month</span>
+              <span>Viewings</span>
+            </a>
+            <a routerLink="/landlord/applications" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">description</span>
+              <span>Applications</span>
+            </a>
+          </div>
+          <div class="sidebar-nav-group">
+            <p class="sidebar-section-label">ACCOUNT</p>
+            <a routerLink="/landlord/profile" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">person</span>
+              <span>Profile settings</span>
+            </a>
+          </div>
         </nav>
 
         <div class="sidebar-footer">
@@ -244,6 +254,10 @@ import { NotificationMenuComponent } from '../../../shared/components/notificati
     }
 
     .sidebar-nav {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .sidebar-nav-group {
       display: grid;
       gap: 0.2rem;
     }

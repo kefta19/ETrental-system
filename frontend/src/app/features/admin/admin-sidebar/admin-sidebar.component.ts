@@ -26,54 +26,67 @@ import { AuthService } from '../../../core/services/auth.service';
         </div>
       </a>
 
-      <p class="sidebar-section-label">WORKSPACE</p>
-
       <nav class="sidebar-nav">
-        <a routerLink="/admin/dashboard" routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">dashboard</span>
-          <span>Dashboard</span>
-        </a>
-        <a routerLink="/admin/moderation" routerLinkActive="active" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">fact_check</span>
-          <span>Approve / reject properties</span>
-        </a>
-        <a routerLink="/admin/listings" routerLinkActive="active" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">real_estate_agent</span>
-          <span>Published listings</span>
-        </a>
-        <a routerLink="/admin/reports" routerLinkActive="active" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">flag</span>
-          <span>Reports & investigations</span>
-        </a>
-        <a routerLink="/admin/support" routerLinkActive="active" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">support_agent</span>
-          <span>Support cases</span>
-        </a>
-        <a routerLink="/admin/users" routerLinkActive="active" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">group</span>
-          <span>User management</span>
-        </a>
-        <a routerLink="/admin/payments" routerLinkActive="active" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">payments</span>
-          <span>Payments</span>
-        </a>
-        <a routerLink="/admin/plans" routerLinkActive="active" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">workspace_premium</span>
-          <span>Plans & entitlements</span>
-        </a>
-        <a routerLink="/admin/analytics" routerLinkActive="active" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">analytics</span>
-          <span>Analytics</span>
-        </a>
-        <a routerLink="/admin/settings" routerLinkActive="active" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">settings</span>
-          <span>Platform settings</span>
-        </a>
-        <a routerLink="/admin/audit-logs" routerLinkActive="active" class="sidebar-link">
-          <span class="sidebar-icon material-icons-outlined" aria-hidden="true">history</span>
-          <span>Audit history</span>
-        </a>
+        <div class="sidebar-nav-group">
+          <p class="sidebar-section-label">OVERVIEW</p>
+          <a routerLink="/admin/dashboard" routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">dashboard</span>
+            <span>Dashboard</span>
+          </a>
+        </div>
+        <div class="sidebar-nav-group">
+          <p class="sidebar-section-label">LISTINGS</p>
+          <a routerLink="/admin/moderation" routerLinkActive="active" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">fact_check</span>
+            <span>Approve / reject properties</span>
+          </a>
+          <a routerLink="/admin/listings" routerLinkActive="active" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">real_estate_agent</span>
+            <span>Published listings</span>
+          </a>
+        </div>
+        <div class="sidebar-nav-group">
+          <p class="sidebar-section-label">PEOPLE &amp; SAFETY</p>
+          <a routerLink="/admin/users" routerLinkActive="active" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">group</span>
+            <span>User management</span>
+          </a>
+          <a routerLink="/admin/reports" routerLinkActive="active" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">flag</span>
+            <span>Reports &amp; investigations</span>
+          </a>
+          <a routerLink="/admin/support" routerLinkActive="active" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">support_agent</span>
+            <span>Support cases</span>
+          </a>
+        </div>
+        <div class="sidebar-nav-group">
+          <p class="sidebar-section-label">FINANCE</p>
+          <a routerLink="/admin/payments" routerLinkActive="active" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">payments</span>
+            <span>Payments</span>
+          </a>
+          <a routerLink="/admin/plans" routerLinkActive="active" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">workspace_premium</span>
+            <span>Plans &amp; entitlements</span>
+          </a>
+        </div>
+        <div class="sidebar-nav-group">
+          <p class="sidebar-section-label">INSIGHTS &amp; SETTINGS</p>
+          <a routerLink="/admin/analytics" routerLinkActive="active" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">analytics</span>
+            <span>Analytics</span>
+          </a>
+          <a routerLink="/admin/settings" routerLinkActive="active" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">settings</span>
+            <span>Platform settings</span>
+          </a>
+          <a routerLink="/admin/audit-logs" routerLinkActive="active" class="sidebar-link">
+            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">history</span>
+            <span>Audit history</span>
+          </a>
+        </div>
       </nav>
 
       <div class="sidebar-footer">
@@ -181,7 +194,8 @@ import { AuthService } from '../../../core/services/auth.service';
       letter-spacing:.12em;
     }
 
-    .sidebar-nav { display:grid; gap:.2rem; }
+    .sidebar-nav { display:grid; gap:.75rem; }
+    .sidebar-nav-group { display:grid; gap:.2rem; }
 
     /* Fluent Nav Item with Left Accent Bar */
     .sidebar-link {
@@ -280,6 +294,7 @@ import { AuthService } from '../../../core/services/auth.service';
         gap:.4rem;
         padding-bottom:.2rem;
       }
+      .sidebar-nav-group { display:contents; }
       .sidebar-link {
         min-height:36px;
         flex:0 0 auto;

@@ -8,6 +8,7 @@ import {
   AdminDashboard,
   AdminUser,
   AuditLogEntry,
+  ListingFeePayment,
   PlatformSetting,
   RestrictUserDto,
   SubscriptionPlanAdmin,
@@ -86,6 +87,17 @@ export class AdminService {
   getPayments(page = 1, pageSize = 20): Observable<ApiResponse<PaymentTransaction[]>> {
     const params = new HttpParams().set('page', page.toString()).set('pageSize', pageSize.toString());
     return this.http.get<ApiResponse<PaymentTransaction[]>>(`${this.API_URL}/payments`, { params });
+  }
+
+  getListingFeePayments(
+    page = 1,
+    pageSize = 20
+  ): Observable<ApiResponse<PaginatedResult<ListingFeePayment>>> {
+    const params = new HttpParams().set('page', page.toString()).set('pageSize', pageSize.toString());
+    return this.http.get<ApiResponse<PaginatedResult<ListingFeePayment>>>(
+      `${this.API_URL}/listing-fee-payments`,
+      { params }
+    );
   }
 
   verifyPayment(dto: VerifyPaymentDto): Observable<ApiResponse<PaymentTransaction>> {

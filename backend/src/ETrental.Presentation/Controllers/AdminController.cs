@@ -118,6 +118,13 @@ public class AdminController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("listing-fee-payments")]
+    public async Task<IActionResult> GetListingFeePayments([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var result = await _adminService.GetListingFeePaymentsAsync(page, pageSize);
+        return Ok(result);
+    }
+
     [HttpPost("payments/verify")]
     public async Task<IActionResult> VerifyPayment([FromBody] VerifyPaymentDto dto)
     {

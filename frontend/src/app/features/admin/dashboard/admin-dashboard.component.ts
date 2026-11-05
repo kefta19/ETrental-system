@@ -133,7 +133,9 @@ interface QuickAction {
                   <div class="stat-card"><span class="stat-label">Open reports</span><strong class="stat-value">{{ s.openReports | number }}</strong><span class="stat-hint">User and listing concerns</span></div>
                   <div class="stat-card"><span class="stat-label">Open support cases</span><strong class="stat-value">{{ s.openTickets | number }}</strong><span class="stat-hint">Support requests to resolve</span></div>
                   <div class="stat-card"><span class="stat-label">Premium subscriptions</span><strong class="stat-value">{{ s.activePremiumSubscriptions | number }}</strong><span class="stat-hint">Currently active</span></div>
-                  <div class="stat-card"><span class="stat-label">Subscription revenue</span><strong class="stat-value revenue-value">{{ s.totalSubscriptionRevenueETB | number:'1.0-0' }} <small>ETB</small></strong><span class="stat-hint">Recorded total revenue</span></div>
+                  <div class="stat-card"><span class="stat-label">Renter subscription revenue</span><strong class="stat-value revenue-value">{{ s.renterSubscriptionRevenueETB | number:'1.0-0' }} <small>ETB</small></strong><span class="stat-hint">{{ s.completedRenterPayments | number }} completed payments</span></div>
+                  <div class="stat-card"><span class="stat-label">Landlord listing-fee revenue</span><strong class="stat-value revenue-value">{{ s.landlordListingFeeRevenueETB | number:'1.0-0' }} <small>ETB</small></strong><span class="stat-hint">{{ s.verifiedLandlordPayments | number }} verified payments</span></div>
+                  <div class="stat-card"><span class="stat-label">Total paid revenue</span><strong class="stat-value revenue-value">{{ s.totalRevenueETB | number:'1.0-0' }} <small>ETB</small></strong><span class="stat-hint">Renter + landlord payments</span></div>
                 </div>
               </div>
             </section>

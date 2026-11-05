@@ -29,42 +29,52 @@ import { NotificationMenuComponent } from '../../../shared/components/notificati
           </div>
         </a>
 
-        <p class="sidebar-section-label">WORKSPACE</p>
-
         <nav class="sidebar-nav">
-          <a routerLink="/renter/dashboard" routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">dashboard</span>
-            <span>Dashboard</span>
-          </a>
-          <a routerLink="/renter/favorites" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">favorite_border</span>
-            <span>Saved homes</span>
-          </a>
-          <a routerLink="/renter/saved-searches" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">search</span>
-            <span>Search alerts</span>
-          </a>
-          <a routerLink="/renter/messages" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">mail</span>
-            <span>Messages</span>
-          </a>
-          <a routerLink="/renter/appointments" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">calendar_month</span>
-            <span>Viewings</span>
-          </a>
-          <a routerLink="/renter/applications" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">description</span>
-            <span>Applications</span>
-          </a>
-          <a routerLink="/renter/profile" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">person</span>
-            <span>My Profile</span>
-          </a>
-          <a routerLink="/renter/subscription" routerLinkActive="active" class="sidebar-link">
-            <span class="sidebar-icon material-icons-outlined" aria-hidden="true">verified</span>
-            <span>Subscription</span>
-          </a>
+          <div class="sidebar-nav-group">
+            <p class="sidebar-section-label">OVERVIEW</p>
+            <a routerLink="/renter/dashboard" routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">dashboard</span>
+              <span>Dashboard</span>
+            </a>
+          </div>
+          <div class="sidebar-nav-group">
+            <p class="sidebar-section-label">DISCOVER</p>
+            <a routerLink="/renter/favorites" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">favorite_border</span>
+              <span>Saved homes</span>
+            </a>
+            <a routerLink="/renter/saved-searches" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">search</span>
+              <span>Search alerts</span>
+            </a>
+          </div>
+          <div class="sidebar-nav-group">
+            <p class="sidebar-section-label">RENTAL ACTIVITY</p>
+            <a routerLink="/renter/messages" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">mail</span>
+              <span>Messages</span>
+            </a>
+            <a routerLink="/renter/appointments" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">calendar_month</span>
+              <span>Viewings</span>
+            </a>
+            <a routerLink="/renter/applications" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">description</span>
+              <span>Applications</span>
+            </a>
+          </div>
+          <div class="sidebar-nav-group">
+            <p class="sidebar-section-label">ACCOUNT</p>
+            <a routerLink="/renter/profile" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">person</span>
+              <span>My Profile</span>
+            </a>
+            <a routerLink="/renter/subscription" routerLinkActive="active" class="sidebar-link">
+              <span class="sidebar-icon material-icons-outlined" aria-hidden="true">verified</span>
+              <span>Subscription</span>
+            </a>
+          </div>
         </nav>
 
         <div class="sidebar-footer">
@@ -248,6 +258,10 @@ import { NotificationMenuComponent } from '../../../shared/components/notificati
     }
 
     .sidebar-nav {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .sidebar-nav-group {
       display: grid;
       gap: 0.2rem;
     }

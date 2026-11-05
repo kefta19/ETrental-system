@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { getAuthErrorMessage } from '../auth-error.util';
 
 @Component({
   selector: 'app-register',
@@ -15,12 +16,13 @@ export class RegisterComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private changeDetector = inject(ChangeDetectorRef);
 
   isLoading = false;
   errorMessage = '';
   hidePassword = true;
 
-  registerForm = this.fb.group({
+  registerForm = this.fb.nonNullable.group({
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
@@ -35,7 +37,7 @@ export class RegisterComponent {
 
   get passwordStrengthMessage(): string {
     const password = this.registerForm.get('password')?.value || '';
-    if (!password) return '';
+    if (!password) return 'Enter a password.';
     if (password.length < 8) return 'Password must be at least 8 characters.';
     if (!/[A-Z]/.test(password)) return 'Password must include at least one uppercase letter.';
     if (!/[0-9]/.test(password)) return 'Password must include at least one number.';
@@ -60,12 +62,12 @@ export class RegisterComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const val = this.registerForm.value;
+    const val = this.registerForm.getRawValue();
     const payload = {
-      firstName: val.firstName,
-      lastName: val.lastName,
-      email: val.email,
-      phoneNumber: val.phoneNumber,
+      firstName: val.firstName.trim(),
+      lastName: val.lastName.trim(),
+      email: val.email.trim(),
+      phoneNumber: val.phoneNumber.trim(),
       password: val.password,
       role: val.role,
       city: 'Addis Ababa'
@@ -75,15 +77,23 @@ export class RegisterComponent {
       next: (res) => {
         this.isLoading = false;
         if (!res.succeeded || !res.data?.user) {
-          this.errorMessage =
-            res.errors?.[0] || 'Registration did not complete. Please check your details and try again.';
+          this.errorMessage = getAuthErrorMessage(
+            res.errors,
+            'Registration did not complete. Please check your details and try again.'
+          );
+          this.changeDetector.markForCheck();
           return;
         }
         this.router.navigateByUrl(this.authService.dashboardRoute(res.data.user));
+        this.changeDetector.markForCheck();
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.error?.errors?.[0] || 'Registration failed. Please check your details.';
+        this.errorMessage = getAuthErrorMessage(
+          err,
+          'Registration failed. Please check your details.'
+        );
+        this.changeDetector.markForCheck();
       }
     });
   }

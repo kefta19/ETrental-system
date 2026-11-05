@@ -102,4 +102,28 @@ public class AdminDashboardDto
     public int OpenTickets { get; set; }
     public int ActivePremiumSubscriptions { get; set; }
     public decimal TotalSubscriptionRevenueETB { get; set; }
+    public int CompletedRenterPayments { get; set; }
+    public decimal RenterSubscriptionRevenueETB { get; set; }
+    public int VerifiedLandlordPayments { get; set; }
+    public decimal LandlordListingFeeRevenueETB { get; set; }
+    public decimal TotalRevenueETB { get; set; }
+}
+
+public class ListingFeePaymentDto
+{
+    public Guid PropertyId { get; set; }
+    public string LandlordId { get; set; } = string.Empty;
+    public string LandlordEmail { get; set; } = string.Empty;
+    public string LandlordFullName { get; set; } = string.Empty;
+    public string PropertyTitle { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string SubCity { get; set; } = string.Empty;
+    public string Neighborhood { get; set; } = string.Empty;
+    public decimal AmountETB { get; set; }
+    public string? Provider { get; set; }
+    public string? Reference { get; set; }
+    public string? TransactionUrl { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTime? VerifiedAtUtc { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
 }

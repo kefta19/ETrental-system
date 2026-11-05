@@ -1,9 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { getAuthErrorMessage } from '../auth-error.util';
 
 @Component({
   selector: 'app-login',
@@ -49,9 +50,16 @@ import { AuthService } from '../../../core/services/auth.service';
                 type="email"
                 formControlName="email"
                 class="form-control"
+                [attr.aria-invalid]="loginForm.controls.email.touched && loginForm.controls.email.invalid"
+                aria-describedby="login-email-error"
                 placeholder="name@example.com"
                 autocomplete="email"
               />
+              @if (loginForm.controls.email.touched && loginForm.controls.email.hasError('required')) {
+                <p id="login-email-error" class="field-error">Enter your email address.</p>
+              } @else if (loginForm.controls.email.touched && loginForm.controls.email.hasError('email')) {
+                <p id="login-email-error" class="field-error">Enter a valid email address.</p>
+              }
             </div>
 
             <div class="form-group">
@@ -61,15 +69,22 @@ import { AuthService } from '../../../core/services/auth.service';
                 type="password"
                 formControlName="password"
                 class="form-control"
+                [attr.aria-invalid]="loginForm.controls.password.touched && loginForm.controls.password.invalid"
+                aria-describedby="login-password-error"
                 placeholder="Enter your password"
                 autocomplete="current-password"
               />
+              @if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
+                <p id="login-password-error" class="field-error">Enter your password.</p>
+              } @else if (loginForm.controls.password.touched && loginForm.controls.password.hasError('minlength')) {
+                <p id="login-password-error" class="field-error">Password must be at least 6 characters.</p>
+              }
             </div>
 
             <button
               type="submit"
               class="btn-block"
-              [disabled]="loginForm.invalid || isLoading"
+              [disabled]="isLoading"
             >
               {{ isLoading ? 'Signing In...' : 'Sign In' }}
             </button>
@@ -260,6 +275,12 @@ import { AuthService } from '../../../core/services/auth.service';
         box-shadow: 0 0 0 4px rgb(16 185 129 / 12%);
       }
 
+      .field-error {
+        margin: 0.4rem 0 0;
+        color: #b91c1c;
+        font-size: 0.8rem;
+      }
+
       .btn-block {
         width: 100%;
         min-height: 3.35rem;
@@ -353,11 +374,12 @@ export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private changeDetector = inject(ChangeDetectorRef);
 
   isLoading = false;
   errorMessage = '';
 
-  loginForm = this.fb.group({
+  loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
@@ -375,24 +397,38 @@ export class LoginComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const credentials = this.loginForm.value as { email: string; password: string };
+    const credentials = {
+      email: this.loginForm.controls.email.value.trim(),
+      password: this.loginForm.controls.password.value,
+    };
 
     this.authService.login(credentials).subscribe({
       next: (res) => {
         this.isLoading = false;
+        if (!res?.succeeded || !res.data?.user) {
+          this.errorMessage = getAuthErrorMessage(
+            res?.errors,
+            'Sign in did not complete. Please check your details and try again.'
+          );
+          this.changeDetector.markForCheck();
+          return;
+        }
+
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
         const destination =
           returnUrl?.startsWith('/') && !returnUrl.startsWith('//')
             ? returnUrl
-            : this.authService.dashboardRoute(
-                res.data?.user ?? this.authService.currentUser()
-              );
+            : this.authService.dashboardRoute(res.data.user);
         this.router.navigateByUrl(destination);
+        this.changeDetector.markForCheck();
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage =
-          err.error?.errors?.[0] || 'Invalid email or password. Please try again.';
+        this.errorMessage = getAuthErrorMessage(
+          err,
+          'Invalid email or password. Please try again.'
+        );
+        this.changeDetector.markForCheck();
       },
     });
   }

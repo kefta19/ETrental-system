@@ -232,6 +232,12 @@
   box-shadow: 0 0 0 4px rgb(16 185 129 / 12%);
 }
 
+.field-error {
+  margin: 0.3rem 0 0;
+  color: #b91c1c;
+  font-size: 0.78rem;
+}
+
 .password-field {
   position: relative;
 }
