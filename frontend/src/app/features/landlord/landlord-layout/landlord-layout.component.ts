@@ -19,7 +19,11 @@ import { NotificationMenuComponent } from '../../../shared/components/notificati
         <!-- Fluent Profile Pill at top (Matches Windows 11 Settings screenshot) -->
         <a routerLink="/landlord/profile" class="user-profile-badge" title="Manage landlord profile">
           @if (authService.currentUser()?.profilePictureUrl; as pictureUrl) {
-            <img class="user-avatar" [src]="pictureUrl" alt="Landlord avatar" />
+            @if (!avatarError()) {
+              <img class="user-avatar" [src]="pictureUrl" alt="Landlord avatar" referrerpolicy="no-referrer" (error)="avatarError.set(true)" />
+            } @else {
+              <span class="user-avatar user-initials">{{ accountInitials }}</span>
+            }
           } @else {
             <span class="user-avatar user-initials">{{ accountInitials }}</span>
           }
@@ -132,7 +136,11 @@ import { NotificationMenuComponent } from '../../../shared/components/notificati
             <a routerLink="/landlord/profile" class="account-link" aria-label="Open landlord profile" title="Profile">
               <span class="account-avatar">
                 @if (authService.currentUser()?.profilePictureUrl; as pictureUrl) {
-                  <img [src]="pictureUrl" alt="" />
+                  @if (!avatarError()) {
+                    <img [src]="pictureUrl" alt="" referrerpolicy="no-referrer" (error)="avatarError.set(true)" />
+                  } @else {
+                    <span class="material-icons-outlined" aria-hidden="true">person_outline</span>
+                  }
                 } @else {
                   <span class="material-icons-outlined" aria-hidden="true">person_outline</span>
                 }
@@ -515,6 +523,7 @@ export class LandlordLayoutComponent {
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   readonly navigationMenuOpen = signal(false);
+  readonly avatarError = signal(false);
   searchQuery = '';
 
   get accountInitials(): string {

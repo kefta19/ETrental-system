@@ -1496,3 +1496,50 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101210124_AddInquiryMessageThreads') THEN
+    CREATE TABLE "InquiryMessages" (
+        "Id" uuid NOT NULL,
+        "PropertyInquiryId" uuid NOT NULL,
+        "SenderUserId" text NOT NULL,
+        "Body" character varying(1500) NOT NULL,
+        "SentAtUtc" timestamp with time zone NOT NULL,
+        "CreatedAtUtc" timestamp with time zone NOT NULL,
+        "CreatedBy" text,
+        "LastModifiedAtUtc" timestamp with time zone,
+        "LastModifiedBy" text,
+        "IsDeleted" boolean NOT NULL,
+        "DeletedAtUtc" timestamp with time zone,
+        CONSTRAINT "PK_InquiryMessages" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_InquiryMessages_AspNetUsers_SenderUserId" FOREIGN KEY ("SenderUserId") REFERENCES "AspNetUsers" ("Id") ON DELETE RESTRICT,
+        CONSTRAINT "FK_InquiryMessages_PropertyInquiries_PropertyInquiryId" FOREIGN KEY ("PropertyInquiryId") REFERENCES "PropertyInquiries" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101210124_AddInquiryMessageThreads') THEN
+    CREATE INDEX "IX_InquiryMessages_PropertyInquiryId_CreatedAtUtc" ON "InquiryMessages" ("PropertyInquiryId", "CreatedAtUtc");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101210124_AddInquiryMessageThreads') THEN
+    CREATE INDEX "IX_InquiryMessages_SenderUserId" ON "InquiryMessages" ("SenderUserId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261101210124_AddInquiryMessageThreads') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261101210124_AddInquiryMessageThreads', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+

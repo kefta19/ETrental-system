@@ -1,13 +1,13 @@
 <!-- Hero: two paths, one for tenants and one for landlords -->
 <section class="hero">
   <div class="container">
-    <h1>Rental search made easy</h1>
+    <h1>{{ 'HOME.HERO_TITLE' | translate }}</h1>
 
     <div class="hero-panel">
       <div class="hero-col">
         <h2>
           <span class="material-icons-outlined" aria-hidden="true">home</span>
-          Find a home
+          {{ 'HOME.FIND_HOME' | translate }}
         </h2>
         <p>
           @if ((total() ?? 0) > 0) {
@@ -29,17 +29,17 @@
               />
             </svg>
             <label class="search-copy">
-              <span>Search all properties</span>
+              <span>{{ 'HOME.SEARCH_ALL' | translate }}</span>
               <input
                 type="search"
                 name="query"
                 [(ngModel)]="query"
                 list="home-location-suggestions"
-                placeholder="Try: 2-bed apartment in Bole under 30k"
+                [placeholder]="'HOME.SEARCH_PLACEHOLDER_TRY' | translate"
                 aria-label="Describe your rental search by location, property, price, rooms or amenities"
               />
             </label>
-            <button type="submit" aria-label="Search properties">
+            <button type="submit" [attr.aria-label]="'HOME.SEARCH_BTN' | translate">
               <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span>
             </button>
           </div>
@@ -54,23 +54,23 @@
           </datalist>
 
           <details class="advanced-search">
-            <summary>Property type, budget, rooms &amp; more</summary>
+            <summary>{{ 'HOME.MORE_FILTERS' | translate }}</summary>
             <div class="advanced-search-grid">
               <label>
-                <span>Property type</span>
+                <span>{{ 'HOME.PROPERTY_TYPE' | translate }}</span>
                 <select name="searchType" [(ngModel)]="searchFilters.type">
-                  <option value="">Any type</option>
-                  <option value="Apartment">Apartment</option>
-                  <option value="Condominium">Condominium</option>
-                  <option value="Villa">House / villa</option>
-                  <option value="G+1">G+1 house</option>
-                  <option value="Studio">Studio / single room</option>
-                  <option value="ServiceQuarter">Service quarter</option>
-                  <option value="Commercial">Commercial</option>
+                  <option value="">{{ 'TYPES.ALL' | translate }}</option>
+                  <option value="Apartment">{{ 'TYPES.APARTMENT' | translate }}</option>
+                  <option value="Condominium">{{ 'TYPES.CONDOMINIUM' | translate }}</option>
+                  <option value="Villa">{{ 'TYPES.VILLA' | translate }}</option>
+                  <option value="G+1">{{ 'TYPES.G1' | translate }}</option>
+                  <option value="Studio">{{ 'TYPES.STUDIO' | translate }}</option>
+                  <option value="ServiceQuarter">{{ 'TYPES.SERVICE_QUARTER' | translate }}</option>
+                  <option value="Commercial">{{ 'TYPES.COMMERCIAL' | translate }}</option>
                 </select>
               </label>
               <label>
-                <span>Minimum rent (ETB)</span>
+                <span>{{ 'HOME.PRICE_MIN' | translate }}</span>
                 <input
                   type="number"
                   name="minRent"
@@ -81,7 +81,7 @@
                 />
               </label>
               <label>
-                <span>Maximum rent (ETB)</span>
+                <span>{{ 'HOME.PRICE_MAX' | translate }}</span>
                 <input
                   type="number"
                   name="maxRent"
@@ -92,7 +92,7 @@
                 />
               </label>
               <label>
-                <span>Bedrooms (at least)</span>
+                <span>{{ 'HOME.BEDROOMS' | translate }}</span>
                 <select name="searchBedrooms" [(ngModel)]="searchFilters.bedrooms">
                   <option value="">Any</option>
                   @for (count of [1, 2, 3, 4, 5, 6]; track count) {
@@ -101,7 +101,7 @@
                 </select>
               </label>
               <label>
-                <span>Bathrooms (at least)</span>
+                <span>{{ 'HOME.BATHROOMS' | translate }}</span>
                 <select name="searchBathrooms" [(ngModel)]="searchFilters.bathrooms">
                   <option value="">Any</option>
                   @for (count of [1, 2, 3, 4, 5]; track count) {
@@ -110,7 +110,7 @@
                 </select>
               </label>
               <label>
-                <span>Minimum area (m²)</span>
+                <span>{{ 'HOME.MIN_AREA' | translate }}</span>
                 <input
                   type="number"
                   name="minSearchArea"
@@ -122,7 +122,7 @@
               </label>
             </div>
             <fieldset class="search-amenities">
-              <legend>Amenities</legend>
+              <legend>{{ 'HOME.AMENITIES' | translate }}</legend>
               @for (feature of searchFeatures; track feature.value) {
                 <label>
                   <input
@@ -134,22 +134,22 @@
                 </label>
               }
             </fieldset>
-            <button type="submit" class="apply-search-filters">Search with these filters</button>
+            <button type="submit" class="apply-search-filters">{{ 'HOME.SEARCH_WITH_FILTERS' | translate }}</button>
           </details>
         </form>
       </div>
 
-      <div class="hero-or" aria-hidden="true"><span>OR</span></div>
+      <div class="hero-or" aria-hidden="true"><span>{{ 'COMMON.OR' | translate }}</span></div>
 
       <div class="hero-col">
         <h2>
           <span class="material-icons-outlined" aria-hidden="true">real_estate_agent</span>
-          Find a tenant
+          {{ 'HOME.FIND_TENANT' | translate }}
         </h2>
-        <p>Easily connect with renters looking for a home.</p>
+        <p>{{ 'HOME.CONNECT_RENTERS' | translate }}</p>
         <a routerLink="/landlord/add-property" class="outline-btn">
           <span class="material-icons-outlined" aria-hidden="true">add_home</span>
-          List your property
+          {{ 'NAV.LIST_PROPERTY' | translate }}
         </a>
       </div>
     </div>
@@ -159,7 +159,7 @@
 <!-- Property types -->
 <section class="section">
   <div class="container">
-    <h2 class="section-title">What type of rental suits you?</h2>
+    <h2 class="section-title">{{ 'HOME.SUITS_YOU' | translate }}</h2>
     <div class="type-row">
       @for (t of types; track t.value) {
         <a class="type-chip" routerLink="/properties" [queryParams]="{ type: t.value }">
@@ -167,7 +167,7 @@
           >{{ t.label }}
         </a>
       }
-      <a class="type-chip all" routerLink="/properties">All rental properties</a>
+      <a class="type-chip all" routerLink="/properties">{{ 'HOME.ALL_TYPES' | translate }}</a>
     </div>
   </div>
 </section>
@@ -175,7 +175,7 @@
 <!-- Popular cities -->
 <section class="section tint">
   <div class="container">
-    <h2 class="section-title">Popular cities to rent in Ethiopia</h2>
+    <h2 class="section-title">{{ 'HOME.POPULAR_CITIES' | translate }}</h2>
     <div class="city-grid" role="region" aria-label="Popular rental cities" tabindex="0">
       @for (city of cities; track city.name) {
         <a class="city" routerLink="/properties" [queryParams]="{ city: city.name }">
@@ -192,17 +192,15 @@
   <div class="container">
     <div class="alert">
       <div class="alert-copy">
-        <h2>Be the first to see new listings</h2>
-        <p>
-          Tell us what you're looking for. We scan every new listing and email you when one matches.
-        </p>
+        <h2>{{ 'HOME.ALERT_TITLE' | translate }}</h2>
+        <p>{{ 'HOME.ALERT_SUBTITLE' | translate }}</p>
         <ul>
           <li>Matches on location, price, bedrooms and property type</li>
           <li>Email alerts you can pause or delete any time</li>
           <li>Premium members get instant alerts</li>
         </ul>
       </div>
-      <a [routerLink]="alertLink()" class="primary-btn">Create AI notification</a>
+      <a [routerLink]="alertLink()" class="primary-btn">{{ 'NAV.CREATE_ALERT' | translate }}</a>
     </div>
   </div>
 </section>
@@ -211,8 +209,8 @@
 <section class="section">
   <div class="container">
     <div class="section-head">
-      <h2 class="section-title">New homes for rent</h2>
-      <a routerLink="/properties" class="text-link">See all homes</a>
+      <h2 class="section-title">{{ 'HOME.RECENT_LISTINGS' | translate }}</h2>
+      <a routerLink="/properties" class="text-link">{{ 'HOME.VIEW_ALL' | translate }}</a>
     </div>
 
     @if (state() === 'loading') {
@@ -239,7 +237,7 @@
 <!-- How it works -->
 <section class="section tint">
   <div class="container">
-    <h2 class="section-title center">From search to keys</h2>
+    <h2 class="section-title center">{{ 'HOME.FROM_SEARCH_TO_KEYS' | translate }}</h2>
     <ol class="steps">
       @for (step of steps; track step.title; let i = $index) {
         <li>
@@ -255,16 +253,16 @@
 <!-- Closing call to action -->
 <section class="cta">
   <div class="container">
-    <h2>Begin your home search now</h2>
-    <p>Every approved listing in one search.</p>
-    <a routerLink="/properties" class="primary-btn light">Search now</a>
+    <h2>{{ 'HOME.BEGIN_SEARCH' | translate }}</h2>
+    <p>{{ 'HOME.EVERY_LISTING' | translate }}</p>
+    <a routerLink="/properties" class="primary-btn light">{{ 'HOME.SEARCH_NOW' | translate }}</a>
   </div>
 </section>
 
 <!-- Rentals in top cities (internal links) -->
 <section class="section">
   <div class="container">
-    <h2 class="section-title">Rentals in top cities</h2>
+    <h2 class="section-title">{{ 'HOME.RENTALS_IN_CITIES' | translate }}</h2>
     <div class="link-cols">
       @for (city of topCities; track city) {
         <div>

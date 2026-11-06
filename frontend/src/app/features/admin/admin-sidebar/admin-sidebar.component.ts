@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -16,7 +16,11 @@ import { AuthService } from '../../../core/services/auth.service';
       <!-- Fluent Profile Pill at top (Matches Windows 11 Settings) -->
       <a routerLink="/admin/dashboard" class="user-profile-badge" title="Administrator Profile">
         @if (authService.currentUser()?.profilePictureUrl; as pictureUrl) {
-          <img class="user-avatar" [src]="pictureUrl" alt="Admin avatar" />
+          @if (!avatarError()) {
+            <img class="user-avatar" [src]="pictureUrl" alt="Admin avatar" referrerpolicy="no-referrer" (error)="avatarError.set(true)" />
+          } @else {
+            <span class="user-avatar user-initials">{{ accountInitials }}</span>
+          }
         } @else {
           <span class="user-avatar user-initials">{{ accountInitials }}</span>
         }
@@ -309,6 +313,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class AdminSidebarComponent {
   readonly authService = inject(AuthService);
+  readonly avatarError = signal(false);
 
   get accountInitials(): string {
     const user = this.authService.currentUser();

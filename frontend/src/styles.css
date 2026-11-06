@@ -93,6 +93,16 @@ body {
   line-height: 1.6;
 }
 
+html.lang-amharic,
+html.lang-amharic body,
+html.lang-amharic button,
+html.lang-amharic input,
+html.lang-amharic select,
+html.lang-amharic textarea {
+  font-family: 'Noto Sans Ethiopic', 'Nyala', 'Abyssinica SIL', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 0.01em;
+}
+
 a {
   color: inherit;
   text-decoration: none;

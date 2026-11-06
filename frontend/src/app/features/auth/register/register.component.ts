@@ -1,8 +1,9 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { GoogleAuthService } from '../../../core/services/google-auth.service';
 import { getAuthErrorMessage } from '../auth-error.util';
 
 @Component({
@@ -12,15 +13,28 @@ import { getAuthErrorMessage } from '../auth-error.util';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private googleAuthService = inject(GoogleAuthService);
   private router = inject(Router);
   private changeDetector = inject(ChangeDetectorRef);
 
   isLoading = false;
+  isGoogleLoading = false;
   errorMessage = '';
   hidePassword = true;
+
+  get currentRoleLabel(): string {
+    return this.registerForm.get('role')?.value === 'landlord' ? 'Landlord' : 'Renter';
+  }
+
+  ngOnInit() {
+    this.googleAuthService.handleRedirectCallback().catch((err) => {
+      this.errorMessage = err?.message || 'Google authentication failed.';
+      this.changeDetector.markForCheck();
+    });
+  }
 
   registerForm = this.fb.nonNullable.group({
     firstName: ['', Validators.required],
@@ -96,5 +110,27 @@ export class RegisterComponent {
         this.changeDetector.markForCheck();
       }
     });
+  }
+
+  async continueWithGoogle() {
+    this.errorMessage = '';
+    const selectedRole = this.registerForm.get('role')?.value || 'renter';
+    this.isGoogleLoading = true;
+
+    try {
+      await this.googleAuthService.signInWithGoogle(selectedRole);
+    } catch (err: any) {
+      this.isGoogleLoading = false;
+      const msg = err?.message || '';
+      if (
+        !msg.includes('closed') &&
+        !msg.includes('cancel') &&
+        !msg.includes('access_denied') &&
+        !msg.includes('popup_closed')
+      ) {
+        this.errorMessage = msg || 'Google registration failed. Please try again.';
+      }
+      this.changeDetector.markForCheck();
+    }
   }
 }

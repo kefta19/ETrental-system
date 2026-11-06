@@ -97,7 +97,11 @@ import { AppNotification } from '../../../core/models/notification.model';
               <a routerLink="/profile" class="account-link" aria-label="Open account profile" title="Profile">
                 <span class="account-avatar">
                   @if (authService.currentUser()?.profilePictureUrl; as pictureUrl) {
-                    <img [src]="pictureUrl" alt="" />
+                    @if (!avatarError()) {
+                      <img [src]="pictureUrl" alt="" referrerpolicy="no-referrer" (error)="avatarError.set(true)" />
+                    } @else {
+                      <span class="material-icons-outlined" aria-hidden="true">person_outline</span>
+                    }
                   } @else {
                     <span class="material-icons-outlined" aria-hidden="true">person_outline</span>
                   }
@@ -411,6 +415,7 @@ export class AdminLayoutComponent {
   readonly unreadCount = signal(0);
   readonly notificationError = signal('');
   readonly navigationMenuOpen = signal(false);
+  readonly avatarError = signal(false);
 
   constructor() {
     interval(30_000).pipe(

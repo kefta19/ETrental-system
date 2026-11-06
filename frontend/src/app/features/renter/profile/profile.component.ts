@@ -41,8 +41,8 @@ interface ProfileDetails extends UserProfile {
       } @else {
         @if (profile(); as data) {
           <section class="profile-hero">
-            @if (data.profilePictureUrl) {
-              <img class="profile-avatar" [src]="data.profilePictureUrl" [alt]="data.fullName + ' profile photo'" />
+            @if (data.profilePictureUrl && !avatarError()) {
+              <img class="profile-avatar" [src]="data.profilePictureUrl" [alt]="data.fullName + ' profile photo'" referrerpolicy="no-referrer" (error)="avatarError.set(true)" />
             } @else {
               <span class="profile-avatar profile-avatar-initials">
                 {{ data.firstName.charAt(0) }}{{ data.lastName.charAt(0) }}
@@ -342,6 +342,7 @@ export class ProfileComponent implements OnInit {
   readonly profile = signal<UserProfile | null>(null);
   readonly accountCreated = signal<string | null>(null);
   readonly loading = signal<boolean>(true);
+  readonly avatarError = signal<boolean>(false);
   readonly error = signal<string | null>(null);
 
   readonly saving = signal<boolean>(false);

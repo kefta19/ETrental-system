@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
 import { InteractionService } from '../../core/services/interaction.service';
 import { PropertyService } from '../../core/services/property.service';
@@ -219,7 +220,7 @@ interface SearchFeature {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, RouterLink, PropertyCardComponent],
+  imports: [DecimalPipe, FormsModule, RouterLink, PropertyCardComponent, TranslatePipe],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
 })

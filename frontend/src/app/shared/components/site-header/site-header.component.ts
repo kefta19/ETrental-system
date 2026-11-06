@@ -1,7 +1,9 @@
 import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../../core/services/auth.service';
+import { SupportedLanguage, TranslationService } from '../../../core/services/translation.service';
 
 interface MenuLink {
   label: string;
@@ -11,7 +13,7 @@ interface MenuLink {
 @Component({
   selector: 'app-site-header',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TranslatePipe],
   template: `
     <header class="site-header">
       <div class="bar">
@@ -25,26 +27,67 @@ interface MenuLink {
             type="search"
             name="location"
             [(ngModel)]="searchQuery"
-            placeholder="Search location, city or area"
-            aria-label="Search rentals by location, city, or area"
+            [placeholder]="'NAV.SEARCH_PLACEHOLDER' | translate"
+            [attr.aria-label]="'NAV.SEARCH_PLACEHOLDER' | translate"
           />
-          <button type="submit" aria-label="Search rentals">
+          <button type="submit" [attr.aria-label]="'HOME.SEARCH_BTN' | translate">
             <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span>
           </button>
         </form>
 
         <nav class="nav" aria-label="Primary">
-          <a [routerLink]="alertLink()" class="nav-link">Create AI notification</a>
+          <a [routerLink]="alertLink()" class="nav-link">{{ 'NAV.CREATE_ALERT' | translate }}</a>
           <a routerLink="/landlord/add-property" class="nav-link">
             <span class="material-icons-outlined" aria-hidden="true">add_home</span>
-            <span>List your property</span>
+            <span>{{ 'NAV.LIST_PROPERTY' | translate }}</span>
           </a>
         </nav>
 
         <div class="actions">
-          <span class="language-indicator" aria-label="Language: English">
-            <span class="material-icons-outlined" aria-hidden="true">language</span>
-          </span>
+          <div class="language-picker">
+            <button
+              type="button"
+              class="language-btn"
+              (click)="toggleLangMenu()"
+              [attr.aria-label]="'NAV.LANGUAGE' | translate"
+              [attr.aria-expanded]="langMenuOpen()"
+              aria-haspopup="true"
+              title="Change language / ቋንቋ ቀይር"
+            >
+              <span class="material-icons-outlined" aria-hidden="true">language</span>
+              <span class="lang-pill">{{ translation.currentLang() === 'am' ? 'አማ' : 'EN' }}</span>
+            </button>
+
+            @if (langMenuOpen()) {
+              <div class="lang-dropdown" role="menu">
+                <button
+                  type="button"
+                  class="lang-option"
+                  [class.active]="translation.currentLang() === 'en'"
+                  (click)="selectLanguage('en')"
+                  role="menuitem"
+                >
+                  <span class="lang-text">English (EN)</span>
+                  @if (translation.currentLang() === 'en') {
+                    <span class="material-icons-outlined check-icon" aria-hidden="true">check</span>
+                  }
+                </button>
+                <button
+                  type="button"
+                  class="lang-option"
+                  [class.active]="translation.currentLang() === 'am'"
+                  (click)="selectLanguage('am')"
+                  role="menuitem"
+                >
+                  <span class="lang-text">አማርኛ (Amharic)</span>
+                  @if (translation.currentLang() === 'am') {
+                    <span class="material-icons-outlined check-icon" aria-hidden="true">check</span>
+                  }
+                </button>
+              </div>
+            }
+          </div>
+
           <div class="profile-controls" aria-label="Menu and profile">
             <button
               type="button"
@@ -67,7 +110,11 @@ interface MenuLink {
               >
                 <span class="profile-circle">
                   @if (auth.currentUser()?.profilePictureUrl; as pictureUrl) {
-                    <img [src]="pictureUrl" alt="" />
+                    @if (!avatarError()) {
+                      <img [src]="pictureUrl" alt="Profile" referrerpolicy="no-referrer" (error)="avatarError.set(true)" />
+                    } @else {
+                      <span class="material-icons-outlined" aria-hidden="true">person_outline</span>
+                    }
                   } @else {
                     <span class="material-icons-outlined" aria-hidden="true">person_outline</span>
                   }
@@ -95,7 +142,7 @@ interface MenuLink {
                     class="dropdown-item signout"
                     (click)="signOut()"
                   >
-                    Sign out
+                    {{ 'NAV.LOGOUT' | translate }}
                   </button>
                 </div>
               }
@@ -111,16 +158,33 @@ interface MenuLink {
 
       @if (mobileOpen()) {
         <div class="mobile-panel">
-          <a [routerLink]="alertLink()" (click)="closeAll()">Create AI notification</a>
-          <a routerLink="/landlord/add-property" (click)="closeAll()">List your property</a>
-          <a routerLink="/properties" (click)="closeAll()">Browse rentals</a>
+          <div class="mobile-lang-row">
+            <span class="mobile-lang-label">{{ 'NAV.LANGUAGE' | translate }}:</span>
+            <div class="mobile-lang-buttons">
+              <button
+                type="button"
+                class="mobile-lang-btn"
+                [class.active]="translation.currentLang() === 'en'"
+                (click)="selectLanguage('en')"
+              >EN</button>
+              <button
+                type="button"
+                class="mobile-lang-btn"
+                [class.active]="translation.currentLang() === 'am'"
+                (click)="selectLanguage('am')"
+              >አማርኛ</button>
+            </div>
+          </div>
+          <a [routerLink]="alertLink()" (click)="closeAll()">{{ 'NAV.CREATE_ALERT' | translate }}</a>
+          <a routerLink="/landlord/add-property" (click)="closeAll()">{{ 'NAV.LIST_PROPERTY' | translate }}</a>
+          <a routerLink="/properties" (click)="closeAll()">{{ 'NAV.BROWSE_RENTALS' | translate }}</a>
           @if (auth.isAuthenticated()) {
             @for (link of accountLinks(); track link.path) {
               <a [routerLink]="link.path" (click)="closeAll()">{{ link.label }}</a>
             }
           } @else {
-            <a routerLink="/login" (click)="closeAll()">Sign in</a>
-            <a routerLink="/register" (click)="closeAll()">Sign up</a>
+            <a routerLink="/login" (click)="closeAll()">{{ 'NAV.LOGIN' | translate }}</a>
+            <a routerLink="/register" (click)="closeAll()">{{ 'NAV.REGISTER' | translate }}</a>
           }
         </div>
       }
@@ -254,18 +318,116 @@ interface MenuLink {
         display: flex;
         flex: 0 0 auto;
         align-items: center;
-        gap: 1rem;
+        gap: 0.85rem;
         margin-left: auto;
       }
-      .language-indicator {
-        display: grid;
-        width: 42px;
-        height: 42px;
-        place-items: center;
-        color: #164e63;
+      .language-picker {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
       }
-      .language-indicator .material-icons-outlined {
-        font-size: 1.75rem;
+      .language-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        height: 42px;
+        padding: 0 0.6rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        background: #fff;
+        color: #164e63;
+        cursor: pointer;
+        transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+      }
+      .language-btn:hover {
+        background: #f0fdfa;
+        border-color: #0d9488;
+        box-shadow: 0 2px 8px rgb(13 148 136 / 15%);
+      }
+      .language-btn .material-icons-outlined {
+        font-size: 1.5rem;
+        color: #0e7490;
+      }
+      .lang-pill {
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #0f766e;
+      }
+      .lang-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        min-width: 185px;
+        background: #fff;
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 12px;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+        padding: 0.35rem;
+        z-index: 60;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+      .lang-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--secondary, #0f172a);
+        font-size: 0.88rem;
+        font-weight: 550;
+        cursor: pointer;
+        text-align: left;
+        transition: background 120ms ease;
+      }
+      .lang-option:hover {
+        background: #f1f5f9;
+      }
+      .lang-option.active {
+        background: #ecfdf5;
+        color: #047857;
+        font-weight: 700;
+      }
+      .lang-option .check-icon {
+        font-size: 1.15rem;
+        color: #059669;
+      }
+      .mobile-lang-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.75rem 0.75rem;
+        border-bottom: 1px solid var(--border-color-light, #f3f4f6);
+        margin-bottom: 0.25rem;
+      }
+      .mobile-lang-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+      }
+      .mobile-lang-buttons {
+        display: inline-flex;
+        gap: 0.35rem;
+      }
+      .mobile-lang-btn {
+        padding: 0.3rem 0.65rem;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #334155;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .mobile-lang-btn.active {
+        background: #10b981;
+        color: #fff;
+        border-color: #10b981;
       }
       .profile-controls {
         display: inline-flex;
@@ -331,7 +493,9 @@ interface MenuLink {
       .profile-circle img {
         width: 100%;
         height: 100%;
+        border-radius: 50%;
         object-fit: cover;
+        display: block;
       }
 
       .dropdown {
@@ -529,11 +693,14 @@ interface MenuLink {
 })
 export class SiteHeaderComponent {
   readonly auth = inject(AuthService);
+  readonly translation = inject(TranslationService);
   private readonly router = inject(Router);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly menuOpen = signal(false);
   readonly mobileOpen = signal(false);
+  readonly langMenuOpen = signal(false);
+  readonly avatarError = signal(false);
   searchQuery = '';
 
   /** Guests are sent to register; signed-in users go straight to their saved searches. */
@@ -553,39 +720,55 @@ export class SiteHeaderComponent {
     const links: MenuLink[] = [];
 
     if (this.auth.isAdmin()) {
-      links.push({ label: 'Admin panel', path: '/admin/dashboard' });
-      links.push({ label: 'Moderation queue', path: '/admin/moderation' });
-      links.push({ label: 'Published listings', path: '/admin/listings' });
-      links.push({ label: 'Users', path: '/admin/users' });
+      links.push({ label: this.translation.instant('NAV.ADMIN_PANEL'), path: '/admin/dashboard' });
+      links.push({ label: this.translation.instant('NAV.MODERATION_QUEUE'), path: '/admin/moderation' });
+      links.push({ label: this.translation.instant('NAV.PUBLISHED_LISTINGS'), path: '/admin/listings' });
+      links.push({ label: this.translation.instant('NAV.USERS'), path: '/admin/users' });
     } else if (this.auth.isLandlord()) {
-      links.push({ label: 'Dashboard', path: '/landlord/dashboard' });
-      links.push({ label: 'My properties', path: '/landlord/my-properties' });
-      links.push({ label: 'Add property', path: '/landlord/add-property' });
-      links.push({ label: 'Messages', path: '/landlord/messages' });
-      links.push({ label: 'Viewings', path: '/landlord/appointments' });
-      links.push({ label: 'Applications', path: '/landlord/applications' });
-
-      links.push({ label: 'My listings', path: '/landlord/my-properties' });
+      links.push({ label: this.translation.instant('NAV.DASHBOARD'), path: '/landlord/dashboard' });
+      links.push({ label: this.translation.instant('NAV.MY_PROPERTIES'), path: '/landlord/my-properties' });
+      links.push({ label: this.translation.instant('NAV.LIST_PROPERTY'), path: '/landlord/add-property' });
+      links.push({ label: this.translation.instant('NAV.MESSAGES'), path: '/landlord/messages' });
+      links.push({ label: this.translation.instant('NAV.APPOINTMENTS'), path: '/landlord/appointments' });
+      links.push({ label: this.translation.instant('NAV.APPLICATIONS'), path: '/landlord/applications' });
+      links.push({ label: this.translation.instant('NAV.AGREEMENTS'), path: '/landlord/agreements' });
     } else {
       // Default to Renter links
-      links.push({ label: 'Dashboard', path: '/renter/dashboard' });
-      links.push({ label: 'Saved homes', path: '/renter/favorites' });
-      links.push({ label: 'Search alerts', path: '/renter/saved-searches' });
-      links.push({ label: 'Messages', path: '/renter/messages' });
-      links.push({ label: 'Viewings', path: '/renter/appointments' });
-      links.push({ label: 'Applications', path: '/renter/applications' });
+      links.push({ label: this.translation.instant('NAV.DASHBOARD'), path: '/renter/dashboard' });
+      links.push({ label: this.translation.instant('NAV.FAVORITES'), path: '/renter/favorites' });
+      links.push({ label: this.translation.instant('NAV.SAVED_SEARCHES'), path: '/renter/saved-searches' });
+      links.push({ label: this.translation.instant('NAV.MESSAGES'), path: '/renter/messages' });
+      links.push({ label: this.translation.instant('NAV.APPOINTMENTS'), path: '/renter/appointments' });
+      links.push({ label: this.translation.instant('NAV.APPLICATIONS'), path: '/renter/applications' });
+      links.push({ label: this.translation.instant('NAV.AGREEMENTS'), path: '/renter/agreements' });
     }
 
     return links;
   }
 
+  toggleLangMenu(): void {
+    this.langMenuOpen.set(!this.langMenuOpen());
+    if (this.langMenuOpen()) {
+      this.menuOpen.set(false);
+    }
+  }
+
+  selectLanguage(lang: SupportedLanguage): void {
+    this.translation.setLanguage(lang);
+    this.langMenuOpen.set(false);
+  }
+
   toggleMenu(): void {
     this.menuOpen.set(!this.menuOpen());
+    if (this.menuOpen()) {
+      this.langMenuOpen.set(false);
+    }
   }
 
   closeAll(): void {
     this.menuOpen.set(false);
     this.mobileOpen.set(false);
+    this.langMenuOpen.set(false);
   }
 
   signOut(): void {
@@ -595,7 +778,9 @@ export class SiteHeaderComponent {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.host.nativeElement.contains(event.target as Node)) this.menuOpen.set(false);
+    if (!this.host.nativeElement.contains(event.target as Node)) {
+      this.closeAll();
+    }
   }
 
   @HostListener('document:keydown.escape')

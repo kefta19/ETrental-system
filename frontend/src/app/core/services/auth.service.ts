@@ -75,6 +75,23 @@ export class AuthService {
     );
   }
 
+  googleAuth(payload: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    photoUrl?: string;
+    role?: string;
+    idToken?: string;
+  }): Observable<ApiResponse<AuthResponse>> {
+    return this.http.post<ApiResponse<AuthResponse>>(`${this.API_URL}/google`, payload).pipe(
+      tap(res => {
+        if (res.succeeded && res.data) {
+          this.handleAuthSuccess(res.data);
+        }
+      })
+    );
+  }
+
   fetchCurrentUser(): Observable<ApiResponse<User>> {
     return this.http.get<ApiResponse<User>>(`${this.API_URL}/me`).pipe(
       tap(res => {

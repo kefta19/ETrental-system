@@ -149,3 +149,25 @@ export interface UpdateApplicationStatus {
   status: ApplicationStatus;
   hostDecisionNotes?: string;
 }
+
+export interface RentalAgreement {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  propertyCity: string;
+  propertyNeighborhood: string;
+  primaryImageUrl?: string;
+  renterId: string;
+  renterName: string;
+  landlordId: string;
+  landlordName: string;
+  monthlyRentETB: number;
+  depositAmountETB: number;
+  leaseMonths: number;
+  startDateUtc: string;
+  endDateUtc: string;
+  actualMoveInDateUtc?: string;
+  status: string;
+  notes?: string;
+  terminatedAtUtc?: string;
+}

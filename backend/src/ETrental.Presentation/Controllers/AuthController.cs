@@ -64,6 +64,28 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Authenticate or register a user using Google account details.
+    /// </summary>
+    [HttpPost("google")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthDto dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(Result<AuthResponseDto>.Failure(
+                ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToArray()));
+        }
+
+        var result = await _authService.GoogleAuthAsync(dto);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Refresh an expired access token using a valid refresh token.
     /// </summary>
     [HttpPost("refresh-token")]

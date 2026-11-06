@@ -65,7 +65,7 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// 5. Automatic Database Initialization & Seeding on Startup
+// 5. Verify the externally managed PostgreSQL schema and seed required data.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -75,23 +75,8 @@ using (var scope = app.Services.CreateScope())
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-        // Apply the schema managed by Entity Framework migrations.
-        // Without a configured connection string the API falls back to a local
-        // SQLite file, which is created directly from the current model.
-        if (context.Database.IsNpgsql())
-        {
-            await context.Database.MigrateAsync();
-        }
-        else
-        {
-            await context.Database.EnsureCreatedAsync();
-            if (context.Database.IsSqlite())
-            {
-                await EnsureSqliteSchemaColumnsAsync(context);
-            }
-        }
+        await VerifyPostgreSqlSchemaAsync(context);
 
-        // Seed default roles, admin user, and subscription plans
         await ApplicationDbContextSeed.SeedAsync(context, userManager, roleManager);
     }
     catch (Exception ex)
@@ -127,100 +112,37 @@ app.MapControllers();
 
 app.Run();
 
-static async Task EnsureSqliteSchemaColumnsAsync(ApplicationDbContext context)
+static async Task VerifyPostgreSqlSchemaAsync(ApplicationDbContext context)
 {
-    var connection = context.Database.GetDbConnection();
-    var closeConnection = connection.State != System.Data.ConnectionState.Open;
-    if (closeConnection)
-    {
-        await connection.OpenAsync();
-    }
-
+    await context.Database.OpenConnectionAsync();
     try
     {
-        var existingColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        await using (var command = connection.CreateCommand())
+        var connection = context.Database.GetDbConnection();
+        await using var command = connection.CreateCommand();
+        command.CommandText = """SELECT to_regclass('public."__EFMigrationsHistory"') IS NOT NULL""";
+        if (await command.ExecuteScalarAsync() is not true)
         {
-            command.CommandText = "PRAGMA table_info('Properties')";
-            await using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                existingColumns.Add(reader.GetString(1));
-            }
+            throw new InvalidOperationException(
+                "The PostgreSQL database has no EF migration history. Back up the database, " +
+                "review backend/ETrental.Migrations.sql, and apply it in Aiven before starting the API.");
         }
 
-        var listingFeeColumns = new (string Name, string Sql)[]
+        command.CommandText = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM "__EFMigrationsHistory"
+                WHERE "MigrationId" = '20261101210124_AddInquiryMessageThreads'
+            )
+            """;
+        if (await command.ExecuteScalarAsync() is not true)
         {
-            ("ListingFeeAmountETB", "REAL NOT NULL DEFAULT 0"),
-            ("ListingFeeProvider", "TEXT NULL"),
-            ("ListingFeeReference", "TEXT NULL"),
-            ("ListingFeeTransactionUrl", "TEXT NULL"),
-            ("ListingFeeStatus", "INTEGER NOT NULL DEFAULT 0"),
-            ("ListingFeeVerifiedAtUtc", "TEXT NULL"),
-            ("ListingFeeVerifiedBy", "TEXT NULL"),
-            ("VideoUrl", "TEXT NULL")
-        };
-
-        foreach (var (name, type) in listingFeeColumns)
-        {
-            if (existingColumns.Contains(name)) continue;
-
-            await using var command = connection.CreateCommand();
-            command.CommandText = $"ALTER TABLE \"Properties\" ADD COLUMN \"{name}\" {type}";
-            await command.ExecuteNonQueryAsync();
-        }
-
-        var paymentTransactionColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        await using (var command = connection.CreateCommand())
-        {
-            command.CommandText = "PRAGMA table_info('PaymentTransactions')";
-            await using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                paymentTransactionColumns.Add(reader.GetString(1));
-            }
-        }
-
-        if (!paymentTransactionColumns.Contains("EvidenceFileName"))
-        {
-            await using var command = connection.CreateCommand();
-            command.CommandText = "ALTER TABLE \"PaymentTransactions\" ADD COLUMN \"EvidenceFileName\" TEXT NULL";
-            await command.ExecuteNonQueryAsync();
-        }
-
-        await using (var command = connection.CreateCommand())
-        {
-            command.CommandText = """
-                CREATE TABLE IF NOT EXISTS "InquiryMessages" (
-                    "Id" TEXT NOT NULL CONSTRAINT "PK_InquiryMessages" PRIMARY KEY,
-                    "PropertyInquiryId" TEXT NOT NULL,
-                    "SenderUserId" TEXT NOT NULL,
-                    "Body" TEXT NOT NULL,
-                    "SentAtUtc" TEXT NOT NULL,
-                    "CreatedAtUtc" TEXT NOT NULL,
-                    "CreatedBy" TEXT NULL,
-                    "LastModifiedAtUtc" TEXT NULL,
-                    "LastModifiedBy" TEXT NULL,
-                    "IsDeleted" INTEGER NOT NULL,
-                    "DeletedAtUtc" TEXT NULL,
-                    CONSTRAINT "FK_InquiryMessages_PropertyInquiries_PropertyInquiryId"
-                        FOREIGN KEY ("PropertyInquiryId") REFERENCES "PropertyInquiries" ("Id") ON DELETE CASCADE,
-                    CONSTRAINT "FK_InquiryMessages_AspNetUsers_SenderUserId"
-                        FOREIGN KEY ("SenderUserId") REFERENCES "AspNetUsers" ("Id") ON DELETE RESTRICT
-                );
-                CREATE INDEX IF NOT EXISTS "IX_InquiryMessages_PropertyInquiryId_CreatedAtUtc"
-                    ON "InquiryMessages" ("PropertyInquiryId", "CreatedAtUtc");
-                CREATE INDEX IF NOT EXISTS "IX_InquiryMessages_SenderUserId"
-                    ON "InquiryMessages" ("SenderUserId");
-                """;
-            await command.ExecuteNonQueryAsync();
+            throw new InvalidOperationException(
+                "The PostgreSQL database schema is missing the latest project migration. " +
+                "Back up the database, review backend/ETrental.Migrations.sql, and apply it in Aiven.");
         }
     }
     finally
     {
-        if (closeConnection)
-        {
-            await connection.CloseAsync();
-        }
+        await context.Database.CloseConnectionAsync();
     }
 }

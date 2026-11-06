@@ -15,7 +15,8 @@ import {
   UpdateAppointmentStatus,
   RentalApplication,
   CreateApplication,
-  UpdateApplicationStatus
+  UpdateApplicationStatus,
+  RentalAgreement
 } from '../models/interaction.model';
 
 @Injectable({
@@ -133,5 +134,20 @@ export class InteractionService {
 
   updateApplicationStatus(id: string, dto: UpdateApplicationStatus): Observable<ApiResponse<RentalApplication>> {
     return this.http.put<ApiResponse<RentalApplication>>(`${this.APPLICATIONS_API}/${id}/status`, dto);
+  }
+
+  // ================= Rental Agreements =================
+  private readonly AGREEMENTS_API = `${API_BASE_URL}/agreements`;
+
+  getAgreements(): Observable<ApiResponse<RentalAgreement[]>> {
+    return this.http.get<ApiResponse<RentalAgreement[]>>(this.AGREEMENTS_API);
+  }
+
+  getAgreementById(id: string): Observable<ApiResponse<RentalAgreement>> {
+    return this.http.get<ApiResponse<RentalAgreement>>(`${this.AGREEMENTS_API}/${id}`);
+  }
+
+  terminateAgreement(id: string, notes?: string): Observable<ApiResponse<boolean>> {
+    return this.http.put<ApiResponse<boolean>>(`${this.AGREEMENTS_API}/${id}/terminate`, { notes });
   }
 }

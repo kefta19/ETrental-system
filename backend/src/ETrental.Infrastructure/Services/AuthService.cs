@@ -174,6 +174,125 @@ public class AuthService : IAuthService
         });
     }
 
+    public async Task<Result<AuthResponseDto>> GoogleAuthAsync(GoogleAuthDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email))
+        {
+            return Result<AuthResponseDto>.Failure("Email is required for Google authentication.");
+        }
+
+        var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+        var user = await _userManager.FindByEmailAsync(normalizedEmail);
+
+        if (user != null)
+        {
+            if (!user.IsActive)
+            {
+                return Result<AuthResponseDto>.Failure("Your account has been deactivated. Please contact support.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.PhotoUrl))
+            {
+                user.ProfilePictureUrl = dto.PhotoUrl;
+            }
+        }
+        else
+        {
+            var role = dto.Role is UserRole.Landlord ? UserRole.Landlord : UserRole.Renter;
+            var firstName = string.IsNullOrWhiteSpace(dto.FirstName) ? normalizedEmail.Split('@')[0] : dto.FirstName.Trim();
+            var lastName = dto.LastName?.Trim() ?? string.Empty;
+
+            user = new ApplicationUser
+            {
+                UserName = normalizedEmail,
+                Email = normalizedEmail,
+                EmailConfirmed = true,
+                FirstName = firstName,
+                LastName = lastName,
+                PhoneNumber = string.Empty,
+                ProfilePictureUrl = dto.PhotoUrl,
+                CreatedAtUtc = DateTime.UtcNow,
+                IsActive = true
+            };
+
+            var randomPassword = $"G!{Guid.NewGuid():N}#9";
+            var createResult = await _userManager.CreateAsync(user, randomPassword);
+            if (!createResult.Succeeded)
+            {
+                return Result<AuthResponseDto>.Failure(createResult.Errors.Select(e => e.Description));
+            }
+
+            var roleName = role.ToString();
+            if (!await _roleManager.RoleExistsAsync(roleName))
+            {
+                await _roleManager.CreateAsync(new IdentityRole(roleName));
+            }
+            await _userManager.AddToRoleAsync(user, roleName);
+
+            if (role == UserRole.Renter)
+            {
+                _context.RenterProfiles.Add(new RenterProfile
+                {
+                    UserId = user.Id,
+                    PreferredCity = "Addis Ababa"
+                });
+            }
+            else
+            {
+                _context.LandlordProfiles.Add(new LandlordProfile
+                {
+                    UserId = user.Id
+                });
+            }
+
+            var freePlan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.Tier == SubscriptionTier.Free);
+            if (freePlan != null)
+            {
+                _context.Subscriptions.Add(new Subscription
+                {
+                    UserId = user.Id,
+                    PlanId = freePlan.Id,
+                    Status = SubscriptionStatus.Active,
+                    StartDateUtc = DateTime.UtcNow
+                });
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var activeSub = await _context.Subscriptions
+            .Include(s => s.Plan)
+            .FirstOrDefaultAsync(s => s.UserId == user.Id && s.Status == SubscriptionStatus.Active);
+
+        var (token, expiration) = _jwtTokenGenerator.GenerateToken(user, roles);
+        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
+
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiryTimeUtc = DateTime.UtcNow.AddDays(7);
+        user.LastLoginAtUtc = DateTime.UtcNow;
+        await _userManager.UpdateAsync(user);
+
+        return Result<AuthResponseDto>.Success(new AuthResponseDto
+        {
+            Token = token,
+            Expiration = expiration,
+            RefreshToken = refreshToken,
+            User = new UserDto
+            {
+                Id = user.Id,
+                Email = user.Email!,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber ?? string.Empty,
+                ProfilePictureUrl = user.ProfilePictureUrl,
+                Roles = roles,
+                SubscriptionTier = activeSub?.Plan.Name ?? "Free"
+            }
+        });
+    }
+
     public async Task<Result<AuthResponseDto>> RefreshTokenAsync(string token, string refreshToken)
     {
         var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);

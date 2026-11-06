@@ -23,24 +23,17 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         // 1. Database Configuration
-        var connectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
-
+       var connectionString = configuration.GetConnectionString("DefaultConnection");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            // Local development fallback: a file based SQLite database so the API can be
-            // started without any connection string. Production always uses PostgreSQL.
-            var fallbackPath = Path.Combine(Directory.GetCurrentDirectory(), "ETrental.db");
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite($"Data Source={fallbackPath}"));
+            throw new InvalidOperationException(
+                "ConnectionStrings:DefaultConnection is required. Configure the Aiven PostgreSQL connection; " +
+                "the API will not start with a local database.");
         }
-        else
-        {
-            services.AddDbContext<ApplicationDbContext>(options =>
-            {
-                options.UseNpgsql(connectionString, b =>
-                    b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
-            });
-        }
+
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(connectionString, b =>
+                b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
         services.AddScoped<IApplicationDbContext>(provider => 
             provider.GetRequiredService<ApplicationDbContext>());

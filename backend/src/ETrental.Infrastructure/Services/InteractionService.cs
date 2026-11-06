@@ -718,6 +718,97 @@ public class InteractionService : IInteractionService
 
     #endregion
 
+    #region Rental Agreements
+
+    public async Task<Result<List<RentalAgreementDto>>> GetAgreementsAsync(string userId, CancellationToken ct = default)
+    {
+        var agreements = await _context.RentalAgreements
+            .Include(a => a.Property)
+                .ThenInclude(p => p.Images)
+            .Include(a => a.Property)
+                .ThenInclude(p => p.Landlord)
+            .Include(a => a.Renter)
+            .Where(a => a.LandlordId == userId || a.RenterId == userId)
+            .OrderByDescending(a => a.StartDateUtc)
+            .ToListAsync(ct);
+
+        var dtos = agreements.Select(MapToAgreementDto).ToList();
+        return Result<List<RentalAgreementDto>>.Success(dtos);
+    }
+
+    public async Task<Result<RentalAgreementDto>> GetAgreementByIdAsync(Guid id, string userId, CancellationToken ct = default)
+    {
+        var agreement = await _context.RentalAgreements
+            .Include(a => a.Property)
+                .ThenInclude(p => p.Images)
+            .Include(a => a.Property)
+                .ThenInclude(p => p.Landlord)
+            .Include(a => a.Renter)
+            .FirstOrDefaultAsync(a => a.Id == id && (a.LandlordId == userId || a.RenterId == userId), ct);
+
+        if (agreement == null)
+            return Result<RentalAgreementDto>.Failure("Rental agreement not found.");
+
+        return Result<RentalAgreementDto>.Success(MapToAgreementDto(agreement));
+    }
+
+    public async Task<Result<bool>> TerminateAgreementAsync(Guid id, string userId, string? notes, CancellationToken ct = default)
+    {
+        var agreement = await _context.RentalAgreements
+            .Include(a => a.Property)
+            .FirstOrDefaultAsync(a => a.Id == id && (a.LandlordId == userId || a.RenterId == userId), ct);
+
+        if (agreement == null)
+            return Result<bool>.Failure("Rental agreement not found.");
+
+        agreement.Status = RentalAgreementStatus.Terminated;
+        agreement.TerminatedAtUtc = DateTime.UtcNow;
+        if (!string.IsNullOrWhiteSpace(notes))
+        {
+            agreement.Notes = (agreement.Notes != null ? agreement.Notes + " | " : "") + notes;
+        }
+
+        if (agreement.Property != null && agreement.Property.Status == PropertyStatus.Rented)
+        {
+            agreement.Property.Status = PropertyStatus.Published;
+            agreement.Property.RentedToTenantName = null;
+            agreement.Property.RentedToTenantId = null;
+        }
+
+        await _context.SaveChangesAsync(ct);
+        await _auditService.LogAsync(userId, "RentalAgreementTerminated", "RentalAgreement", id.ToString(), notes);
+
+        return Result<bool>.Success(true);
+    }
+
+    private static RentalAgreementDto MapToAgreementDto(RentalAgreement a)
+    {
+        return new RentalAgreementDto
+        {
+            Id = a.Id,
+            PropertyId = a.PropertyId,
+            PropertyTitle = a.Property?.Title ?? "Rental Unit",
+            PropertyCity = a.Property?.City ?? string.Empty,
+            PropertyNeighborhood = a.Property?.Neighborhood ?? string.Empty,
+            PrimaryImageUrl = a.Property?.Images.OrderBy(img => img.DisplayOrder).Select(img => img.ImageUrl).FirstOrDefault(),
+            RenterId = a.RenterId,
+            RenterName = a.Renter?.FullName ?? a.Property?.RentedToTenantName ?? "Renter",
+            LandlordId = a.LandlordId,
+            LandlordName = a.Property?.Landlord?.FullName ?? "Landlord",
+            MonthlyRentETB = a.MonthlyRentETB,
+            DepositAmountETB = a.DepositAmountETB,
+            LeaseMonths = a.LeaseMonths,
+            StartDateUtc = a.StartDateUtc,
+            EndDateUtc = a.EndDateUtc,
+            ActualMoveInDateUtc = a.ActualMoveInDateUtc,
+            Status = a.Status.ToString(),
+            Notes = a.Notes,
+            TerminatedAtUtc = a.TerminatedAtUtc
+        };
+    }
+
+    #endregion
+
     #region Helper Mappers
 
     private static PropertyInquiryDto MapToInquiryDto(PropertyInquiry i, Property p, ApplicationUser r)

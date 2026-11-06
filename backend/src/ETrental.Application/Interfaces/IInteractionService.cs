@@ -34,4 +34,9 @@ public interface IInteractionService
     Task<Result<List<RentalApplicationDto>>> GetMyApplicationsAsync(string applicantId, CancellationToken ct = default);
     Task<Result<List<RentalApplicationDto>>> GetReceivedApplicationsAsync(string hostId, Guid? propertyId = null, CancellationToken ct = default);
     Task<Result<RentalApplicationDto>> UpdateApplicationStatusAsync(Guid id, UpdateApplicationStatusDto dto, string hostId, CancellationToken ct = default);
+
+    // Rental Agreements
+    Task<Result<List<RentalAgreementDto>>> GetAgreementsAsync(string userId, CancellationToken ct = default);
+    Task<Result<RentalAgreementDto>> GetAgreementByIdAsync(Guid id, string userId, CancellationToken ct = default);
+    Task<Result<bool>> TerminateAgreementAsync(Guid id, string userId, string? notes, CancellationToken ct = default);
 }

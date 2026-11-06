@@ -630,6 +630,39 @@ public class PropertiesController : ControllerBase
         }
 
         property.Status = PropertyStatus.Rented;
+        property.RentedToTenantName = dto.TenantName;
+        property.RentedToTenantId = dto.TenantId;
+        property.AgreedLeaseMonths = dto.AgreedLeaseMonths;
+        var startDate = DateTime.TryParse(dto.TenancyStartDateUtc, out var parsedDate) ? parsedDate.ToUniversalTime() : DateTime.UtcNow;
+        property.TenancyStartDateUtc = startDate;
+        if (dto.AgreedRentAmountETB > 0)
+        {
+            property.RentAmountETB = dto.AgreedRentAmountETB;
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.TenantId))
+        {
+            var renterExists = await _context.Users.AnyAsync(u => u.Id == dto.TenantId);
+            if (renterExists)
+            {
+                var agreement = new RentalAgreement
+                {
+                    PropertyId = property.Id,
+                    LandlordId = property.LandlordId,
+                    RenterId = dto.TenantId,
+                    MonthlyRentETB = dto.AgreedRentAmountETB > 0 ? dto.AgreedRentAmountETB : property.RentAmountETB,
+                    DepositAmountETB = property.DepositAmountETB,
+                    LeaseMonths = dto.AgreedLeaseMonths > 0 ? dto.AgreedLeaseMonths : 12,
+                    StartDateUtc = startDate,
+                    EndDateUtc = startDate.AddMonths(dto.AgreedLeaseMonths > 0 ? dto.AgreedLeaseMonths : 12),
+                    Status = RentalAgreementStatus.Active,
+                    ActualMoveInDateUtc = startDate,
+                    Notes = $"Tenancy agreement with {dto.TenantName}"
+                };
+                _context.RentalAgreements.Add(agreement);
+            }
+        }
+
         await _context.SaveChangesAsync();
 
         return Ok(Result<PropertySummaryDto>.Success(new PropertySummaryDto
