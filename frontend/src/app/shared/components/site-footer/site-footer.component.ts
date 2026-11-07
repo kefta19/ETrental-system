@@ -35,6 +35,13 @@ import { RouterLink } from '@angular/router';
             <a routerLink="/properties" [queryParams]="{ city: city }">{{ city }}</a>
           }
         </div>
+
+        <div class="col">
+          <h3>About & support</h3>
+          <a routerLink="/about">How ETrental works</a>
+          <a routerLink="/contact">Contact support</a>
+          <a href="mailto:support@etrental.com">support@etrental.com</a>
+        </div>
       </div>
       <div class="legal">&copy; {{ year }} ETrental. All rights reserved.</div>
     </footer>
@@ -51,7 +58,7 @@ import { RouterLink } from '@angular/router';
         margin: 0 auto;
         padding: 3rem 1.5rem 2rem;
         display: grid;
-        grid-template-columns: 1.6fr 1fr 1fr 1fr;
+        grid-template-columns: 1.6fr repeat(4, 1fr);
         gap: 2rem;
       }
       .logo {

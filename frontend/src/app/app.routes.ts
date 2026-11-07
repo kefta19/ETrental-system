@@ -35,6 +35,8 @@ import { ApplicationsListComponent } from './features/interactions/applications/
 import { SubscriptionComponent } from './features/subscription/subscription.component';
 import { authGuard, roleGuard } from './core/guards/auth.guard';
 import { MainLayoutComponent } from './shared/components/main-layout/main-layout.component';
+import { AboutComponent } from './features/public/about/about.component';
+import { ContactComponent } from './features/public/contact/contact.component';
 
 export const routes: Routes = [
   // Full-screen pages (no header/footer)
@@ -46,6 +48,8 @@ export const routes: Routes = [
     component: MainLayoutComponent,
     children: [
       { path: '', component: HomeComponent, pathMatch: 'full' },
+      { path: 'about', component: AboutComponent },
+      { path: 'contact', component: ContactComponent },
 
       { path: 'properties', component: PropertyListComponent },
       { path: 'properties/:id', component: PropertyDetailComponent },

@@ -1,0 +1,55 @@
+<main class="contact-page">
+  <section class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow"><span class="material-icons-outlined" aria-hidden="true">support_agent</span> ETrental customer care</span>
+      <h1>How can we<br /><span>help you today?</span></h1>
+      <p>Tell us what you need and our team will help you find the right next step.</p>
+      <a class="email-cta" [href]="'mailto:' + supportEmail + '?subject=ETrental%20support%20request'">
+        <span class="mail-icon material-icons-outlined" aria-hidden="true">mail</span>
+        <span><small>EMAIL OUR SUPPORT TEAM</small><strong>{{ supportEmail }}</strong></span>
+        <span class="material-icons-outlined arrow" aria-hidden="true">arrow_forward</span>
+      </a>
+    </div>
+    <div class="hero-illustration" role="img" aria-label="Illustration of customer support conversations">
+      <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+      <div class="support-center"><span class="material-icons-outlined" aria-hidden="true">support_agent</span></div>
+      <div class="bubble bubble-one"><span class="material-icons-outlined" aria-hidden="true">forum</span><i></i><i></i></div>
+      <div class="bubble bubble-two"><span class="material-icons-outlined" aria-hidden="true">task_alt</span><i></i></div>
+      <div class="bubble bubble-three"><span class="material-icons-outlined" aria-hidden="true">mail</span><i></i><i></i></div>
+      <span class="spark spark-one"></span><span class="spark spark-two"></span><span class="spark spark-three"></span>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="section-heading"><span class="eyebrow">GET IN TOUCH</span><h2>Choose what you need help with.</h2><p>For a faster answer, include the details that help us understand your question.</p></div>
+    <div class="contact-grid">
+      <article class="contact-card">
+        <span class="icon mint material-icons-outlined" aria-hidden="true">person</span>
+        <h3>Account or sign-in</h3><p>Describe what happened and include the email address on your ETrental account. Never send your password.</p>
+        <a [href]="'mailto:' + supportEmail + '?subject=ETrental%20account%20help'">Email about account access <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span></a>
+      </article>
+      <article class="contact-card">
+        <span class="icon blue material-icons-outlined" aria-hidden="true">home_work</span>
+        <h3>Property or listing</h3><p>Share the listing link or property title and explain what you need help with.</p>
+        <a [href]="'mailto:' + supportEmail + '?subject=ETrental%20property%20question'">Email about a property <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span></a>
+      </article>
+      <article class="contact-card">
+        <span class="icon peach material-icons-outlined" aria-hidden="true">credit_card</span>
+        <h3>Subscription or payment</h3><p>Include the relevant plan or transaction reference. Do not send card details, passwords, or payment PINs.</p>
+        <a [href]="'mailto:' + supportEmail + '?subject=ETrental%20subscription%20or%20payment%20help'">Email about billing <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span></a>
+      </article>
+    </div>
+
+    <div class="how-to-contact">
+      <div class="how-heading"><span class="eyebrow">A HELPFUL MESSAGE</span><h2>What to include in your email</h2><p>A few details can help the team understand your request.</p></div>
+      <ol>
+        <li><span>01</span><div><strong>Use your account email</strong><p>Let us know which ETrental account the request is about.</p></div></li>
+        <li><span>02</span><div><strong>Describe the issue</strong><p>Tell us what you were trying to do and what happened instead.</p></div></li>
+        <li><span>03</span><div><strong>Add a useful reference</strong><p>Include a property link, page name, or transaction reference if relevant.</p></div></li>
+      </ol>
+    </div>
+
+    <div class="safety-note"><span class="material-icons-outlined" aria-hidden="true">shield</span><div><strong>Keep your account and payments safe.</strong><p>ETrental support will never need your password or payment PIN. Do not include sensitive payment information in an email.</p></div></div>
+    <div class="bottom-cta"><div><h2>Still looking for a rental?</h2><p>Head back to the listings and continue your search.</p></div><a routerLink="/properties">Explore properties <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span></a></div>
+  </section>
+</main>

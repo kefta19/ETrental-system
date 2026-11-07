@@ -36,6 +36,8 @@ interface MenuLink {
         </form>
 
         <nav class="nav" aria-label="Primary">
+          <a routerLink="/about" class="nav-link">About</a>
+          <a routerLink="/contact" class="nav-link">Contact</a>
           <a [routerLink]="alertLink()" class="nav-link">{{ 'NAV.CREATE_ALERT' | translate }}</a>
           <a routerLink="/landlord/add-property" class="nav-link">
             <span class="material-icons-outlined" aria-hidden="true">add_home</span>
@@ -178,6 +180,8 @@ interface MenuLink {
           <a [routerLink]="alertLink()" (click)="closeAll()">{{ 'NAV.CREATE_ALERT' | translate }}</a>
           <a routerLink="/landlord/add-property" (click)="closeAll()">{{ 'NAV.LIST_PROPERTY' | translate }}</a>
           <a routerLink="/properties" (click)="closeAll()">{{ 'NAV.BROWSE_RENTALS' | translate }}</a>
+          <a routerLink="/about" (click)="closeAll()">About ETrental</a>
+          <a routerLink="/contact" (click)="closeAll()">Contact support</a>
           @if (auth.isAuthenticated()) {
             @for (link of accountLinks(); track link.path) {
               <a [routerLink]="link.path" (click)="closeAll()">{{ link.label }}</a>

@@ -1,0 +1,118 @@
+<div class="scroll-progress" aria-hidden="true"><span></span></div>
+
+<main class="about-page">
+  <section class="hero">
+    <div class="hero-art scroll-reveal" role="img" aria-label="Illustration of searching for a rental home">
+      <div class="art-glow"></div>
+      <div class="art-phone">
+        <div class="phone-speaker"></div>
+        <div class="phone-search"><span class="material-icons-outlined" aria-hidden="true">search</span><span>Find a home</span></div>
+        <div class="phone-photo"><span class="material-icons-outlined" aria-hidden="true">home</span></div>
+        <div class="phone-line line-long"></div><div class="phone-line line-short"></div>
+        <div class="phone-bottom"><span></span><span></span><span></span></div>
+      </div>
+      <div class="float-card property-card"><span class="material-icons-outlined" aria-hidden="true">apartment</span><div><b>Places to call home</b><small>Explore rental listings</small></div></div>
+      <div class="float-card search-card"><span class="material-icons-outlined" aria-hidden="true">location_on</span><div><b>Your kind of place</b><small>Search across Ethiopia</small></div></div>
+      <span class="spark spark-one"></span><span class="spark spark-two"></span><span class="spark spark-three"></span>
+    </div>
+
+    <a class="scroll-cue" href="#about-intro">
+      <span>FIND OUT WHO WE ARE</span>
+      <span class="material-icons-outlined" aria-hidden="true">keyboard_arrow_down</span>
+    </a>
+    <div class="hero-copy scroll-reveal">
+      <h1>Rental searching,<br /><span>made more connected.</span></h1>
+      <p>ETrental helps renters discover homes and landlords connect with people looking for their next place.</p>
+    </div>
+  </section>
+
+  <section class="intro section-wrap scroll-reveal" id="about-intro">
+    <span class="eyebrow">ABOUT ETRENTAL</span>
+    <h2>A clearer way to find and offer a home.</h2>
+    <p>Search local listings, compare the details that matter, and take the next step with the landlord. If you have a property, list it and manage renter inquiries in one place.</p>
+    <div class="intro-tags" aria-label="ETrental features">
+      <span><span class="material-icons-outlined" aria-hidden="true">travel_explore</span>Explore listings</span>
+      <span><span class="material-icons-outlined" aria-hidden="true">favorite_border</span>Save favorites</span>
+      <span><span class="material-icons-outlined" aria-hidden="true">forum</span>Connect directly</span>
+    </div>
+  </section>
+
+  <section class="workflows" id="how-it-works">
+    <div class="section-wrap">
+      <div class="section-heading scroll-reveal">
+        <span class="eyebrow">HOW IT WORKS</span>
+        <h2>Every move, one step at a time.</h2>
+        <p>Choose your journey to see how ETrental takes you from registration to the next stage.</p>
+      </div>
+
+      <div class="role-tabs scroll-reveal" role="tablist" aria-label="Choose your rental journey">
+        @for (workflow of workflows; track workflow.role; let index = $index) {
+          <button
+            type="button"
+            role="tab"
+            [class.is-active]="activeIndex() === index"
+            [attr.aria-selected]="activeIndex() === index"
+            (click)="selectRole(index)"
+          >
+            <span class="material-icons-outlined" aria-hidden="true">{{ workflow.icon }}</span>
+            {{ workflow.role }}
+          </button>
+        }
+      </div>
+
+      @for (workflow of activeList(); track workflow.role) {
+        <section class="role-journey" [attr.aria-label]="workflow.role + ' workflow'">
+          <header class="journey-heading scroll-reveal">
+            <span class="role-mark material-icons-outlined" aria-hidden="true">{{ workflow.icon }}</span>
+            <div>
+              <span class="eyebrow">{{ workflow.role }} JOURNEY</span>
+              <h3>{{ workflow.audience }}</h3>
+              <p>{{ workflow.summary }}</p>
+            </div>
+            @if (workflow.link && workflow.linkLabel) {
+              <a class="text-link" [routerLink]="workflow.link">
+                {{ workflow.linkLabel }}
+                <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span>
+              </a>
+            }
+          </header>
+
+          <ol class="journey">
+            @for (stage of workflow.stages; track stage.title; let stageIndex = $index) {
+              <li [style.--i]="stageIndex" [class.reverse]="stageIndex % 2 === 1">
+                <div class="stage-copy">
+                  <span class="stage-kicker">STEP {{ stageIndex + 1 }}</span>
+                  <h4>{{ stage.title }}</h4>
+                  <p>{{ stage.description }}</p>
+                </div>
+                <span class="stage-number">{{ stageIndex + 1 }}</span>
+                <div class="stage-art" aria-hidden="true">
+                  <span class="stage-art-orbit"></span>
+                  <span class="stage-art-icon material-icons-outlined">{{ stage.icon }}</span>
+                  <span class="stage-art-label">{{ stage.visualLabel }}</span>
+                </div>
+              </li>
+            }
+          </ol>
+
+          <div class="workflow-finish scroll-reveal">
+            <span class="material-icons-outlined" aria-hidden="true">flag</span>
+            <p><strong>And then?</strong>{{ workflow.finish }}</p>
+          </div>
+        </section>
+      }
+    </div>
+  </section>
+
+  <section class="closing section-wrap">
+    <div class="closing-copy scroll-reveal">
+      <span class="eyebrow">YOUR NEXT STEP STARTS HERE</span>
+      <h2>Ready to find your place?</h2>
+      <p>Explore available rentals or contact our team if you have a question.</p>
+    </div>
+    <div class="closing-actions scroll-reveal">
+      <a class="button primary" routerLink="/properties">Explore rentals <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span></a>
+      <a class="button secondary" routerLink="/contact">Contact us</a>
+    </div>
+  </section>
+</main>
